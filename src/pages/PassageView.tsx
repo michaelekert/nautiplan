@@ -33,7 +33,7 @@ export default function PassagePlan() {
   const [points, setPoints] = useState<Point[]>([]);
   const [speeds, setSpeeds] = useState<number[]>([]);
   const [stopTimes, setStopTimes] = useState<Record<number, number>>({});
-  const [startDate, setStartDate] = useState(new Date().toISOString().slice(0, 16));
+  const [startDate] = useState(new Date().toISOString().slice(0, 16));
   const [segments, setSegments] = useState<Segment[]>([]);
 
   const handleAddPoint = (lngLat: { lat: number; lng: number }) => {
