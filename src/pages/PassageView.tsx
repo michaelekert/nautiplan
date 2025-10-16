@@ -1,10 +1,10 @@
-import { useEffect, useState, useRef } from "react"
-import { Map, MapStyle, config } from "@maptiler/sdk"
-import '@maptiler/sdk/dist/maptiler-sdk.css'
-import { WindLayer } from "@maptiler/weather"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { BottomNavbar } from "@/components/BottomNavbar"
+import { useEffect, useState, useRef } from "react";
+import { Map, MapStyle, config } from "@maptiler/sdk";
+import "@maptiler/sdk/dist/maptiler-sdk.css";
+import { WindLayer } from "@maptiler/weather";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { BottomNavbar } from "@/components/BottomNavbar";
 
 config.apiKey = import.meta.env.VITE_MAPTILER_API_KEY;
 
@@ -21,9 +21,14 @@ type Segment = {
   departNext: Date;
 };
 
+interface WindLayerExtended extends WindLayer {
+  on: (event: string, callback: () => void) => void;
+  reloadData: () => Promise<void>;
+}
+
 export default function PassagePlan() {
   const mapRef = useRef<Map | null>(null);
-  const windLayerRef = useRef<WindLayer | null>(null);
+  const windLayerRef = useRef<WindLayerExtended | null>(null);
   const [currentTimeText, setCurrentTimeText] = useState("");
   const [points, setPoints] = useState<Point[]>([]);
   const [speeds, setSpeeds] = useState<number[]>([]);
@@ -31,11 +36,12 @@ export default function PassagePlan() {
   const [startDate, setStartDate] = useState(new Date().toISOString().slice(0, 16));
   const [segments, setSegments] = useState<Segment[]>([]);
 
-  const handleAddPoint = (lngLat: any) => {
+  const handleAddPoint = (lngLat: { lat: number; lng: number }) => {
+    const newPoint: Point = [lngLat.lat, lngLat.lng];
     setPoints((prev) => {
-      const newPoints = [...prev, [lngLat.lat, lngLat.lng]];
+      const newPoints: Point[] = [...prev, newPoint];
       if (newPoints.length > 1 && speeds.length < newPoints.length - 1) {
-        setSpeeds((s) => [...s, 10]); 
+        setSpeeds((s) => [...s, 10]);
       }
       return newPoints;
     });
@@ -66,12 +72,14 @@ export default function PassagePlan() {
   };
 
   const calculateCourse = (p1: Point, p2: Point) => {
-    const y = Math.sin((p2[1] - p1[1]) * Math.PI / 180) * Math.cos(p2[0] * Math.PI / 180);
+    const y =
+      Math.sin((p2[1] - p1[1]) * Math.PI / 180) * Math.cos(p2[0] * Math.PI / 180);
     const x =
       Math.cos(p1[0] * Math.PI / 180) * Math.sin(p2[0] * Math.PI / 180) -
-      Math.sin(p1[0] * Math.PI / 180) * Math.cos(p2[0] * Math.PI / 180) *
-      Math.cos((p2[1] - p1[1]) * Math.PI / 180);
-    return (Math.atan2(y, x) * 180 / Math.PI + 360) % 360;
+      Math.sin(p1[0] * Math.PI / 180) *
+        Math.cos(p2[0] * Math.PI / 180) *
+        Math.cos((p2[1] - p1[1]) * Math.PI / 180);
+    return ((Math.atan2(y, x) * 180) / Math.PI + 360) % 360;
   };
 
   const buildSegments = () => {
@@ -125,7 +133,7 @@ export default function PassagePlan() {
     });
 
     mapRef.current = map;
-    const windLayer = new WindLayer({ opacity: 0.4 });
+    const windLayer = new WindLayer({ opacity: 0.4 }) as WindLayerExtended;
     windLayerRef.current = windLayer;
 
     map.on("load", () => {
@@ -133,7 +141,11 @@ export default function PassagePlan() {
 
       map.addSource("route", {
         type: "geojson",
-        data: { type: "Feature", geometry: { type: "LineString", coordinates: [] } },
+        data: {
+          type: "Feature",
+          geometry: { type: "LineString", coordinates: [] },
+          properties: {},
+        },
       });
 
       map.addLayer({
@@ -165,7 +177,15 @@ export default function PassagePlan() {
     if (!map || !map.isStyleLoaded()) return;
 
     const coords = points.map((p) => [p[1], p[0]]);
-    map.getSource("route")?.setData({ type: "Feature", geometry: { type: "LineString", coordinates: coords } });
+
+    const routeSource: any = map.getSource("route");
+    if (routeSource) {
+      routeSource.setData({
+        type: "Feature",
+        geometry: { type: "LineString", coordinates: coords },
+        properties: {},
+      });
+    }
 
     if (map.getLayer("markers")) map.removeLayer("markers");
     if (map.getSource("markers")) map.removeSource("markers");
@@ -174,10 +194,10 @@ export default function PassagePlan() {
       map.addSource("markers", {
         type: "geojson",
         data: {
-          type: "FeatureCollection",
+          type: "FeatureCollection" as const,
           features: points.map((p, idx) => ({
-            type: "Feature",
-            geometry: { type: "Point", coordinates: [p[1], p[0]] },
+            type: "Feature" as const,
+            geometry: { type: "Point" as const, coordinates: [p[1], p[0]] },
             properties: { idx: idx + 1 },
           })),
         },
@@ -194,7 +214,6 @@ export default function PassagePlan() {
       });
     }
 
-  
     if (map.getLayer("segment-labels")) map.removeLayer("segment-labels");
     if (map.getSource("segment-labels")) map.removeSource("segment-labels");
 
@@ -208,15 +227,15 @@ export default function PassagePlan() {
         const label = `${s.distanceNm.toFixed(0)} NM · ${travelHours.toFixed(1)}h`;
 
         return {
-          type: "Feature",
-          geometry: { type: "Point", coordinates: [midLng, midLat] },
+          type: "Feature" as const,
+          geometry: { type: "Point" as const, coordinates: [midLng, midLat] },
           properties: { label },
         };
       });
 
       map.addSource("segment-labels", {
         type: "geojson",
-        data: { type: "FeatureCollection", features },
+        data: { type: "FeatureCollection" as const, features },
       });
 
       map.addLayer({
@@ -256,7 +275,9 @@ export default function PassagePlan() {
             <ul className="space-y-4">
               {segments.map((s, i) => (
                 <li key={i} className="p-4 bg-slate-700 rounded-md text-slate-100 space-y-2">
-                  <div>Dystans: {s.distanceKm.toFixed(2)} km ({s.distanceNm.toFixed(2)} NM)</div>
+                  <div>
+                    Dystans: {s.distanceKm.toFixed(2)} km ({s.distanceNm.toFixed(2)} NM)
+                  </div>
                   <div>Wypłynięcie: {s.departTime.toLocaleString()}</div>
                   <div>Dopłynięcie: {s.arriveTime.toLocaleString()}</div>
                   <div>Wypłynięcie z portu: {s.departNext.toLocaleString()}</div>

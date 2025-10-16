@@ -4,13 +4,11 @@ import {
   SidebarProvider,
   SidebarContent,
   SidebarGroup,
-  SidebarGroupLabel,
   SidebarGroupContent,
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
   SidebarHeader,
-  SidebarFooter,
   SidebarTrigger,
 } from "@/components/ui/sidebar"
 import { Card, CardContent } from "@/components/ui/card"
@@ -76,7 +74,6 @@ export default function SkipperView() {
         <AppSidebar activeSection={activeSection} setActiveSection={setActiveSection} />
         
         <main className="flex-1">
-          {/* Przycisk do toggle sidebara */}
           <div className="sticky top-0 z-10 border-b bg-background p-4">
             <div className="flex items-center gap-4">
               <SidebarTrigger />
@@ -86,7 +83,6 @@ export default function SkipperView() {
             </div>
           </div>
 
-          {/* Główna zawartość widoku */}
           <div className="p-6">
             {activeSection === "checklisty" && (
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
