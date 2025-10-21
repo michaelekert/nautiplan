@@ -35,7 +35,7 @@ export default function PassagePlan() {
     const map = new Map({
       container: "map",
       style: MapStyle.BRIGHT,
-      center: [2.3399, 48.8555],
+      center: [18.6466, 54.3520],
       zoom: 5,
       maxZoom: 10,
     });
