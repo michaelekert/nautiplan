@@ -41,7 +41,7 @@ export default function PassagePlan() {
     });
     mapRef.current = map;
 
-    const windLayer = new WindLayer({ opacity: 0.1 });
+    const windLayer = new WindLayer({ opacity: 0.1 }) as any;
     windLayerRef.current = windLayer;
 
     map.on("load", () => {
@@ -118,7 +118,7 @@ export default function PassagePlan() {
     let currentTime = new Date(startDate);
     const newSegments: Segment[] = [];
 
-    data.features.forEach((f) => {
+    data.features.forEach((f: any) => {
       if (f.geometry.type === "LineString") {
         const distanceKm = turf.length(f, { units: "kilometers" });
         const distanceNm = distanceKm / 1.852;
@@ -151,7 +151,7 @@ export default function PassagePlan() {
         const coords = f.geometry.coordinates as [number, number][];
         const midpoint = turf.along(turf.lineString(coords), turf.length(f) / 2);
         const seg = segments.find((s) => s.id === f.id);
-        const label = `${seg?.distanceNm.toFixed(1)} NM · ${seg?.timeHours.toFixed(1)} h · Postój: ${seg?.stopHours} h`;
+        const label = `${seg?.distanceNm.toFixed(1)} NM · ${seg?.timeHours.toFixed(1)} h`;
         return {
           type: "Feature" as const,
           geometry: midpoint.geometry,
