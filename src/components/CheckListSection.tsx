@@ -16,10 +16,10 @@ export function ChecklistSection() {
     queryFn: fetchChecklists,
   })
 
-  // Lokalne przechowywanie stanu zaznaczenia po załadowaniu danych
+
   const [items, setItems] = useState<ChecklistItem[]>([])
 
-  // Gdy dane się załadują, ustawiamy je w stanie (raz)
+
   if (!isLoading && data && items.length === 0) {
     setItems(data)
   }
