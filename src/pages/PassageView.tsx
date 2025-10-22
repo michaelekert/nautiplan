@@ -281,7 +281,7 @@ export default function PassagePlan() {
       </div>
       <Drawer>
         <DrawerTrigger className="md:hidden w-full max-w-6xl absolute left-1/2 bottom-1/8 -translate-x-1/2 -translate-y-1/2" asChild>
-          <Button>Otwórz Panel Planowania</Button>
+          <Button className="w-1/2">Otwórz Panel Planowania</Button>
         </DrawerTrigger>
         <DrawerContent className="md:hidden w-full max-w-full bg-slate-800 text-white p-6 top-0">
           <DrawerHeader>
@@ -332,7 +332,7 @@ export default function PassagePlan() {
           </div>
 
           <DrawerFooter className="mt-4">
-            <DrawerClose>
+            <DrawerClose asChild>
               <Button variant="outline" className="w-full text-black">
                 Zamknij
               </Button>
