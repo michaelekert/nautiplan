@@ -8,6 +8,16 @@ import { WindLayer } from "@maptiler/weather";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { BottomNavbar } from "@/components/BottomNavbar";
+import {
+  Drawer,
+  DrawerTrigger,
+  DrawerContent,
+  DrawerHeader,
+  DrawerTitle,
+  DrawerFooter,
+  DrawerClose,
+} from "@/components/ui/drawer";
+import { Button } from "@/components/ui/button";
 
 config.apiKey = import.meta.env.VITE_MAPTILER_API_KEY;
 
@@ -26,7 +36,6 @@ export default function PassagePlan() {
   const windLayerRef = useRef<any>(null);
 
   const [startDate, setStartDate] = useState(new Date().toISOString().slice(0, 16));
-  const [currentTimeText, setCurrentTimeText] = useState("");
   const [segments, setSegments] = useState<Segment[]>([]);
 
   useEffect(() => {
@@ -91,7 +100,7 @@ export default function PassagePlan() {
     windLayer.on("sourceReady", () => {
       const updateTime = () => {
         const date = windLayer.getAnimationTimeDate();
-        setCurrentTimeText(date.toLocaleString());
+        console.log(date.toLocaleString());
       };
       updateTime();
       const interval = setInterval(async () => {
@@ -101,7 +110,6 @@ export default function PassagePlan() {
       return () => clearInterval(interval);
     });
   }, []);
-
 
   const updateSegments = () => {
     const draw = drawRef.current;
@@ -218,8 +226,9 @@ export default function PassagePlan() {
   }, [startDate]);
 
   return (
-    <div className="flex flex-col items-center gap-6 p-6 text-white mb-20">
-      <div className="w-full max-w-6xl bg-slate-800 p-4 rounded-lg space-y-4">
+    <div className="flex flex-col items-center gap-6 p-0 md:p-6 text-white mb-20">
+      <div id="map" className="w-full h-[90vh] md:h-[60vh] max-w-6xl" />
+      <div className="hidden md:block w-full max-w-6xl bg-slate-800 p-4 rounded-lg space-y-4">
         <Label htmlFor="startDate">📅 Data i godzina wypłynięcia</Label>
         <Input
           id="startDate"
@@ -228,15 +237,6 @@ export default function PassagePlan() {
           onChange={(e) => setStartDate(e.target.value)}
           className="mb-2"
         />
-      </div>
-
-      <div id="map" className="w-full max-w-6xl h-[60vh] rounded-lg shadow-lg" />
-
-      <div className="w-full max-w-6xl bg-slate-800 p-4 rounded-lg space-y-4">
-        <div className="flex justify-between text-sm text-slate-300 border-b border-slate-700 pb-2">
-          <span>🕓 Aktualna godzina danych wiatru:</span>
-          <span>{currentTimeText}</span>
-        </div>
 
         {segments.length === 0 ? (
           <p className="text-slate-400 text-sm">
@@ -279,7 +279,67 @@ export default function PassagePlan() {
           </ul>
         )}
       </div>
+      <Drawer>
+        <DrawerTrigger className="md:hidden w-full max-w-6xl absolute left-1/2 bottom-1/8 -translate-x-1/2 -translate-y-1/2" asChild>
+          <Button className="w-1/2">Otwórz Panel Planowania</Button>
+        </DrawerTrigger>
+        <DrawerContent className="md:hidden w-full max-w-full bg-slate-800 text-white p-6 top-0">
+          <DrawerHeader>
+            <DrawerTitle className="text-white">Ustawienia trasy</DrawerTitle>
+          </DrawerHeader>
 
+          <div className="space-y-4 mt-4 overflow-y-auto max-h-[80vh]">
+            <div>
+              <Label htmlFor="startDate">📅 Data i godzina wypłynięcia</Label>
+              <Input
+                id="startDate"
+                type="datetime-local"
+                value={startDate}
+                onChange={(e) => setStartDate(e.target.value)}
+                className="w-full"
+              />
+            </div>
+
+            {segments.length === 0 ? (
+              <p className="text-slate-400 text-sm">✏️ Narysuj trasę na mapie, aby ustawić segmenty</p>
+            ) : (
+              segments.map((s, i) => (
+                <div key={s.id} className="p-3 bg-slate-700 rounded-md flex flex-col gap-2">
+                  <span>Odcinek {i + 1}</span>
+                  <span>Dystans: {s.distanceNm.toFixed(2)} NM · Czas: {s.timeHours.toFixed(2)} h</span>
+                  <Label>Prędkość (węzły)</Label>
+                  <Input
+                    type="number"
+                    min={0.1}
+                    step={0.1}
+                    value={s.speed}
+                    onChange={(e) => handleSpeedChange(s.id, Number(e.target.value))}
+                    className="w-full"
+                  />
+                  <Label>Postój (h)</Label>
+                  <Input
+                    type="number"
+                    min={0}
+                    step={0.1}
+                    value={s.stopHours}
+                    onChange={(e) => handleStopChange(s.id, Number(e.target.value))}
+                    className="w-full"
+                  />
+                  <span>• Dopłynięcie: {s.arrivalTime.toLocaleString()}</span>
+                </div>
+              ))
+            )}
+          </div>
+
+          <DrawerFooter className="mt-4">
+            <DrawerClose asChild>
+              <Button variant="outline" className="w-full text-black">
+                Zamknij
+              </Button>
+            </DrawerClose>
+          </DrawerFooter>
+        </DrawerContent>
+      </Drawer>
       <BottomNavbar />
     </div>
   );
