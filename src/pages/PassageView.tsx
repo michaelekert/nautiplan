@@ -101,7 +101,7 @@ export default function PassagePlan() {
     windLayer.on("sourceReady", () => {
       const updateTime = () => {
         const date = windLayer.getAnimationTimeDate();
-        setCurrentTimeText(date.toLocaleString());
+        console.log(date.toLocaleString());
       };
       updateTime();
       const interval = setInterval(async () => {
@@ -281,7 +281,7 @@ export default function PassagePlan() {
         )}
       </div>
       <Drawer>
-        <DrawerTrigger className="md:hidden w-full max-w-6xl absolute left-1/2 bottom-1/8 -translate-x-1/2 -translate-y-1/2 ">
+        <DrawerTrigger className="md:hidden w-full max-w-6xl absolute left-1/2 bottom-1/8 -translate-x-1/2 -translate-y-1/2" asChild>
           <Button>Otwórz Panel Planowania</Button>
         </DrawerTrigger>
         <DrawerContent className="md:hidden w-full max-w-full bg-slate-800 text-white p-6 top-0">
