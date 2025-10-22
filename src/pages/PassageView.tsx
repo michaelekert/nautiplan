@@ -36,7 +36,6 @@ export default function PassagePlan() {
   const windLayerRef = useRef<any>(null);
 
   const [startDate, setStartDate] = useState(new Date().toISOString().slice(0, 16));
-  const [currentTimeText, setCurrentTimeText] = useState("");
   const [segments, setSegments] = useState<Segment[]>([]);
 
   useEffect(() => {
