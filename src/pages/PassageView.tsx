@@ -8,11 +8,22 @@ import { WindLayer } from "@maptiler/weather";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { BottomNavbar } from "@/components/BottomNavbar";
+import {
+  Drawer,
+  DrawerTrigger,
+  DrawerContent,
+  DrawerHeader,
+  DrawerTitle,
+  DrawerFooter,
+  DrawerClose,
+} from "@/components/ui/drawer";
+import { Button } from "@/components/ui/button";
 
 config.apiKey = import.meta.env.VITE_MAPTILER_API_KEY;
 
 interface Segment {
   id: string;
+  name?: string;
   distanceNm: number;
   speed: number;
   stopHours: number;
@@ -26,8 +37,13 @@ export default function PassagePlan() {
   const windLayerRef = useRef<any>(null);
 
   const [startDate, setStartDate] = useState(new Date().toISOString().slice(0, 16));
-  const [currentTimeText, setCurrentTimeText] = useState("");
   const [segments, setSegments] = useState<Segment[]>([]);
+  const [defaultSpeed, setDefaultSpeed] = useState(5);
+  const defaultSpeedRef = useRef(defaultSpeed);
+
+  useEffect(() => {
+    defaultSpeedRef.current = defaultSpeed;
+  }, [defaultSpeed]);
 
   useEffect(() => {
     if (mapRef.current) return;
@@ -91,7 +107,7 @@ export default function PassagePlan() {
     windLayer.on("sourceReady", () => {
       const updateTime = () => {
         const date = windLayer.getAnimationTimeDate();
-        setCurrentTimeText(date.toLocaleString());
+        console.log(date.toLocaleString());
       };
       updateTime();
       const interval = setInterval(async () => {
@@ -102,44 +118,82 @@ export default function PassagePlan() {
     });
   }, []);
 
+  async function getPlaceName([lon, lat]: [number, number]): Promise<string> {
+  const apiKey = import.meta.env.VITE_MAPTILER_API_KEY;
+  const url = `https://api.maptiler.com/geocoding/${lon},${lat}.json?key=${apiKey}`;
+  try {
+    const response = await fetch(url);
+    const data = await response.json();
 
-  const updateSegments = () => {
-    const draw = drawRef.current;
-    const map = mapRef.current;
-    if (!draw || !map) return;
+    if (!data?.features?.length) return "Nieznane miejsce";
 
-    const data = draw.getAll();
+  const place =
+    data.features.find((f: any) =>
+      f.place_type?.includes("municipal_district")
+    ) ||
+    data.features.find((f: any) =>
+      f.place_type?.includes("region")
+    ) ||
+    data.features[3];
 
-    const oldSettings: Record<string, { speed: number; stopHours: number }> = {};
-    segments.forEach((s) => {
-      oldSettings[s.id] = { speed: s.speed, stopHours: s.stopHours };
-    });
+    return place.text || place.place_name || "Nieznane miejsce";
+  } catch (e) {
+    console.error("Błąd reverse geocodingu:", e);
+    return "Nieznane miejsce";
+  }
+}
 
-    let currentTime = new Date(startDate);
-    const newSegments: Segment[] = [];
 
-    data.features.forEach((f: any) => {
-      if (f.geometry.type === "LineString") {
-        const distanceKm = turf.length(f, { units: "kilometers" });
-        const distanceNm = distanceKm / 1.852;
+const updateSegments = async () => {
+  const draw = drawRef.current;
+  const map = mapRef.current;
+  if (!draw || !map) return;
 
-        const speed = oldSettings[f.id]?.speed || 10;
-        const stopHours = oldSettings[f.id]?.stopHours || 0;
-        const timeHours = distanceNm / speed;
+  const data = draw.getAll();
+  let currentTime = new Date(startDate);
+  const newSegments: Segment[] = [];
 
-        const arrivalTime = new Date(currentTime);
-        arrivalTime.setHours(arrivalTime.getHours() + timeHours);
+  for (const f of data.features) {
+    if (f.geometry.type === "LineString") {
+      const coords = f.geometry.coordinates as [number, number][];
+      const start = coords[0];
+      const end = coords[coords.length - 1];
 
-        newSegments.push({ id: f.id, distanceNm, speed, stopHours, timeHours, arrivalTime });
+      const [startName, endName] = await Promise.all([
+        getPlaceName(start),
+        getPlaceName(end),
+      ]);
 
-        currentTime = new Date(arrivalTime);
-        currentTime.setHours(currentTime.getHours() + stopHours);
-      }
-    });
+      const distanceKm = turf.length(f, { units: "kilometers" });
+      const distanceNm = distanceKm / 1.852;
 
-    setSegments(newSegments);
-    updateLabelsOnMap(newSegments, data.features, map);
-  };
+      const speed = defaultSpeedRef.current;
+      const stopHours = 0;
+      const timeHours = distanceNm / speed;
+
+      const arrivalTime = new Date(currentTime);
+      arrivalTime.setHours(arrivalTime.getHours() + timeHours);
+
+      newSegments.push({
+        id: String(f.id),
+        name: `${startName} → ${endName}`,
+        distanceNm,
+        speed,
+        stopHours,
+        timeHours,
+        arrivalTime,
+      });
+
+      currentTime = new Date(arrivalTime);
+      currentTime.setHours(currentTime.getHours() + stopHours);
+    }
+  }
+
+  setSegments(newSegments);
+  updateLabelsOnMap(newSegments, data.features, map);
+};
+
+
 
   const updateLabelsOnMap = (segments: Segment[], features: any[], map: Map) => {
     if (map.getLayer("segment-labels")) map.removeLayer("segment-labels");
@@ -218,61 +272,92 @@ export default function PassagePlan() {
   }, [startDate]);
 
   return (
-    <div className="flex flex-col items-center gap-6 p-6 text-white mb-20">
-      <div className="w-full max-w-6xl bg-slate-800 p-4 rounded-lg space-y-4">
-        <Label htmlFor="startDate">📅 Data i godzina wypłynięcia</Label>
-        <Input
-          id="startDate"
-          type="datetime-local"
-          value={startDate}
-          onChange={(e) => setStartDate(e.target.value)}
-          className="mb-2"
-        />
-      </div>
+    <div className="flex flex-col items-center gap-6 p-0 md:p-6 text-white mb-20">
+      <div id="map" className="w-full h-[90vh] md:h-[60vh] max-w-6xl" />
+      <div className="hidden md:block w-full max-w-6xl bg-slate-800 p-6 rounded-lg space-y-6 shadow-lg">
 
-      <div id="map" className="w-full max-w-6xl h-[60vh] rounded-lg shadow-lg" />
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="flex flex-col">
+            <Label htmlFor="startDate" className="mb-1 font-medium text-slate-200">
+              📅 Data i godzina wypłynięcia
+            </Label>
+            <Input
+              id="startDate"
+              type="datetime-local"
+              value={startDate}
+              onChange={(e) => setStartDate(e.target.value)}
+              className="rounded-lg border border-slate-600 bg-slate-900 text-white"
+            />
+          </div>
 
-      <div className="w-full max-w-6xl bg-slate-800 p-4 rounded-lg space-y-4">
-        <div className="flex justify-between text-sm text-slate-300 border-b border-slate-700 pb-2">
-          <span>🕓 Aktualna godzina danych wiatru:</span>
-          <span>{currentTimeText}</span>
+          <div className="flex flex-col">
+            <Label htmlFor="defaultSpeed" className="mb-1 font-medium text-slate-200">
+              ⚓ Domyślna prędkość (węzły)
+            </Label>
+            <Input
+              id="defaultSpeed"
+              type="number"
+              min={0.1}
+              step={0.1}
+              value={defaultSpeed}
+              onChange={(e) => setDefaultSpeed(Number(e.target.value))}
+              className="rounded-lg border border-slate-600 bg-slate-900 text-white"
+            />
+          </div>
         </div>
 
+
         {segments.length === 0 ? (
-          <p className="text-slate-400 text-sm">
-            ✏️ Kliknij przycisk "Draw line" na mapie, by narysować trasę.
+          <p className="text-slate-400 text-sm text-center py-4">
+            ✏️ Kliknij przycisk „Draw line” na mapie, by narysować trasę.
           </p>
         ) : (
-          <ul className="space-y-3">
+          <ul className="space-y-4">
             {segments.map((s, i) => (
               <li
                 key={s.id}
-                className="p-3 bg-slate-700 rounded-md flex flex-col md:flex-row md:justify-between md:items-center gap-2 text-sm"
+                className="p-4 bg-slate-700 rounded-lg flex flex-col gap-3 shadow-md"
               >
-                <span>Odcinek {i + 1}</span>
-                <div className="flex gap-2 items-center flex-wrap">
-                  <span>
+                <div className="flex flex-wrap justify-between items-center">
+                  <span className="font-medium text-white">
+                    {s.name || `Odcinek ${i + 1}`}
+                  </span>
+                  <span className="text-slate-300 text-sm">
                     Dystans: {s.distanceNm.toFixed(2)} NM · Czas: {s.timeHours.toFixed(2)} h
                   </span>
-                  <Label>Prędkość (węzły)</Label>
-                  <Input
-                    type="number"
-                    min={0.1}
-                    step={0.1}
-                    value={s.speed}
-                    onChange={(e) => handleSpeedChange(s.id, Number(e.target.value))}
-                    className="w-24"
-                  />
-                  <Label>Postój (h)</Label>
-                  <Input
-                    type="number"
-                    min={0}
-                    step={0.1}
-                    value={s.stopHours}
-                    onChange={(e) => handleStopChange(s.id, Number(e.target.value))}
-                    className="w-24"
-                  />
-                  <span>• Dopłynięcie: {s.arrivalTime.toLocaleString()}</span>
+                </div>
+
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 items-end">
+                  <div className="flex flex-col">
+                    <Label className="text-slate-200 text-sm">Prędkość (węzły)</Label>
+                    <Input
+                      type="number"
+                      min={0.1}
+                      step={0.1}
+                      value={s.speed}
+                      onChange={(e) => handleSpeedChange(s.id, Number(e.target.value))}
+                      className="rounded-lg border border-slate-600 bg-slate-900 text-white"
+                    />
+                  </div>
+
+                  <div className="flex flex-col">
+                    <Label className="text-slate-200 text-sm">Postój (h)</Label>
+                    <Input
+                      type="number"
+                      min={0}
+                      step={0.1}
+                      value={s.stopHours}
+                      onChange={(e) => handleStopChange(s.id, Number(e.target.value))}
+                      className="rounded-lg border border-slate-600 bg-slate-900 text-white"
+                    />
+                  </div>
+
+                  <div className="col-span-2 md:col-span-2 flex flex-col justify-end">
+                    <Label className="text-slate-200 text-sm mb-1">Przewidywany czas dopłynięcia</Label>
+                    <div className="text-slate-300 text-sm">
+                      {s.arrivalTime.toLocaleString()}
+                    </div>
+                  </div>
                 </div>
               </li>
             ))}
@@ -280,6 +365,106 @@ export default function PassagePlan() {
         )}
       </div>
 
+      <Drawer>
+        <DrawerTrigger className="md:hidden w-full max-w-6xl absolute left-1/2 bottom-1/8 -translate-x-1/2 -translate-y-1/2" asChild>
+          <Button className="w-1/2">Otwórz Panel Planowania</Button>
+        </DrawerTrigger>
+        <DrawerContent className="md:hidden w-full max-w-full bg-slate-800 text-white p-6 top-0">
+          <DrawerHeader>
+            <DrawerTitle className="text-white">⚓ Ustawienia trasy</DrawerTitle>
+          </DrawerHeader>
+
+          <div className="space-y-6 mt-4 overflow-y-auto max-h-[80vh]">
+            <div className="flex flex-col gap-3">
+              <div className="flex flex-col">
+                <Label htmlFor="startDate" className="mb-2">📅 Data i godzina wypłynięcia</Label>
+                <Input
+                  id="startDate"
+                  type="datetime-local"
+                  value={startDate}
+                  onChange={(e) => setStartDate(e.target.value)}
+                  className="w-full"
+                />
+              </div>
+
+              <div className="flex flex-col">
+                <Label htmlFor="defaultSpeed" className="mb-2">⚓ Domyślna prędkość (węzły)</Label>
+                <Input
+                  id="defaultSpeed"
+                  type="number"
+                  min={0.1}
+                  step={0.1}
+                  value={defaultSpeed}
+                  onChange={(e) => setDefaultSpeed(Number(e.target.value))}
+                  className="w-full"
+                />
+              </div>
+            </div>
+
+            {segments.length === 0 ? (
+              <p className="text-slate-400 text-sm">
+                ✏️ Narysuj trasę na mapie, aby ustawić segmenty.
+              </p>
+            ) : (
+              segments.map((s, i) => (
+                <div
+                  key={s.id}
+                  className="p-3 bg-slate-700 rounded-md flex flex-col gap-2"
+                >
+                  <span className="font-medium">{s.name || `Odcinek ${i + 1}`}</span>
+                  <span className="text-sm text-slate-300">
+                    Dystans: {s.distanceNm.toFixed(2)} NM · Czas:{" "}
+                    {s.timeHours.toFixed(2)} h
+                  </span>
+
+                  <div className="flex flex-col gap-2 mt-2">
+                    <div className="flex flex-col">
+                      <Label>Prędkość (węzły)</Label>
+                      <Input
+                        type="number"
+                        min={0.1}
+                        step={0.1}
+                        value={s.speed}
+                        onChange={(e) =>
+                          handleSpeedChange(s.id, Number(e.target.value))
+                        }
+                        className="w-full"
+                      />
+                    </div>
+
+                    <div className="flex flex-col">
+                      <Label>Postój (h)</Label>
+                      <Input
+                        type="number"
+                        min={0}
+                        step={0.1}
+                        value={s.stopHours}
+                        onChange={(e) =>
+                          handleStopChange(s.id, Number(e.target.value))
+                        }
+                        className="w-full"
+                      />
+                    </div>
+                  </div>
+
+                  <span className="text-sm text-slate-400 mt-1">
+                    • Dopłynięcie: {s.arrivalTime.toLocaleString()}
+                  </span>
+                </div>
+              ))
+            )}
+          </div>
+
+          <DrawerFooter className="mt-6">
+            <DrawerClose asChild>
+              <Button variant="outline" className="w-full text-black">
+                Zamknij
+              </Button>
+            </DrawerClose>
+          </DrawerFooter>
+        </DrawerContent>
+
+      </Drawer>
       <BottomNavbar />
     </div>
   );
