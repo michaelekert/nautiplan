@@ -40,8 +40,15 @@
 .read-the-docs {
   color: #888;
 }
-html, body {
+html {
   overflow: hidden;
-  overscroll-behavior: none;
+  height: 100%;
+  position: fixed;
+}
+
+body {
+  overflow: auto;
+  height: 100%;
+  position: relative;
 }
 
