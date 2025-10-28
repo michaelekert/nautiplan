@@ -12,7 +12,7 @@ export function BottomNavbar() {
 
   return (
     <nav className="fixed bottom-0 left-0 w-full bg-white border-t border-slate-200 shadow-md">
-      <ul className="flex justify-around items-center md:h-16 h-[10vh]">
+      <ul className="flex justify-around items-center h-[calc(10vh-env(safe-area-inset-top)-env(safe-area-inset-bottom))] md:h-16">
         {navItems.map((item) => (
           <li key={item.to}>
             <NavLink
