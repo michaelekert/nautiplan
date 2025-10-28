@@ -273,7 +273,7 @@ const updateSegments = async () => {
 
   return (
     <div className="flex flex-col items-center gap-6 p-0 md:p-6 text-white mb-20">
-      <div id="map" className="w-full max-w-6xl h-[calc(90vh-env(safe-area-inset-top)-env(safe-area-inset-bottom))] md:h-[60vh]" />
+      <div id="map" className="w-full h-[90dvh] md:h-[60dvh] max-w-6xl" />
       <div className="hidden md:block w-full max-w-6xl bg-slate-800 p-6 rounded-lg space-y-6 shadow-lg">
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
