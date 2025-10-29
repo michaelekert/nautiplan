@@ -23,7 +23,10 @@ config.apiKey = import.meta.env.VITE_MAPTILER_API_KEY;
 
 interface Segment {
   id: string;
-  name?: string;
+  startName: string;
+  endName: string;
+  autoStartName: string;
+  autoEndName: string;
   distanceNm: number;
   speed: number;
   stopHours: number;
@@ -40,6 +43,11 @@ export default function PassagePlan() {
   const [segments, setSegments] = useState<Segment[]>([]);
   const [defaultSpeed, setDefaultSpeed] = useState(5);
   const defaultSpeedRef = useRef(defaultSpeed);
+  const segmentsRef = useRef<Segment[]>([]);
+
+  useEffect(() => {
+    segmentsRef.current = segments;
+  }, [segments]);
 
   useEffect(() => {
     defaultSpeedRef.current = defaultSpeed;
@@ -119,56 +127,70 @@ export default function PassagePlan() {
   }, []);
 
   async function getPlaceName([lon, lat]: [number, number]): Promise<string> {
-  const apiKey = import.meta.env.VITE_MAPTILER_API_KEY;
-  const url = `https://api.maptiler.com/geocoding/${lon},${lat}.json?key=${apiKey}`;
-  try {
-    const response = await fetch(url);
-    const data = await response.json();
+    const apiKey = import.meta.env.VITE_MAPTILER_API_KEY;
+    const url = `https://api.maptiler.com/geocoding/${lon},${lat}.json?key=${apiKey}`;
+    try {
+      const response = await fetch(url);
+      const data = await response.json();
+      if (!data?.features?.length) return "Nieznane miejsce";
 
-    if (!data?.features?.length) return "Nieznane miejsce";
+      const place =
+        data.features.find((f: any) =>
+          f.place_type?.includes("municipal_district")
+        ) ||
+        data.features.find((f: any) =>
+          f.place_type?.includes("region")
+        ) ||
+        data.features[3];
 
-  const place =
-    data.features.find((f: any) =>
-      f.place_type?.includes("municipal_district")
-    ) ||
-    data.features.find((f: any) =>
-      f.place_type?.includes("region")
-    ) ||
-    data.features[3];
-
-    return place.text || place.place_name || "Nieznane miejsce";
-  } catch (e) {
-    console.error("Błąd reverse geocodingu:", e);
-    return "Nieznane miejsce";
+      return place.text || place.place_name || "Nieznane miejsce";
+    } catch (e) {
+      console.error("Błąd reverse geocodingu:", e);
+      return "Nieznane miejsce";
+    }
   }
-}
 
+  const updateSegments = async () => {
+    const draw = drawRef.current;
+    const map = mapRef.current;
+    if (!draw || !map) return;
 
-const updateSegments = async () => {
-  const draw = drawRef.current;
-  const map = mapRef.current;
-  if (!draw || !map) return;
+    const data = draw.getAll();
+    let currentTime = new Date(startDate);
 
-  const data = draw.getAll();
-  let currentTime = new Date(startDate);
-  const newSegments: Segment[] = [];
+    const prevSegments = segmentsRef.current;
 
-  for (const f of data.features) {
-    if (f.geometry.type === "LineString") {
+    const newSegments: Segment[] = [];
+
+    for (const f of data.features) {
+      if (f.geometry.type !== "LineString") continue;
+
       const coords = f.geometry.coordinates as [number, number][];
       const start = coords[0];
       const end = coords[coords.length - 1];
 
-      const [startName, endName] = await Promise.all([
-        getPlaceName(start),
-        getPlaceName(end),
-      ]);
+      const existingSegment = prevSegments.find((s) => s.id === String(f.id));
+
+      let autoStartName = existingSegment?.autoStartName;
+      let autoEndName = existingSegment?.autoEndName;
+
+      if (!existingSegment) {
+        const [startName, endName] = await Promise.all([
+          getPlaceName(start),
+          getPlaceName(end),
+        ]);
+        autoStartName = startName;
+        autoEndName = endName;
+      }
+
+      const startName = existingSegment?.startName ?? autoStartName ?? "Unknown";
+      const endName = existingSegment?.endName ?? autoEndName ?? "Unknown";
+
 
       const distanceKm = turf.length(f, { units: "kilometers" });
       const distanceNm = distanceKm / 1.852;
-
-      const speed = defaultSpeedRef.current;
-      const stopHours = 0;
+      const speed = existingSegment?.speed || defaultSpeedRef.current;
+      const stopHours = existingSegment?.stopHours || 0;
       const timeHours = distanceNm / speed;
 
       const arrivalTime = new Date(currentTime);
@@ -176,7 +198,10 @@ const updateSegments = async () => {
 
       newSegments.push({
         id: String(f.id),
-        name: `${startName} → ${endName}`,
+        startName,
+        endName,
+        autoStartName: autoStartName ?? "Nieznane miejsce",
+        autoEndName: autoEndName ?? "Nieznane miejsce",
         distanceNm,
         speed,
         stopHours,
@@ -187,13 +212,10 @@ const updateSegments = async () => {
       currentTime = new Date(arrivalTime);
       currentTime.setHours(currentTime.getHours() + stopHours);
     }
-  }
 
-  setSegments(newSegments);
-  updateLabelsOnMap(newSegments, data.features, map);
-};
-
-
+    setSegments(newSegments);
+    updateLabelsOnMap(newSegments, data.features, map);
+  };
 
   const updateLabelsOnMap = (segments: Segment[], features: any[], map: Map) => {
     if (map.getLayer("segment-labels")) map.removeLayer("segment-labels");
@@ -306,25 +328,44 @@ const updateSegments = async () => {
           </div>
         </div>
 
-
         {segments.length === 0 ? (
           <p className="text-slate-400 text-sm text-center py-4">
             ✏️ Kliknij przycisk „Draw line” na mapie, by narysować trasę.
           </p>
         ) : (
           <ul className="space-y-4">
-            {segments.map((s, i) => (
-              <li
-                key={s.id}
-                className="p-4 bg-slate-700 rounded-lg flex flex-col gap-3 shadow-md"
-              >
-                <div className="flex flex-wrap justify-between items-center">
-                  <span className="font-medium text-white">
-                    {s.name || `Odcinek ${i + 1}`}
-                  </span>
-                  <span className="text-slate-300 text-sm">
-                    Dystans: {s.distanceNm.toFixed(2)} NM · Czas: {s.timeHours.toFixed(2)} h
-                  </span>
+            {segments.map((s) => (
+              <li key={s.id} className="p-4 bg-slate-700 rounded-lg flex flex-col gap-3 shadow-md">
+                <div className="flex gap-2 items-center">
+                  <Input
+                    type="text"
+                    value={s.startName}
+                    readOnly
+                    onFocus={(e) => e.currentTarget.readOnly = false}
+                    onChange={(e) =>
+                      setSegments(prev =>
+                        prev.map(seg =>
+                          seg.id === s.id ? { ...seg, startName: e.target.value } : seg
+                        )
+                      )
+                    }
+                    className="rounded-lg border border-slate-600 bg-slate-900 text-white w-full"
+                  />
+                  <span>→</span>
+                  <Input
+                    type="text"
+                    value={s.endName}
+                    readOnly
+                    onFocus={(e) => e.currentTarget.readOnly = false}
+                    onChange={(e) =>
+                      setSegments(prev =>
+                        prev.map(seg =>
+                          seg.id === s.id ? { ...seg, endName: e.target.value } : seg
+                        )
+                      )
+                    }
+                    className="rounded-lg border border-slate-600 bg-slate-900 text-white w-full"
+                  />
                 </div>
 
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4 items-end">
@@ -352,11 +393,9 @@ const updateSegments = async () => {
                     />
                   </div>
 
-                  <div className="col-span-2 md:col-span-2 flex flex-col justify-end">
+                  <div className="col-span-2 flex flex-col justify-end">
                     <Label className="text-slate-200 text-sm mb-1">Przewidywany czas dopłynięcia</Label>
-                    <div className="text-slate-300 text-sm">
-                      {s.arrivalTime.toLocaleString()}
-                    </div>
+                    <div className="text-slate-300 text-sm">{s.arrivalTime.toLocaleString()}</div>
                   </div>
                 </div>
               </li>
@@ -374,7 +413,7 @@ const updateSegments = async () => {
             <DrawerTitle className="text-white">⚓ Ustawienia trasy</DrawerTitle>
           </DrawerHeader>
 
-          <div className="space-y-6 mt-4 overflow-y-auto max-h-[80vh]">
+          <div className="space-y-6 mt-4 overflow-y-auto max-h-[80dvh] px-6">
             <div className="flex flex-col gap-3">
               <div className="flex flex-col">
                 <Label htmlFor="startDate" className="mb-2">📅 Data i godzina wypłynięcia</Label>
@@ -406,16 +445,39 @@ const updateSegments = async () => {
                 ✏️ Narysuj trasę na mapie, aby ustawić segmenty.
               </p>
             ) : (
-              segments.map((s, i) => (
-                <div
-                  key={s.id}
-                  className="p-3 bg-slate-700 rounded-md flex flex-col gap-2"
-                >
-                  <span className="font-medium">{s.name || `Odcinek ${i + 1}`}</span>
-                  <span className="text-sm text-slate-300">
-                    Dystans: {s.distanceNm.toFixed(2)} NM · Czas:{" "}
-                    {s.timeHours.toFixed(2)} h
-                  </span>
+              segments.map((s) => (
+                <div key={s.id} className="p-3 bg-slate-700 rounded-md flex flex-col gap-2">
+                  <div className="flex gap-2 items-center">
+                    <Input
+                      type="text"
+                      value={s.startName}
+                      readOnly
+                      onFocus={(e) => e.currentTarget.readOnly = false}
+                      onChange={(e) =>
+                        setSegments(prev =>
+                          prev.map(seg =>
+                            seg.id === s.id ? { ...seg, startName: e.target.value } : seg
+                          )
+                        )
+                      }
+                      className="rounded-lg border border-slate-600 bg-slate-900 text-white w-full"
+                    />
+                    <span>→</span>
+                    <Input
+                      type="text"
+                      value={s.endName}
+                      readOnly
+                      onFocus={(e) => e.currentTarget.readOnly = false}
+                      onChange={(e) =>
+                        setSegments(prev =>
+                          prev.map(seg =>
+                            seg.id === s.id ? { ...seg, endName: e.target.value } : seg
+                          )
+                        )
+                      }
+                      className="rounded-lg border border-slate-600 bg-slate-900 text-white w-full"
+                    />
+                  </div>
 
                   <div className="flex flex-col gap-2 mt-2">
                     <div className="flex flex-col">
@@ -425,9 +487,7 @@ const updateSegments = async () => {
                         min={0.1}
                         step={0.1}
                         value={s.speed}
-                        onChange={(e) =>
-                          handleSpeedChange(s.id, Number(e.target.value))
-                        }
+                        onChange={(e) => handleSpeedChange(s.id, Number(e.target.value))}
                         className="w-full"
                       />
                     </div>
@@ -439,9 +499,7 @@ const updateSegments = async () => {
                         min={0}
                         step={0.1}
                         value={s.stopHours}
-                        onChange={(e) =>
-                          handleStopChange(s.id, Number(e.target.value))
-                        }
+                        onChange={(e) => handleStopChange(s.id, Number(e.target.value))}
                         className="w-full"
                       />
                     </div>
@@ -455,7 +513,7 @@ const updateSegments = async () => {
             )}
           </div>
 
-          <DrawerFooter className="mt-6">
+          <DrawerFooter className="mt-6 px-6">
             <DrawerClose asChild>
               <Button variant="outline" className="w-full text-black">
                 Zamknij
