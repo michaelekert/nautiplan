@@ -340,8 +340,6 @@ export default function PassagePlan() {
                   <Input
                     type="text"
                     value={s.startName}
-                    readOnly
-                    onFocus={(e) => e.currentTarget.readOnly = false}
                     onChange={(e) =>
                       setSegments(prev =>
                         prev.map(seg =>
@@ -355,8 +353,6 @@ export default function PassagePlan() {
                   <Input
                     type="text"
                     value={s.endName}
-                    readOnly
-                    onFocus={(e) => e.currentTarget.readOnly = false}
                     onChange={(e) =>
                       setSegments(prev =>
                         prev.map(seg =>
@@ -451,8 +447,6 @@ export default function PassagePlan() {
                     <Input
                       type="text"
                       value={s.startName}
-                      readOnly
-                      onFocus={(e) => e.currentTarget.readOnly = false}
                       onChange={(e) =>
                         setSegments(prev =>
                           prev.map(seg =>
@@ -466,8 +460,6 @@ export default function PassagePlan() {
                     <Input
                       type="text"
                       value={s.endName}
-                      readOnly
-                      onFocus={(e) => e.currentTarget.readOnly = false}
                       onChange={(e) =>
                         setSegments(prev =>
                           prev.map(seg =>
