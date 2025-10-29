@@ -272,7 +272,7 @@ const updateSegments = async () => {
   }, [startDate]);
 
   return (
-    <div className="flex flex-col items-center gap-6 p-0 md:p-6 text-white mb-20">
+    <div className="flex flex-col items-center gap-6 p-0 md:p-6 text-white">
       <div id="map" className="w-full max-w-6xl md:h-[60dvh] flex-grow overflow-hidden h-[calc(100dvh-10dvh)]"/>
       <div className="hidden md:block w-full max-w-6xl bg-slate-800 p-6 rounded-lg space-y-6 shadow-lg">
 
