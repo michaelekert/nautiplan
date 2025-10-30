@@ -15,6 +15,12 @@ declare module "@mapbox/mapbox-gl-draw" {
   }
 
   export default class MapboxDraw implements IControl {
+    add(arg0: { type: string; properties: {}; geometry: { type: string; coordinates: [number, number][]; }; }) {
+      throw new Error("Method not implemented.");
+    }
+    delete(id: string | number | undefined) {
+      throw new Error("Method not implemented.");
+    }
     constructor(options?: MapboxDrawOptions);
     onAdd(map: Map): HTMLElement;
     onRemove(map: Map): void;
