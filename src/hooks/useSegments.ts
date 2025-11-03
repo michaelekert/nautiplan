@@ -142,7 +142,6 @@ const handleNameChange = useCallback(
         seg.id === id ? { ...seg, [field]: value } : seg
       );
 
-      // 🔁 Bezpieczne odświeżenie mapy
       try {
         const map = mapRef.current;
         const draw = drawRef.current;

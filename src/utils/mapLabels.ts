@@ -7,7 +7,7 @@ export function updateLabelsOnMap(
   features: any[],
   map: Map
 ) {
-  // --- Funkcja pomocnicza do aktualizacji danych źródła ---
+
   const updateSourceData = (sourceId: string, features: any[]) => {
     if (map.getSource(sourceId)) {
       (map.getSource(sourceId) as any).setData({
@@ -22,7 +22,6 @@ export function updateLabelsOnMap(
     }
   };
 
-  // --- 1️⃣ Etykiety w połowie odcinków ---
   const labelFeatures = features
     .filter((f) => f.geometry.type === "LineString" && !f.properties?.temp)
     .map((f) => {
@@ -60,16 +59,13 @@ export function updateLabelsOnMap(
     });
   }
 
-  // --- 2️⃣ Zielone kropki i etykiety końcowe ---
   const endpointFeatures: any[] = [];
 
   for (const f of features) {
     if (f.geometry.type !== "LineString") continue;
 
-    // Znajdź segment po id
     let seg = segments.find((s) => s.id === String(f.id));
 
-    // Jeśli brak segmentu, utwórz tymczasowy
     if (!seg) {
       const coords = f.geometry.coordinates as [number, number][];
       seg = {
