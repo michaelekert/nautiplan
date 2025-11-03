@@ -17,6 +17,8 @@ export function useMapInstance() {
       center: [18.6466, 54.352],
       zoom: 5,
       maxZoom: 10,
+      navigationControl: false,
+      geolocateControl: false,
     });
     mapRef.current = map;
 
