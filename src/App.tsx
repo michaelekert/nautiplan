@@ -1,6 +1,5 @@
 import { Routes, Route } from "react-router-dom"
 import Home from "./pages/Home"
-import PassageView from "./pages/PassageView"
 import SkipperView from "./pages/SkipperView"
 import StudyView from "./pages/StudyView"
 import PassagePlan from "./components/PassagePlan/index"
