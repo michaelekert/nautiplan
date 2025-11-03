@@ -67,7 +67,6 @@ export function updateLabelsOnMap(
     let seg = segments.find((s) => s.id === String(f.id));
 
     if (!seg) {
-      const coords = f.geometry.coordinates as [number, number][];
       seg = {
         id: String(f.id),
         startName: "Nieznane miejsce",
