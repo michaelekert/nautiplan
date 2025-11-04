@@ -48,7 +48,10 @@ export function PassagePlanControls({
           min={0.1}
           step={0.1}
           value={defaultSpeed}
-          onChange={(e) => onDefaultSpeedChange(Number(e.target.value))}
+          onChange={(e) => {
+            const val = e.target.value;
+            onDefaultSpeedChange(val === "" ? NaN : Number(val));
+          }}
           className="rounded-lg border border-slate-600 bg-slate-900 text-white w-1/2"
         />
       </div>
