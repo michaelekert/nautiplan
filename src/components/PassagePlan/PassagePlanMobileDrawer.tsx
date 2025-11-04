@@ -74,7 +74,10 @@ export function PassagePlanMobileDrawer({
                 min={0.1}
                 step={0.1}
                 value={defaultSpeed}
-                onChange={(e) => onDefaultSpeedChange(Number(e.target.value))}
+                onChange={(e) => {
+                  const val = e.target.value;
+                  onDefaultSpeedChange(val === "" ? NaN : Number(val));
+                }}
                 className="w-full h-10 px-2 rounded-lg border border-slate-600 bg-slate-900 text-white"
               />
             </div>
