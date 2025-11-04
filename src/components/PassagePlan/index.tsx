@@ -9,24 +9,23 @@ import { PassagePlanMap } from "./PassagePlanMap";
 import { PassagePlanControls } from "./PassagePlanControls";
 import { PassagePlanSegmentsList } from "./PassagePlanSegmentsList";
 import { PassagePlanMobileButtons } from "./PassagePlanMobileButtons";
+import { PassagePlanDesktopButtons } from "./PassagePlanDesktopButtons";
 import { PassagePlanMobileDrawer } from "./PassagePlanMobileDrawer";
 
 export default function PassagePlan() {
-  const [startDate, setStartDate] = useState<string>(
-    new Date().toISOString().slice(0, 16)
-  );
+  const [startDate, setStartDate] = useState<string>(new Date().toISOString().slice(0, 16));
   const [defaultSpeed, setDefaultSpeed] = useState<number>(5);
 
   const { mapRef } = useMapInstance();
 
+  const updateSegmentsRef = { current: async () => {} };
+  
   const enforceSingleLine = useCallback(
-    (e: any) => {
+    async (e: any) => {
       const draw = drawRef.current;
       if (!draw) return;
 
-      const lines = draw
-        .getAll()
-        .features.filter((f) => f.geometry.type === "LineString");
+      const lines = draw.getAll().features.filter(f => f.geometry.type === "LineString");
       if (lines.length > 1) {
         const lastLine = lines[lines.length - 2] as any;
         const newLine = e.features[0];
@@ -40,18 +39,17 @@ export default function PassagePlan() {
         }
       }
 
-      updateSegments();
+      await updateSegmentsRef.current();
     },
     []
   );
 
-  const drawRef = useMapDraw(mapRef, {
-    enforceSingleLine,
-    updateSegments: () => segmentsHook.updateSegments(),
+  const drawRef = useMapDraw(mapRef, { 
+    enforceSingleLine, 
+    updateSegments: async () => await updateSegmentsRef.current() 
   });
-
+  
   const segmentsHook = useSegments(mapRef, drawRef, startDate, defaultSpeed);
-
   const {
     segments,
     lastCoordRef,
@@ -61,10 +59,13 @@ export default function PassagePlan() {
     handleNameChange,
   } = segmentsHook;
 
+  updateSegmentsRef.current = updateSegments;
+
   const {
     isDrawingMode,
     tempRoutePoints,
     showRouteActions,
+    showCursorOnMobile,
     addPointAtCenter,
     finishDrawing,
     cancelDrawing,
@@ -76,21 +77,28 @@ export default function PassagePlan() {
 
   return (
     <div className="flex flex-col items-center gap-6 p-0 md:p-6 text-white relative">
-      <PassagePlanMap isDrawingMode={isDrawingMode} />
+      <PassagePlanMap isDrawingMode={isDrawingMode} showCursorOnMobile={showCursorOnMobile}>
+        <PassagePlanMobileButtons
+          showRouteActions={showRouteActions}
+          isDrawingMode={isDrawingMode}
+          segmentsCount={segments.length}
+          tempRoutePointsCount={tempRoutePoints.length}
+          onStartRouteDrawing={startRouteDrawing}
+          onStartDrawing={startDrawing}
+          onAddPointAtCenter={addPointAtCenter}
+          onFinishDrawing={finishDrawing}
+          onCancelDrawing={cancelDrawing}
+          onUndoLastSegment={undoLastSegment}
+          onClearAllSegments={clearAllSegments}
+        />
 
-      <PassagePlanMobileButtons
-        showRouteActions={showRouteActions}
-        isDrawingMode={isDrawingMode}
-        segmentsCount={segments.length}
-        tempRoutePointsCount={tempRoutePoints.length}
-        onStartRouteDrawing={startRouteDrawing}
-        onStartDrawing={startDrawing}
-        onAddPointAtCenter={addPointAtCenter}
-        onFinishDrawing={finishDrawing}
-        onCancelDrawing={cancelDrawing}
-        onUndoLastSegment={undoLastSegment}
-        onClearAllSegments={clearAllSegments}
-      />
+        <PassagePlanDesktopButtons
+          segmentsCount={segments.length}
+          tempRoutePointsCount={tempRoutePoints.length}
+          onUndoLastSegment={undoLastSegment}
+          onClearAllSegments={clearAllSegments}
+        />
+      </PassagePlanMap>
 
       <div className="hidden md:block w-full max-w-6xl bg-slate-800 p-6 rounded-lg space-y-6 shadow-lg">
         <PassagePlanControls

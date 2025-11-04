@@ -1,4 +1,4 @@
-import { useState } from "react"
+import { useState, useEffect, useRef } from "react"
 import { BottomNavbar } from "@/components/BottomNavbar"
 import { Button } from "@/components/ui/button"
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card"
@@ -134,12 +134,48 @@ const tests: Test[] = [
   },
 ]
 
+function useAccurateTimer(active: boolean) {
+  const [elapsed, setElapsed] = useState(0)
+  const startRef = useRef<number | null>(null)
+  const frameRef = useRef<number | null>(null)
+
+  useEffect(() => {
+    if (active) {
+      startRef.current = performance.now() - elapsed * 1000
+
+      const update = () => {
+        const now = performance.now()
+        if (startRef.current != null) {
+          setElapsed(Math.floor((now - startRef.current) / 1000))
+        }
+        frameRef.current = requestAnimationFrame(update)
+      }
+
+      frameRef.current = requestAnimationFrame(update)
+      return () => cancelAnimationFrame(frameRef.current!)
+    } else if (!active && frameRef.current) {
+      cancelAnimationFrame(frameRef.current)
+    }
+  }, [active])
+
+  return elapsed
+}
+
 export default function StudyView() {
   const [selectedTest, setSelectedTest] = useState<Test | null>(null)
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0)
   const [selectedOptionId, setSelectedOptionId] = useState<string | null>(null)
   const [score, setScore] = useState(0)
   const [finished, setFinished] = useState(false)
+  const [timerActive, setTimerActive] = useState(false)
+
+  const time = useAccurateTimer(timerActive)
+
+  const formatTime = (seconds: number) => {
+    const mins = Math.floor(seconds / 60).toString().padStart(2, "0")
+    const secs = (seconds % 60).toString().padStart(2, "0")
+    return `${mins}:${secs}`
+  }
 
   if (!selectedTest) {
     return (
@@ -149,7 +185,10 @@ export default function StudyView() {
             <Card
               key={test.id}
               className="flex flex-col justify-between cursor-pointer hover:shadow-lg transition"
-              onClick={() => setSelectedTest(test)}
+              onClick={() => {
+                setSelectedTest(test)
+                setTimerActive(true)
+              }}
             >
               <CardHeader>
                 <CardTitle>{test.title}</CardTitle>
@@ -184,6 +223,7 @@ export default function StudyView() {
       setCurrentQuestionIndex((prev) => prev + 1)
     } else {
       setFinished(true)
+      setTimerActive(false)
     }
   }
 
@@ -193,16 +233,18 @@ export default function StudyView() {
     setSelectedOptionId(null)
     setScore(0)
     setFinished(false)
+    setTimerActive(false)
   }
 
   if (finished) {
     return (
       <div className="flex flex-col items-center justify-center min-h-screen text-center p-4">
         <h2 className="text-3xl font-bold mb-4">Twój wynik</h2>
-        <p className="text-xl mb-6">
+        <p className="text-xl mb-2">
           Odpowiedziałeś poprawnie na {score} z {questions.length} pytań (
           {Math.round((score / questions.length) * 100)}%)
         </p>
+        <p className="text-lg mb-6">Czas rozwiązania: {formatTime(time)}</p>
         <Button onClick={handleRestart}>Wróć do wyboru testu</Button>
         <BottomNavbar />
       </div>
@@ -212,12 +254,13 @@ export default function StudyView() {
   return (
     <div className="flex flex-col items-center justify-center min-h-screen p-4">
       <div className="w-full max-w-2xl text-center space-y-6">
-        <h2 className="text-2xl font-semibold">
-          Pytanie {currentQuestionIndex + 1} z {questions.length}
-        </h2>
-        <Progress
-          value={((currentQuestionIndex + 1) / questions.length) * 100}
-        />
+        <div className="flex justify-between items-center">
+          <h2 className="text-2xl font-semibold">
+            Pytanie {currentQuestionIndex + 1} z {questions.length}
+          </h2>
+          <span className="text-lg font-mono">{formatTime(time)}</span>
+        </div>
+        <Progress value={((currentQuestionIndex + 1) / questions.length) * 100} />
         <div className="text-xl font-bold">{currentQuestion.text}</div>
 
         <div className="flex flex-col gap-2 mt-4">
@@ -246,9 +289,7 @@ export default function StudyView() {
 
         {selectedOptionId && (
           <Button className="mt-4" onClick={handleNext}>
-            {currentQuestionIndex + 1 === questions.length
-              ? "Zakończ test"
-              : "Następne pytanie"}
+            {currentQuestionIndex + 1 === questions.length ? "Zakończ test" : "Następne pytanie"}
           </Button>
         )}
       </div>
