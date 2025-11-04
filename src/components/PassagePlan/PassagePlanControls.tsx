@@ -1,6 +1,5 @@
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Button } from "@/components/ui/button";
 
 interface PassagePlanControlsProps {
   startDate: string;
@@ -21,17 +20,8 @@ interface PassagePlanControlsProps {
 export function PassagePlanControls({
   startDate,
   defaultSpeed,
-  segmentsCount,
-  showRouteActions,
-  isDrawingMode,
   onStartDateChange,
   onDefaultSpeedChange,
-  onStartRouteDrawing,
-  onStartDrawing,
-  onFinishDrawing,
-  onCancelDrawing,
-  onUndoLastSegment,
-  onClearAllSegments,
 }: PassagePlanControlsProps) {
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 items-end">
@@ -61,38 +51,6 @@ export function PassagePlanControls({
           onChange={(e) => onDefaultSpeedChange(Number(e.target.value))}
           className="rounded-lg border border-slate-600 bg-slate-900 text-white w-1/2"
         />
-      </div>
-
-      <div className="flex gap-2 justify-end">
-        {!showRouteActions ? (
-          <Button
-            onClick={onStartRouteDrawing}
-            className="bg-slate-900 hover:bg-blue-700"
-          >
-            Rysuj trasę
-          </Button>
-        ) : !isDrawingMode ? (
-          <>
-            <Button onClick={onStartDrawing} className="bg-blue-600 hover:bg-blue-700">
-              {segmentsCount === 0 ? "Zacznij trasę" : "Kontynuuj trasę"}
-            </Button>
-            <Button onClick={onUndoLastSegment} className="text-white border-slate-500">
-              Cofnij
-            </Button>
-            <Button onClick={onClearAllSegments} className="text-white border-slate-500">
-              Usuń wszystko
-            </Button>
-          </>
-        ) : (
-          <>
-            <Button onClick={onFinishDrawing} className="bg-green-600 hover:bg-green-700">
-              Dodaj postój
-            </Button>
-            <Button onClick={onCancelDrawing} className="bg-red-600 hover:bg-red-700">
-              Anuluj
-            </Button>
-          </>
-        )}
       </div>
     </div>
   );
