@@ -1,4 +1,5 @@
 import { useState } from "react"
+import { useTranslation } from "react-i18next"
 import {
   Sidebar,
   SidebarProvider,
@@ -13,21 +14,10 @@ import {
 } from "@/components/ui/sidebar"
 import { ClipboardList, BookOpen, AlertCircle, Lightbulb, FileText } from "lucide-react"
 import { BottomNavbar } from "@/components/BottomNavbar"
-
-
 import { ChecklistSection } from "@/components/CheckListSection"
 import { RegulationsSection } from "@/components/RegulationSection"
 
-
 type Section = "checklisty" | "przepisy" | "usterki" | "porady" | "dokumenty"
-
-const sections: { name: string; icon: typeof ClipboardList; key: Section }[] = [
-  { name: "Checklisty", icon: ClipboardList, key: "checklisty" },
-  { name: "Przepisy", icon: BookOpen, key: "przepisy" },
-  { name: "Usterki", icon: AlertCircle, key: "usterki" },
-  { name: "Porady", icon: Lightbulb, key: "porady" },
-  { name: "Dokumenty", icon: FileText, key: "dokumenty" },
-]
 
 function AppSidebar({
   activeSection,
@@ -36,12 +26,22 @@ function AppSidebar({
   activeSection: Section
   setActiveSection: (section: Section) => void
 }) {
+  const { t } = useTranslation()
+
+  const sections: { name: string; icon: typeof ClipboardList; key: Section }[] = [
+    { name: t("Checklists"), icon: ClipboardList, key: "checklisty" },
+    { name: t("Regulations"), icon: BookOpen, key: "przepisy" },
+    { name: t("Faults"), icon: AlertCircle, key: "usterki" },
+    { name: t("Tips"), icon: Lightbulb, key: "porady" },
+    { name: t("Documents"), icon: FileText, key: "dokumenty" },
+  ]
+
   return (
     <Sidebar className="z-40">
       <SidebarHeader>
         <div className="flex items-center gap-2 px-4 py-2">
           <div className="flex flex-col">
-            <span className="text-sm font-semibold">Menu główne</span>
+            <span className="text-sm font-semibold">{t("Main menu")}</span>
           </div>
         </div>
       </SidebarHeader>
@@ -70,7 +70,33 @@ function AppSidebar({
 }
 
 export default function SkipperView() {
+  const { t } = useTranslation()
   const [activeSection, setActiveSection] = useState<Section>("checklisty")
+
+  const renderContent = () => {
+    switch (activeSection) {
+      case "checklisty":
+        return <ChecklistSection />
+      case "przepisy":
+        return <RegulationsSection />
+      case "usterki":
+        return <p>{t("Faults section placeholder")} 🚧</p>
+      case "porady":
+        return <p>{t("Tips section placeholder")} ⚓</p>
+      case "dokumenty":
+        return <p>{t("Documents section placeholder")} 📄</p>
+      default:
+        return null
+    }
+  }
+
+  const sections: { name: string; key: Section }[] = [
+    { name: t("Checklists"), key: "checklisty" },
+    { name: t("Regulations"), key: "przepisy" },
+    { name: t("Faults"), key: "usterki" },
+    { name: t("Tips"), key: "porady" },
+    { name: t("Documents"), key: "dokumenty" },
+  ]
 
   return (
     <SidebarProvider>
@@ -86,13 +112,7 @@ export default function SkipperView() {
             </div>
           </div>
 
-          <div className="p-6">
-            {activeSection === "checklisty" && <ChecklistSection />}
-            {activeSection === "przepisy" && <RegulationsSection />}
-            {activeSection === "usterki" && <p>Tu będą usterki 🚧</p>}
-            {activeSection === "porady" && <p>Tu będą porady ⚓</p>}
-            {activeSection === "dokumenty" && <p>Tu będą dokumenty 📄</p>}
-          </div>
+          <div className="p-6">{renderContent()}</div>
         </main>
       </div>
 

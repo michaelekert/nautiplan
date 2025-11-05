@@ -1,13 +1,16 @@
 import { NavLink } from "react-router-dom"
 import { Home, BookOpen, Compass, CheckSquare } from "lucide-react"
 import { cn } from "@/lib/utils"
+import { useTranslation } from "react-i18next"
 
 export function BottomNavbar() {
+  const { t } = useTranslation()
+
   const navItems = [
-    { name: "Home", to: "/", icon: Home },
-    { name: "Passage Plan", to: "/passage-view", icon: Compass },
-    { name: "Study", to: "/study-view", icon: BookOpen },
-    { name: "Skipper", to: "/skipper-view", icon: CheckSquare },
+    { name: t("Home"), to: "/", icon: Home },
+    { name: t("Passage Plan"), to: "/passage-view", icon: Compass },
+    { name: t("Study"), to: "/study-view", icon: BookOpen },
+    { name: t("Skipper"), to: "/skipper-view", icon: CheckSquare },
   ]
 
   return (

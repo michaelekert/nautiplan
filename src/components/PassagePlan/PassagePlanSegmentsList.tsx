@@ -1,5 +1,6 @@
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { useTranslation } from "react-i18next"
 import type { Segment } from "../../types/passagePlan";
 
 interface PassagePlanSegmentsListProps {
@@ -19,10 +20,12 @@ export function PassagePlanSegmentsList({
   onStopChange,
   onNameChange,
 }: PassagePlanSegmentsListProps) {
+  const { t } = useTranslation()
+
   if (segments.length === 0) {
     return (
       <p className="text-slate-400 text-sm text-center py-4">
-        ✏️ Kliknij „Rysuj trasę", aby rozpocząć planowanie trasy.
+        ✏️ {t("Click on the map to add a route.")}
       </p>
     );
   }
@@ -42,11 +45,9 @@ export function PassagePlanSegmentsList({
               <Input
                 type="text"
                 value={s.startName}
-                onChange={(e) =>
-                  onNameChange(s.id, "startName", e.target.value)
-                }
+                onChange={(e) => onNameChange(s.id, "startName", e.target.value)}
                 className="rounded-lg border border-slate-600 bg-slate-900 text-white w-full"
-                placeholder="Punkt startowy"
+                placeholder={t("Start point")}
               />
 
               <div className="flex flex-col items-center w-[180px]">
@@ -71,36 +72,36 @@ export function PassagePlanSegmentsList({
               <Input
                 type="text"
                 value={s.endName}
-                onChange={(e) =>
-                  onNameChange(s.id, "endName", e.target.value)
-                }
+                onChange={(e) => onNameChange(s.id, "endName", e.target.value)}
                 className="rounded-lg border border-slate-600 bg-slate-900 text-white w-full"
-                placeholder="Punkt końcowy"
+                placeholder={t("End point")}
               />
             </div>
 
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4 items-end">
               <div className="flex flex-col">
-                <Label className="text-slate-200 text-sm">Prędkość (węzły)</Label>
+                <Label className="text-slate-200 text-sm">
+                  {t("Speed (knots)")}
+                </Label>
                 <Input
                   type="number"
                   value={s.speed}
                   onChange={(e) => {
-                    const val = e.target.value;
-                    onSpeedChange(s.id, val === "" ? NaN : Number(val));
+                    const val = e.target.value
+                    onSpeedChange(s.id, val === "" ? NaN : Number(val))
                   }}
                   className="rounded-lg border border-slate-600 bg-slate-900 text-white"
                 />
               </div>
 
               <div className="flex flex-col">
-                <Label className="text-slate-200 text-sm">Postój (h)</Label>
+                <Label className="text-slate-200 text-sm">{t("Stop (hours)")}</Label>
                 <Input
                   type="number"
                   value={s.stopHours}
                   onChange={(e) => {
-                    const val = e.target.value;
-                    onStopChange(s.id, val === "" ? NaN : Number(val));
+                    const val = e.target.value
+                    onStopChange(s.id, val === "" ? NaN : Number(val))
                   }}
                   className="rounded-lg border border-slate-600 bg-slate-900 text-white"
                 />
@@ -108,7 +109,7 @@ export function PassagePlanSegmentsList({
 
               <div className="col-span-2 flex flex-col justify-end">
                 <Label className="text-slate-200 text-sm mb-1">
-                  Przewidywany czas dopłynięcia
+                  {t("Estimated arrival time")}
                 </Label>
                 <div className="text-slate-300 text-sm">
                   {s.arrivalTime.toLocaleString()}
