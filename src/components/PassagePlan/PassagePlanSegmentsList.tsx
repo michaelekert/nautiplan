@@ -25,7 +25,7 @@ export function PassagePlanSegmentsList({
   if (segments.length === 0) {
     return (
       <p className="text-slate-400 text-sm text-center py-4">
-        ✏️ {t("Click on the map to add a route.")}
+        ✏️ {t("Click on the map to add a route")}
       </p>
     );
   }

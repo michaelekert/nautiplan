@@ -35,7 +35,8 @@ const resources = {
       "Documents": "Documents",
       "Faults section placeholder": "Faults section placeholder",
       "Tips section placeholder": "Tips section placeholder",
-      "Documents section placeholder": "Documents section placeholder"
+      "Documents section placeholder": "Documents section placeholder",
+      "Click on the map to add a route": "Click on the map to add a route"
     },
   },
   pl: {
@@ -71,7 +72,8 @@ const resources = {
       "Documents": "Dokumenty",
       "Faults section placeholder": "Tu będą usterki",
       "Tips section placeholder": "Tu będą porady",
-      "Documents section placeholder": "Tu będą dokumenty"
+      "Documents section placeholder": "Tu będą dokumenty",
+      "Click on the map to add a route": "Kliknij na mapę, aby dodać trasę"
     },
   },
 }
