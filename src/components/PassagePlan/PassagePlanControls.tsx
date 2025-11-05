@@ -1,20 +1,21 @@
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
+import { useTranslation } from "react-i18next"
 
 interface PassagePlanControlsProps {
-  startDate: string;
-  defaultSpeed: number;
-  segmentsCount: number;
-  showRouteActions: boolean;
-  isDrawingMode: boolean;
-  onStartDateChange: (value: string) => void;
-  onDefaultSpeedChange: (value: number) => void;
-  onStartRouteDrawing: () => void;
-  onStartDrawing: () => void;
-  onFinishDrawing: () => void;
-  onCancelDrawing: () => void;
-  onUndoLastSegment: () => void;
-  onClearAllSegments: () => void;
+  startDate: string
+  defaultSpeed: number
+  segmentsCount: number
+  showRouteActions: boolean
+  isDrawingMode: boolean
+  onStartDateChange: (value: string) => void
+  onDefaultSpeedChange: (value: number) => void
+  onStartRouteDrawing: () => void
+  onStartDrawing: () => void
+  onFinishDrawing: () => void
+  onCancelDrawing: () => void
+  onUndoLastSegment: () => void
+  onClearAllSegments: () => void
 }
 
 export function PassagePlanControls({
@@ -23,11 +24,13 @@ export function PassagePlanControls({
   onStartDateChange,
   onDefaultSpeedChange,
 }: PassagePlanControlsProps) {
+  const { t } = useTranslation()
+
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 items-end">
       <div className="flex flex-col">
         <Label htmlFor="startDate" className="mb-1 font-medium text-slate-200">
-          📅 Data i godzina wypłynięcia
+          📅 {t("Departure date and time")}
         </Label>
         <Input
           id="startDate"
@@ -40,7 +43,7 @@ export function PassagePlanControls({
 
       <div className="flex flex-col">
         <Label htmlFor="defaultSpeed" className="mb-1 font-medium text-slate-200">
-          ⚓ Domyślna prędkość (węzły)
+          ⚓ {t("Default speed (knots)")}
         </Label>
         <Input
           id="defaultSpeed"
@@ -49,12 +52,12 @@ export function PassagePlanControls({
           step={0.1}
           value={defaultSpeed}
           onChange={(e) => {
-            const val = e.target.value;
-            onDefaultSpeedChange(val === "" ? NaN : Number(val));
+            const val = e.target.value
+            onDefaultSpeedChange(val === "" ? NaN : Number(val))
           }}
           className="rounded-lg border border-slate-600 bg-slate-900 text-white w-1/2"
         />
       </div>
     </div>
-  );
+  )
 }
