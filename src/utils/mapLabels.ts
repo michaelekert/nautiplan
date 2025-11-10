@@ -1,3 +1,4 @@
+// utils/mapLabels.ts
 import { Map } from "@maptiler/sdk";
 import * as turf from "@turf/turf";
 import type { Segment } from "../types/passagePlan";
@@ -5,7 +6,8 @@ import type { Segment } from "../types/passagePlan";
 export function updateLabelsOnMap(
   segments: Segment[],
   features: any[],
-  map: Map
+  map: Map,
+  unknownCounterRef: { current: number }
 ) {
 
   const updateSourceData = (sourceId: string, features: any[]) => {
@@ -22,15 +24,14 @@ export function updateLabelsOnMap(
     }
   };
 
+  // Etykiety dla segmentów
   const labelFeatures = features
     .filter((f) => f.geometry.type === "LineString" && !f.properties?.temp)
     .map((f) => {
       const coords = f.geometry.coordinates as [number, number][];
       const midpoint = turf.along(turf.lineString(coords), turf.length(f) / 2);
       const seg = segments.find((s) => s.id === String(f.id));
-      const label = `${seg?.distanceNm.toFixed(1)} NM · ${seg?.timeHours.toFixed(
-        1
-      )} h`;
+      const label = `${seg?.distanceNm.toFixed(1)} NM · ${seg?.timeHours.toFixed(1)} h`;
       return {
         type: "Feature" as const,
         geometry: midpoint.geometry,
@@ -59,26 +60,34 @@ export function updateLabelsOnMap(
     });
   }
 
+  // Punkty końcowe
   const endpointFeatures: any[] = [];
+  let lastEndName: string | null = null;
 
   for (const f of features) {
     if (f.geometry.type !== "LineString") continue;
 
     let seg = segments.find((s) => s.id === String(f.id));
+    let endName: string;
 
     if (!seg) {
+      endName = `Punkt ${unknownCounterRef.current++}`;
       seg = {
         id: String(f.id),
-        startName: "Nieznane miejsce",
-        endName: "Nieznane miejsce",
-        autoStartName: "Nieznane miejsce",
-        autoEndName: "Nieznane miejsce",
+        startName: endName,
+        endName,
+        autoStartName: endName,
+        autoEndName: endName,
         distanceNm: turf.length(f, { units: "kilometers" }) / 1.852,
         speed: 1,
         stopHours: 0,
         timeHours: 0,
         arrivalTime: new Date(),
       };
+    } else {
+      endName = seg.endName && seg.endName !== "Nieznane miejsce"
+        ? seg.endName
+        : `Punkt ${unknownCounterRef.current++}`;
     }
 
     const coords = f.geometry.coordinates as [number, number][];
@@ -93,9 +102,11 @@ export function updateLabelsOnMap(
       type: "Feature",
       geometry: { type: "Point", coordinates: end },
       properties: {
-        label: `${seg.endName} · ${arrivalTime}`,
+        label: `${endName} · ${arrivalTime}`,
       },
     });
+
+    lastEndName = endName;
   }
 
   updateSourceData("segment-endpoints", endpointFeatures);

@@ -18,7 +18,6 @@ interface Props {
 
 export function PassagePlanTimeline({
   mapRef,
-  windLayerRef,
   drawRef,
   segments,
   startDate,
@@ -111,11 +110,15 @@ export function PassagePlanTimeline({
       return;
     }
 
-    const feature = {
+    const feature: GeoJSON.Feature<GeoJSON.Point> = {
       type: "Feature",
-      geometry: { type: "Point", coordinates: pos },
+      geometry: {
+        type: "Point",
+        coordinates: pos as [number, number],
+      },
       properties: {},
     };
+
 
     if (map.getSource(id)) {
       (map.getSource(id) as any).setData(feature);

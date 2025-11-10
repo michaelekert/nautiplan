@@ -6,7 +6,8 @@ export function useDrawingMode(
   mapRef: React.RefObject<Map | null>,
   drawRef: React.RefObject<MapboxDraw | null>,
   lastCoordRef: React.RefObject<[number, number] | null>,
-  onUpdateSegments: () => void
+  onUpdateSegments: () => void,
+  segmentsHook?: { resetUnknownCounter?: () => void } // opcjonalnie, żeby móc resetować licznik
 ) {
   const [isDrawingMode, setIsDrawingMode] = useState(false);
   const [tempRoutePoints, setTempRoutePoints] = useState<[number, number][]>([]);
@@ -14,6 +15,7 @@ export function useDrawingMode(
   const [isMobile, setIsMobile] = useState(false);
   const [showCursorOnMobile, setShowCursorOnMobile] = useState(false);
 
+  // sprawdzenie, czy urządzenie mobilne
   useEffect(() => {
     const checkMobile = () => {
       setIsMobile(window.innerWidth < 768 || "ontouchstart" in window);
@@ -96,7 +98,7 @@ export function useDrawingMode(
     const draw = drawRef.current;
     const map = mapRef.current;
 
-    if (draw) draw.getAll().features.filter(f => f.properties?.temp).forEach(f => draw.delete(f.id));
+    if (draw) draw.getAll().features.filter(f => f.properties?.temp).forEach((f) => draw.delete(f.id));
     if (map) tempRoutePoints.forEach((_, i) => {
       const pointId = `click-point-${i + 1}`;
       if (map.getLayer(pointId)) map.removeLayer(pointId);
@@ -132,11 +134,35 @@ export function useDrawingMode(
 
   const clearAllSegments = useCallback(() => {
     const draw = drawRef.current;
-    if (!draw) return;
-    draw.deleteAll();
-    onUpdateSegments();
-  }, [drawRef, onUpdateSegments]);
+    const map = mapRef.current;
+    if (!draw || !map) return;
 
+    // 1. Usuń wszystkie segmenty
+    draw.deleteAll();
+
+    // 2. Usuń tymczasowe punkty z mapy
+    tempRoutePoints.forEach((_, i) => {
+      const pointId = `click-point-${i + 1}`;
+      if (map.getLayer(pointId)) map.removeLayer(pointId);
+      if (map.getSource(pointId)) map.removeSource(pointId);
+    });
+
+    // 3. Wywołaj updateSegments z useSegments (czyści segmenty i resetuje licznik)
+    onUpdateSegments();
+
+    // 4. Reset hook rysowania
+    setTempRoutePoints([]);
+    setIsDrawingMode(false);
+    setShowRouteActions(false);
+    setShowCursorOnMobile(false);
+
+    // 5. Reset liczników punktów
+    if (segmentsHook?.resetUnknownCounter) {
+      segmentsHook.resetUnknownCounter();
+    }
+  }, [drawRef, mapRef, tempRoutePoints, onUpdateSegments, segmentsHook]);
+
+  // --- Eventy mapy do dodawania punktów ---
   useEffect(() => {
     const map = mapRef.current;
     if (!map) return;
@@ -208,6 +234,7 @@ export function useDrawingMode(
     }
   }, [isDrawingMode, mapRef, drawRef, lastCoordRef, tempRoutePoints, isMobile]);
 
+  // Obsługa klawiszy Enter/Escape
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (!isDrawingMode) return;

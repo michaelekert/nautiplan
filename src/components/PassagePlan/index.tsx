@@ -1,4 +1,4 @@
-import { useState, useCallback, useRef } from "react";
+import { useState, useCallback} from "react";
 import * as turf from "@turf/turf";
 import { BottomNavbar } from "@/components/BottomNavbar";
 import { useMapInstance } from "../../hooks/useMapInstance";
