@@ -90,7 +90,6 @@ export function useDrawingMode(
     const map = mapRef.current;
     if (!draw || !map || tempRoutePoints.length < 2) return;
 
-    // Usuń tymczasową linię i punkty
     draw.getAll().features
       .filter((f) => f.properties?.temp)
       .forEach((f) => draw.delete(f.id));
@@ -101,19 +100,16 @@ export function useDrawingMode(
       if (map.getSource(pointId)) map.removeSource(pointId);
     });
 
-    // Dodaj finalny segment
     draw.add({
       type: "Feature",
       properties: {},
       geometry: { type: "LineString", coordinates: tempRoutePoints },
     });
 
-    // Na mobile: kontynuuj rysowanie od ostatniego punktu
     if (isMobile) {
       lastCoordRef.current = tempRoutePoints[tempRoutePoints.length - 1];
       setTempRoutePoints([lastCoordRef.current]);
     } else {
-      // Na desktop: zakończ rysowanie całkowicie
       setIsDrawingMode(false);
       setTempRoutePoints([]);
       setShowRouteActions(false);
@@ -144,7 +140,6 @@ export function useDrawingMode(
     setShowRouteActions(false);
     setShowCursorOnMobile(false);
     
-    // Resetuj lastCoordRef jeśli nie ma żadnych segmentów
     const draw2 = drawRef.current;
     if (draw2) {
       const lines = draw2.getAll().features.filter((f) => f.geometry.type === "LineString");
@@ -154,7 +149,6 @@ export function useDrawingMode(
     }
   }, [drawRef, mapRef, tempRoutePoints, lastCoordRef]);
 
-  // Funkcja do całkowitego wyjścia z trybu rysowania (zachowuje się jak cancel)
   const exitDrawingMode = useCallback(() => {
     cancelDrawing();
   }, [cancelDrawing]);
@@ -182,10 +176,8 @@ export function useDrawingMode(
       .features.filter((f) => f.geometry.type === "LineString");
     if (lines.length === 0) return;
     
-    // Usuń ostatni segment
     draw.delete(lines[lines.length - 1].id);
     
-    // Zaktualizuj lastCoordRef do końca poprzedniego segmentu (jeśli istnieje)
     if (lines.length > 1) {
       const prevLine = lines[lines.length - 2];
       if (prevLine.geometry.type === "LineString") {
@@ -196,7 +188,6 @@ export function useDrawingMode(
       lastCoordRef.current = null;
     }
     
-    // Zaktualizuj tempRoutePoints jeśli jesteśmy w trybie rysowania
     if (isDrawingMode) {
       setTempRoutePoints(lastCoordRef.current ? [lastCoordRef.current] : []);
     }
@@ -227,7 +218,6 @@ export function useDrawingMode(
     }
   }, [drawRef, mapRef, tempRoutePoints, onUpdateSegments, segmentsHook]);
 
-  // Eventy mapy
   useEffect(() => {
     const map = mapRef.current;
     if (!map) return;

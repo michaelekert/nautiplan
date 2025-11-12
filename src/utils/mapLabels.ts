@@ -5,10 +5,8 @@ import type { Segment } from "../types/passagePlan";
 export function updateLabelsOnMap(
   segments: Segment[],
   features: any[],
-  map: Map,
-  unknownCounterRef: { current: number }
+  map: Map
 ) {
-
   const updateSourceData = (sourceId: string, features: any[]) => {
     if (map.getSource(sourceId)) {
       (map.getSource(sourceId) as any).setData({
@@ -66,7 +64,10 @@ export function updateLabelsOnMap(
       type: "Feature",
       geometry: { type: "Point", coordinates: firstCoord },
       properties: {
-        label: `${firstSeg.startName} · ${firstSeg.arrivalTime.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}`,
+        label: `${firstSeg.startName} · ${firstSeg.arrivalTime.toLocaleTimeString([], {
+          hour: "2-digit",
+          minute: "2-digit",
+        })}`,
       },
     });
   }
@@ -79,14 +80,15 @@ export function updateLabelsOnMap(
 
     const coords = f.geometry.coordinates as [number, number][];
     const end = coords[coords.length - 1];
-    const arrivalTime = seg.arrivalTime.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+    const arrivalTime = seg.arrivalTime.toLocaleTimeString([], {
+      hour: "2-digit",
+      minute: "2-digit",
+    });
 
     endpointFeatures.push({
       type: "Feature",
       geometry: { type: "Point", coordinates: end },
-      properties: {
-        label: `${seg.endName} · ${arrivalTime}`,
-      },
+      properties: { label: `${seg.endName} · ${arrivalTime}` },
     });
   }
 

@@ -16,7 +16,7 @@ export function useSegments(
   const lastCoordRef = useRef<[number, number] | null>(null);
   const defaultSpeedRef = useRef<number>(defaultSpeed);
   const segmentsRef = useRef<Segment[]>([]);
-  const unknownCounterRef = useRef(1); // licznik punktów domyślnych
+  const unknownCounterRef = useRef(1);
 
   useEffect(() => {
     defaultSpeedRef.current = defaultSpeed;
@@ -45,7 +45,7 @@ export function useSegments(
       const map = mapRef.current;
       const draw = drawRef.current;
       if (map && draw) {
-        updateLabelsOnMap(updated, draw.getAll().features, map, unknownCounterRef);
+        updateLabelsOnMap(updated, draw.getAll().features, map);
       }
       return updated;
     },
@@ -59,7 +59,6 @@ export function useSegments(
 
     const data = draw.getAll();
 
-    // 🔹 Reset licznika jeśli nie ma segmentów
     if (data.features.length === 0) {
       unknownCounterRef.current = 1;
       setSegments([]);
@@ -97,8 +96,7 @@ export function useSegments(
     let lastEndName: string | null = null;
 
     for (const f of data.features) {
-      if (f.geometry.type !== "LineString") continue;
-      if (f.properties?.temp) continue;
+      if (f.geometry.type !== "LineString" || f.properties?.temp) continue;
 
       const coords = f.geometry.coordinates as [number, number][];
       const start = coords[0];
@@ -144,7 +142,6 @@ export function useSegments(
 
       currentTime = new Date(arrivalTime);
       currentTime.setHours(currentTime.getHours() + stopHours);
-
       lastEndName = autoEndName;
     }
 
@@ -153,13 +150,11 @@ export function useSegments(
     const allFeatures = draw.getAll().features;
     const lastLine = allFeatures
       .filter((f) => f.geometry.type === "LineString")
-      .at(-1) as
-      | { geometry: { type: "LineString"; coordinates: [number, number][] } }
-      | undefined;
+      .at(-1) as { geometry: { type: "LineString"; coordinates: [number, number][] } } | undefined;
 
     lastCoordRef.current = lastLine?.geometry.coordinates.at(-1) ?? null;
 
-    updateLabelsOnMap(newSegments, data.features, map, unknownCounterRef);
+    updateLabelsOnMap(newSegments, data.features, map);
   }, [drawRef, mapRef, startDate]);
 
   const clearAllSegments = useCallback(() => {
@@ -218,12 +213,12 @@ export function useSegments(
   const handleNameChange = useCallback(
     (id: string, field: "startName" | "endName", value: string) => {
       setSegments((prev) => {
-        const changedSegment = prev.find(seg => seg.id === id);
+        const changedSegment = prev.find((seg) => seg.id === id);
         if (!changedSegment) return prev;
 
         const oldName = changedSegment[field];
 
-        const updated = prev.map(seg => {
+        const updated = prev.map((seg) => {
           const newSeg = { ...seg };
           if (seg.startName === oldName) newSeg.startName = value;
           if (seg.endName === oldName) newSeg.endName = value;
@@ -235,7 +230,7 @@ export function useSegments(
           const draw = drawRef.current;
           if (map && draw && typeof draw.getAll === "function") {
             const data = draw.getAll();
-            if (data?.features) updateLabelsOnMap(updated, data.features, map, unknownCounterRef);
+            if (data?.features) updateLabelsOnMap(updated, data.features, map);
           }
         } catch (err) {
           console.warn("Nie udało się odświeżyć etykiet:", err);
