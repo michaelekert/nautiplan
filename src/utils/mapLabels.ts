@@ -1,4 +1,3 @@
-// utils/mapLabels.ts
 import { Map } from "@maptiler/sdk";
 import * as turf from "@turf/turf";
 import type { Segment } from "../types/passagePlan";
@@ -24,7 +23,6 @@ export function updateLabelsOnMap(
     }
   };
 
-  // Etykiety dla segmentów
   const labelFeatures = features
     .filter((f) => f.geometry.type === "LineString" && !f.properties?.temp)
     .map((f) => {
@@ -60,53 +58,36 @@ export function updateLabelsOnMap(
     });
   }
 
-  // Punkty końcowe
   const endpointFeatures: any[] = [];
-  
+  if (segments.length > 0 && features.length > 0) {
+    const firstSeg = segments[0];
+    const firstCoord = (features[0].geometry.coordinates as [number, number][])[0];
+    endpointFeatures.push({
+      type: "Feature",
+      geometry: { type: "Point", coordinates: firstCoord },
+      properties: {
+        label: `${firstSeg.startName} · ${firstSeg.arrivalTime.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}`,
+      },
+    });
+  }
 
   for (const f of features) {
     if (f.geometry.type !== "LineString") continue;
 
-    let seg = segments.find((s) => s.id === String(f.id));
-    let endName: string;
-
-    if (!seg) {
-      endName = `Punkt ${unknownCounterRef.current++}`;
-      seg = {
-        id: String(f.id),
-        startName: endName,
-        endName,
-        autoStartName: endName,
-        autoEndName: endName,
-        distanceNm: turf.length(f, { units: "kilometers" }) / 1.852,
-        speed: 1,
-        stopHours: 0,
-        timeHours: 0,
-        arrivalTime: new Date(),
-      };
-    } else {
-      endName = seg.endName && seg.endName !== "Nieznane miejsce"
-        ? seg.endName
-        : `Punkt ${unknownCounterRef.current++}`;
-    }
+    const seg = segments.find((s) => s.id === String(f.id));
+    if (!seg) continue;
 
     const coords = f.geometry.coordinates as [number, number][];
     const end = coords[coords.length - 1];
-
-    const arrivalTime = seg.arrivalTime.toLocaleTimeString([], {
-      hour: "2-digit",
-      minute: "2-digit",
-    });
+    const arrivalTime = seg.arrivalTime.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
 
     endpointFeatures.push({
       type: "Feature",
       geometry: { type: "Point", coordinates: end },
       properties: {
-        label: `${endName} · ${arrivalTime}`,
+        label: `${seg.endName} · ${arrivalTime}`,
       },
     });
-
-    
   }
 
   updateSourceData("segment-endpoints", endpointFeatures);

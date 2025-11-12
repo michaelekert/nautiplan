@@ -1,5 +1,6 @@
 import { Button } from "@/components/ui/button";
-import { MapPin, PlusCircle, Flag, XCircle, CornerUpLeft, Trash } from "lucide-react";
+import { PlusCircle, Flag, XCircle, CornerUpLeft, Trash } from "lucide-react";
+import { useTranslation } from "react-i18next";
 
 interface PassagePlanMobileButtonsProps {
   showRouteActions: boolean;
@@ -24,19 +25,15 @@ export function PassagePlanMobileButtons({
   onUndoLastSegment,
   onClearAllSegments,
 }: PassagePlanMobileButtonsProps) {
+  const { t } = useTranslation()
   return (
     <div className="md:hidden fixed left-1/2 bottom-1/4 -translate-x-1/2 z-50">
       {!showRouteActions ? (
-        <Button
-          onClick={onStartRouteDrawing}
-          className="bg-slate-900 hover:bg-blue-700 flex items-center justify-center"
-          size="icon"
-        >
-          <MapPin className="h-5 w-5" />
+        <Button onClick={onStartRouteDrawing} className="bg-slate-900 hover:bg-blue-700">
+          {t("Draw route")}
         </Button>
       ) : (
-        <div className="flex gap-2 items-center justify-center flex-wrap">
-          {/* Rysowanie */}
+        <div className="flex gap-2 items-center justify-center">
           <Button
             onClick={onAddPointAtCenter}
             className="bg-blue-600 hover:bg-blue-700"
@@ -61,7 +58,6 @@ export function PassagePlanMobileButtons({
             </Button>
           )}
 
-          {/* Odcinki istniejące */}
           {segmentsCount > 0 && (
             <>
               <Button
