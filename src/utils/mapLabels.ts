@@ -7,7 +7,6 @@ export function updateLabelsOnMap(
   features: any[],
   map: Map
 ) {
-
   const updateSourceData = (sourceId: string, features: any[]) => {
     if (map.getSource(sourceId)) {
       (map.getSource(sourceId) as any).setData({
@@ -28,9 +27,7 @@ export function updateLabelsOnMap(
       const coords = f.geometry.coordinates as [number, number][];
       const midpoint = turf.along(turf.lineString(coords), turf.length(f) / 2);
       const seg = segments.find((s) => s.id === String(f.id));
-      const label = `${seg?.distanceNm.toFixed(1)} NM · ${seg?.timeHours.toFixed(
-        1
-      )} h`;
+      const label = `${seg?.distanceNm.toFixed(1)} NM · ${seg?.timeHours.toFixed(1)} h`;
       return {
         type: "Feature" as const,
         geometry: midpoint.geometry,
@@ -60,30 +57,29 @@ export function updateLabelsOnMap(
   }
 
   const endpointFeatures: any[] = [];
+  if (segments.length > 0 && features.length > 0) {
+    const firstSeg = segments[0];
+    const firstCoord = (features[0].geometry.coordinates as [number, number][])[0];
+    endpointFeatures.push({
+      type: "Feature",
+      geometry: { type: "Point", coordinates: firstCoord },
+      properties: {
+        label: `${firstSeg.startName} · ${firstSeg.arrivalTime.toLocaleTimeString([], {
+          hour: "2-digit",
+          minute: "2-digit",
+        })}`,
+      },
+    });
+  }
 
   for (const f of features) {
     if (f.geometry.type !== "LineString") continue;
 
-    let seg = segments.find((s) => s.id === String(f.id));
-
-    if (!seg) {
-      seg = {
-        id: String(f.id),
-        startName: "Nieznane miejsce",
-        endName: "Nieznane miejsce",
-        autoStartName: "Nieznane miejsce",
-        autoEndName: "Nieznane miejsce",
-        distanceNm: turf.length(f, { units: "kilometers" }) / 1.852,
-        speed: 1,
-        stopHours: 0,
-        timeHours: 0,
-        arrivalTime: new Date(),
-      };
-    }
+    const seg = segments.find((s) => s.id === String(f.id));
+    if (!seg) continue;
 
     const coords = f.geometry.coordinates as [number, number][];
     const end = coords[coords.length - 1];
-
     const arrivalTime = seg.arrivalTime.toLocaleTimeString([], {
       hour: "2-digit",
       minute: "2-digit",
@@ -92,9 +88,7 @@ export function updateLabelsOnMap(
     endpointFeatures.push({
       type: "Feature",
       geometry: { type: "Point", coordinates: end },
-      properties: {
-        label: `${seg.endName} · ${arrivalTime}`,
-      },
+      properties: { label: `${seg.endName} · ${arrivalTime}` },
     });
   }
 

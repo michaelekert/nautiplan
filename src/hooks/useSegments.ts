@@ -16,6 +16,7 @@ export function useSegments(
   const lastCoordRef = useRef<[number, number] | null>(null);
   const defaultSpeedRef = useRef<number>(defaultSpeed);
   const segmentsRef = useRef<Segment[]>([]);
+  const unknownCounterRef = useRef(1);
 
   useEffect(() => {
     defaultSpeedRef.current = defaultSpeed;
@@ -24,6 +25,10 @@ export function useSegments(
   useEffect(() => {
     segmentsRef.current = segments;
   }, [segments]);
+
+  const resetUnknownCounter = useCallback(() => {
+    unknownCounterRef.current = 1;
+  }, []);
 
   const recalcSegments = useCallback(
     (segs: Segment[]) => {
@@ -53,49 +58,81 @@ export function useSegments(
     if (!draw || !map) return;
 
     const data = draw.getAll();
+
+    if (data.features.length === 0) {
+      unknownCounterRef.current = 1;
+      setSegments([]);
+      segmentsRef.current = [];
+      lastCoordRef.current = null;
+
+      const layers = map.getStyle().layers || [];
+      layers.forEach((layer) => {
+        if (
+          layer.id.startsWith("segment-endpoints") ||
+          layer.id.startsWith("click-point-") ||
+          layer.id.startsWith("segment-labels") ||
+          layer.id.startsWith("segment-endpoint-labels")
+        ) {
+          if (map.getLayer(layer.id)) map.removeLayer(layer.id);
+          if (map.getSource(layer.id)) map.removeSource(layer.id);
+        }
+      });
+
+      map.addSource("segment-labels", {
+        type: "geojson",
+        data: { type: "FeatureCollection", features: [] },
+      });
+      map.addSource("segment-endpoints", {
+        type: "geojson",
+        data: { type: "FeatureCollection", features: [] },
+      });
+
+      return;
+    }
+
     let currentTime = new Date(startDate);
     const prevSegments = segmentsRef.current;
     const newSegments: Segment[] = [];
+    let lastEndName: string | null = null;
 
     for (const f of data.features) {
-      if (f.geometry.type !== "LineString") continue;
-      if (f.properties?.temp) continue;
+      if (f.geometry.type !== "LineString" || f.properties?.temp) continue;
 
       const coords = f.geometry.coordinates as [number, number][];
       const start = coords[0];
       const end = coords[coords.length - 1];
       const existingSegment = prevSegments.find((s) => s.id === String(f.id));
 
-      let autoStartName = existingSegment?.autoStartName;
-      let autoEndName = existingSegment?.autoEndName;
+      let autoStartName: string;
+      let autoEndName: string;
 
       if (!existingSegment) {
         const [startName, endName] = await Promise.all([
           getPlaceName(start),
           getPlaceName(end),
         ]);
-        autoStartName = startName;
-        autoEndName = endName;
+
+        autoStartName = lastEndName ?? startName ?? `Punkt ${unknownCounterRef.current++}`;
+        autoEndName = endName ?? `Punkt ${unknownCounterRef.current++}`;
+      } else {
+        autoStartName = existingSegment.startName ?? lastEndName ?? `Punkt ${unknownCounterRef.current++}`;
+        autoEndName = existingSegment.endName ?? `Punkt ${unknownCounterRef.current++}`;
       }
 
-      const startName =
-        existingSegment?.startName ?? autoStartName ?? "Nieznane miejsce";
-      const endName =
-        existingSegment?.endName ?? autoEndName ?? "Nieznane miejsce";
       const distanceKm = turf.length(f, { units: "kilometers" });
       const distanceNm = distanceKm / 1.852;
       const speed = existingSegment?.speed ?? defaultSpeedRef.current;
       const stopHours = existingSegment?.stopHours ?? 0;
       const timeHours = distanceNm / speed;
       const arrivalTime = new Date(currentTime);
-      arrivalTime.setHours(arrivalTime.getHours() + timeHours);
+      arrivalTime.setHours(currentTime.getHours() + timeHours);
 
       newSegments.push({
         id: String(f.id),
-        startName,
-        endName,
-        autoStartName: autoStartName ?? "Nieznane miejsce",
-        autoEndName: autoEndName ?? "Nieznane miejsce",
+        startName: autoStartName,
+        endName: autoEndName,
+        autoStartName,
+        autoEndName,
         distanceNm,
         speed,
         stopHours,
@@ -105,6 +142,7 @@ export function useSegments(
 
       currentTime = new Date(arrivalTime);
       currentTime.setHours(currentTime.getHours() + stopHours);
+      lastEndName = autoEndName;
     }
 
     setSegments(newSegments);
@@ -112,55 +150,97 @@ export function useSegments(
     const allFeatures = draw.getAll().features;
     const lastLine = allFeatures
       .filter((f) => f.geometry.type === "LineString")
-      .at(-1) as
-      | { geometry: { type: "LineString"; coordinates: [number, number][] } }
-      | undefined;
+      .at(-1) as { geometry: { type: "LineString"; coordinates: [number, number][] } } | undefined;
 
     lastCoordRef.current = lastLine?.geometry.coordinates.at(-1) ?? null;
 
     updateLabelsOnMap(newSegments, data.features, map);
   }, [drawRef, mapRef, startDate]);
 
-  const handleSpeedChange = useCallback((id: string, newSpeed: number) => {
-    setSegments((prev) =>
-      recalcSegments(prev.map((s) => (s.id === id ? { ...s, speed: newSpeed } : s)))
-    );
-  }, [recalcSegments]);
+  const clearAllSegments = useCallback(() => {
+    const draw = drawRef.current;
+    const map = mapRef.current;
+    if (!draw || !map) return;
 
-  const handleStopChange = useCallback((id: string, newStop: number) => {
-    setSegments((prev) =>
-      recalcSegments(
-        prev.map((s) => (s.id === id ? { ...s, stopHours: newStop } : s))
-      )
-    );
-  }, [recalcSegments]);
+    draw.deleteAll();
+    unknownCounterRef.current = 1;
+    setSegments([]);
+    segmentsRef.current = [];
+    lastCoordRef.current = null;
 
-const handleNameChange = useCallback(
-  (id: string, field: "startName" | "endName", value: string) => {
-    setSegments((prev) => {
-      const updated = prev.map((seg) =>
-        seg.id === id ? { ...seg, [field]: value } : seg
-      );
-
-      try {
-        const map = mapRef.current;
-        const draw = drawRef.current;
-        if (map && draw && typeof draw.getAll === "function") {
-          const data = draw.getAll();
-          if (data?.features) {
-            updateLabelsOnMap(updated, data.features, map);
-          }
-        }
-      } catch (err) {
-        console.warn("Nie udało się odświeżyć etykiet:", err);
+    const layers = map.getStyle().layers || [];
+    layers.forEach((layer) => {
+      if (
+        layer.id.startsWith("segment-endpoints") ||
+        layer.id.startsWith("click-point-") ||
+        layer.id.startsWith("segment-labels") ||
+        layer.id.startsWith("segment-endpoint-labels")
+      ) {
+        if (map.getLayer(layer.id)) map.removeLayer(layer.id);
+        if (map.getSource(layer.id)) map.removeSource(layer.id);
       }
-
-      return updated;
     });
-  },
-  [mapRef, drawRef]
-);
 
+    map.addSource("segment-labels", {
+      type: "geojson",
+      data: { type: "FeatureCollection", features: [] },
+    });
+    map.addSource("segment-endpoints", {
+      type: "geojson",
+      data: { type: "FeatureCollection", features: [] },
+    });
+  }, [drawRef, mapRef]);
+
+  const handleSpeedChange = useCallback(
+    (id: string, newSpeed: number) => {
+      setSegments((prev) =>
+        recalcSegments(prev.map((s) => (s.id === id ? { ...s, speed: newSpeed } : s)))
+      );
+    },
+    [recalcSegments]
+  );
+
+  const handleStopChange = useCallback(
+    (id: string, newStop: number) => {
+      setSegments((prev) =>
+        recalcSegments(prev.map((s) => (s.id === id ? { ...s, stopHours: newStop } : s)))
+      );
+    },
+    [recalcSegments]
+  );
+
+  // naem changing points
+  const handleNameChange = useCallback(
+    (id: string, field: "startName" | "endName", value: string) => {
+      setSegments((prev) => {
+        const changedSegment = prev.find((seg) => seg.id === id);
+        if (!changedSegment) return prev;
+
+        const oldName = changedSegment[field];
+
+        const updated = prev.map((seg) => {
+          const newSeg = { ...seg };
+          if (seg.startName === oldName) newSeg.startName = value;
+          if (seg.endName === oldName) newSeg.endName = value;
+          return newSeg;
+        });
+
+        try {
+          const map = mapRef.current;
+          const draw = drawRef.current;
+          if (map && draw && typeof draw.getAll === "function") {
+            const data = draw.getAll();
+            if (data?.features) updateLabelsOnMap(updated, data.features, map);
+          }
+        } catch (err) {
+          console.warn("Nie udało się odświeżyć etykiet:", err);
+        }
+
+        return updated;
+      });
+    },
+    [mapRef, drawRef]
+  );
 
   useEffect(() => {
     if (segments.length > 0) {
@@ -177,5 +257,7 @@ const handleNameChange = useCallback(
     handleStopChange,
     handleNameChange,
     recalcSegments,
+    clearAllSegments,
+    resetUnknownCounter,
   };
 }

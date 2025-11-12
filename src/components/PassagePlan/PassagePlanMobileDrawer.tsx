@@ -74,8 +74,8 @@ export function PassagePlanMobileDrawer({
               <Input
                 id="defaultSpeed"
                 type="number"
-                min={0.1}
-                step={0.1}
+                min={0}
+                step={1}
                 value={defaultSpeed}
                 onChange={(e) => {
                   const val = e.target.value
@@ -139,22 +139,28 @@ export function PassagePlanMobileDrawer({
 
                   <div className="grid grid-cols-2 gap-4 items-end">
                     <div className="flex flex-col">
-                      <Label className="text-slate-200 text-sm">
+                      <Label className="text-slate-200 text-sm mb-1">
                         {t("Speed (knots)")}
                       </Label>
-                      <Input
-                        type="number"
-                        value={s.speed}
-                        onChange={(e) => {
-                          const val = e.target.value
-                          onSpeedChange(s.id, val === "" ? NaN : Number(val))
-                        }}
-                        className="rounded-lg border border-slate-600 bg-slate-900 text-white"
-                      />
+                      <div className="flex items-center">
+                        <Button
+                          size="sm"
+                          onClick={() => onSpeedChange(s.id, Math.max(0, s.speed - 1))}
+                        >
+                          -
+                        </Button>
+                        <div className="w-12 text-center">{s.speed}</div>
+                        <Button
+                          size="sm"
+                          onClick={() => onSpeedChange(s.id, s.speed + 1)}
+                        >
+                          +
+                        </Button>
+                      </div>
                     </div>
 
                     <div className="flex flex-col">
-                      <Label className="text-slate-200 text-sm">
+                      <Label className="text-slate-200 text-sm mb-1">
                         {t("Stop (hours)")}
                       </Label>
                       <Input
@@ -164,7 +170,7 @@ export function PassagePlanMobileDrawer({
                           const val = e.target.value
                           onStopChange(s.id, val === "" ? NaN : Number(val))
                         }}
-                        className="rounded-lg border border-slate-600 bg-slate-900 text-white"
+                        className="rounded-lg border border-slate-600 bg-slate-900 text-white w-1/2"
                       />
                     </div>
                   </div>
