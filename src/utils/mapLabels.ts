@@ -62,7 +62,7 @@ export function updateLabelsOnMap(
 
   // Punkty końcowe
   const endpointFeatures: any[] = [];
-  let _lastEndName: string | null = null;
+  
 
   for (const f of features) {
     if (f.geometry.type !== "LineString") continue;
@@ -106,7 +106,7 @@ export function updateLabelsOnMap(
       },
     });
 
-    _lastEndName = endName;
+    
   }
 
   updateSourceData("segment-endpoints", endpointFeatures);
