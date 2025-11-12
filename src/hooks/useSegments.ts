@@ -66,7 +66,6 @@ export function useSegments(
       segmentsRef.current = [];
       lastCoordRef.current = null;
 
-      // Usuń wszystkie warstwy i dodaj puste źródła
       const layers = map.getStyle().layers || [];
       layers.forEach((layer) => {
         if (
@@ -174,7 +173,6 @@ export function useSegments(
     segmentsRef.current = [];
     lastCoordRef.current = null;
 
-    // Usuń wszystkie warstwy punktów i etykiet
     const layers = map.getStyle().layers || [];
     layers.forEach((layer) => {
       if (
@@ -188,7 +186,6 @@ export function useSegments(
       }
     });
 
-    // Dodaj puste źródła, aby mapa nie rysowała starych etykiet
     map.addSource("segment-labels", {
       type: "geojson",
       data: { type: "FeatureCollection", features: [] },
@@ -217,21 +214,28 @@ export function useSegments(
     [recalcSegments]
   );
 
+  // naem changing points
   const handleNameChange = useCallback(
     (id: string, field: "startName" | "endName", value: string) => {
       setSegments((prev) => {
-        const updated = prev.map((seg) =>
-          seg.id === id ? { ...seg, [field]: value } : seg
-        );
+        const changedSegment = prev.find(seg => seg.id === id);
+        if (!changedSegment) return prev;
+
+        const oldName = changedSegment[field];
+
+        const updated = prev.map(seg => {
+          const newSeg = { ...seg };
+          if (seg.startName === oldName) newSeg.startName = value;
+          if (seg.endName === oldName) newSeg.endName = value;
+          return newSeg;
+        });
 
         try {
           const map = mapRef.current;
           const draw = drawRef.current;
           if (map && draw && typeof draw.getAll === "function") {
             const data = draw.getAll();
-            if (data?.features) {
-              updateLabelsOnMap(updated, data.features, map, unknownCounterRef);
-            }
+            if (data?.features) updateLabelsOnMap(updated, data.features, map, unknownCounterRef);
           }
         } catch (err) {
           console.warn("Nie udało się odświeżyć etykiet:", err);
