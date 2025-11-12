@@ -86,11 +86,9 @@ export default function PassagePlan() {
         
         <PassagePlanMobileButtons
           showRouteActions={showRouteActions}
-          isDrawingMode={isDrawingMode}
           segmentsCount={segments.length}
           tempRoutePointsCount={tempRoutePoints.length}
           onStartRouteDrawing={startRouteDrawing}
-          onStartDrawing={startDrawing}
           onAddPointAtCenter={addPointAtCenter}
           onFinishDrawing={finishDrawing}
           onCancelDrawing={cancelDrawing}
