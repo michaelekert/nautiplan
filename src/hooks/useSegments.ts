@@ -45,7 +45,7 @@ export function useSegments(
       const map = mapRef.current;
       const draw = drawRef.current;
       if (map && draw) {
-        updateLabelsOnMap(updated, draw.getAll().features, map);
+        updateLabelsOnMap(updated, draw.getAll().features, map, startDate);
       }
       return updated;
     },
@@ -154,7 +154,7 @@ export function useSegments(
 
     lastCoordRef.current = lastLine?.geometry.coordinates.at(-1) ?? null;
 
-    updateLabelsOnMap(newSegments, data.features, map);
+    updateLabelsOnMap(newSegments, data.features, map, startDate);
   }, [drawRef, mapRef, startDate]);
 
   const clearAllSegments = useCallback(() => {
@@ -230,7 +230,7 @@ export function useSegments(
           const draw = drawRef.current;
           if (map && draw && typeof draw.getAll === "function") {
             const data = draw.getAll();
-            if (data?.features) updateLabelsOnMap(updated, data.features, map);
+            if (data?.features) updateLabelsOnMap(updated, data.features, map, startDate);
           }
         } catch (err) {
           console.warn("Nie udało się odświeżyć etykiet:", err);
@@ -239,7 +239,7 @@ export function useSegments(
         return updated;
       });
     },
-    [mapRef, drawRef]
+    [mapRef, drawRef, startDate]
   );
 
   useEffect(() => {
