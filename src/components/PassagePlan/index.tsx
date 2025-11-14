@@ -1,5 +1,4 @@
-import { useState, useCallback} from "react";
-import * as turf from "@turf/turf";
+import { useState } from "react";
 import { BottomNavbar } from "@/components/BottomNavbar";
 import { useMapInstance } from "../../hooks/useMapInstance";
 import { useMapDraw } from "../../hooks/useMapDraw";
@@ -12,42 +11,19 @@ import { PassagePlanMobileButtons } from "./PassagePlanMobileButtons";
 import { PassagePlanDesktopButtons } from "./PassagePlanDesktopButtons";
 import { PassagePlanMobileDrawer } from "./PassagePlanMobileDrawer";
 import { PassagePlanTimeline } from "./PassagePlanTimeline";
+import { WindInfoBox } from "@/components/WindInfoBox"; // ✅ nowy import
 
 export default function PassagePlan() {
   const [startDate, setStartDate] = useState<string>(
     new Date().toISOString().slice(0, 16)
   );
   const [defaultSpeed, setDefaultSpeed] = useState<number>(5);
+  const [currentWind, setCurrentWind] = useState<{ speed: number; dir: number } | null>(null); // ✅ nowy stan
 
-  const { mapRef, windLayerRef, setTime, getWindAt } = useMapInstance();
-
+  const { mapRef, setTime, getWindAt } = useMapInstance();
   const updateSegmentsRef = { current: async () => {} };
-
-  const enforceSingleLine = useCallback(async (e: any) => {
-    const draw = drawRef.current;
-    if (!draw) return;
-
-    const lines = draw.getAll().features.filter(
-      (f) => f.geometry.type === "LineString"
-    );
-    if (lines.length > 1) {
-      const lastLine = lines[lines.length - 2] as any;
-      const newLine = e.features[0];
-      const lastEnd = lastLine.geometry.coordinates.at(-1);
-      const newStart = newLine.geometry.coordinates[0];
-      const distance = turf.distance(turf.point(lastEnd), turf.point(newStart));
-      if (distance > 0.001) {
-        draw.delete(newLine.id);
-        console.warn("Musisz kontynuować trasę od końca poprzedniego segmentu");
-        return;
-      }
-    }
-
-    await updateSegmentsRef.current();
-  }, []);
-
   const drawRef = useMapDraw(mapRef, {
-    enforceSingleLine,
+    enforceSingleLine: async (_e: any) => {},
     updateSegments: async () => await updateSegmentsRef.current(),
   });
 
@@ -63,6 +39,7 @@ export default function PassagePlan() {
 
   updateSegmentsRef.current = updateSegments;
 
+  const drawing = useDrawingMode(mapRef, drawRef, lastCoordRef, updateSegments);
   const {
     isDrawingMode,
     tempRoutePoints,
@@ -75,15 +52,13 @@ export default function PassagePlan() {
     startDrawing,
     undoLastSegment,
     clearAllSegments,
-  } = useDrawingMode(mapRef, drawRef, lastCoordRef, updateSegments);
+  } = drawing;
 
   return (
     <div className="flex flex-col items-center gap-6 p-0 md:p-6 text-white relative">
-      <PassagePlanMap
-        isDrawingMode={isDrawingMode}
-        showCursorOnMobile={showCursorOnMobile}
-      >
-        
+      <PassagePlanMap isDrawingMode={isDrawingMode} showCursorOnMobile={showCursorOnMobile}>
+        {currentWind && <WindInfoBox wind={currentWind} />} {/* ✅ wyświetlanie nad mapą */}
+
         <PassagePlanMobileButtons
           showRouteActions={showRouteActions}
           segmentsCount={segments.length}
@@ -102,17 +77,17 @@ export default function PassagePlan() {
           onUndoLastSegment={undoLastSegment}
           onClearAllSegments={clearAllSegments}
         />
-      </PassagePlanMap>
 
-      <PassagePlanTimeline
-        mapRef={mapRef}
-        windLayerRef={windLayerRef}
-        drawRef={drawRef}
-        segments={segments}
-        startDate={startDate}
-        setTime={setTime}
-        getWindAt={getWindAt}
-      />
+        <PassagePlanTimeline
+          mapRef={mapRef}
+          drawRef={drawRef}
+          segments={segments}
+          startDate={startDate}
+          setTime={setTime}
+          getWindAt={getWindAt}
+          onWindInfoChange={setCurrentWind}
+        />
+      </PassagePlanMap>
 
       <div className="hidden md:block w-full max-w-6xl bg-slate-800 p-6 rounded-lg space-y-6 shadow-lg">
         <PassagePlanControls
