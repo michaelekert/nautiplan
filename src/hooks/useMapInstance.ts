@@ -22,7 +22,7 @@ export function useMapInstance() {
       style: MapStyle.BRIGHT,
       center: [18.6466, 54.352],
       zoom: 5,
-      maxZoom: 10,
+      maxZoom: 15,
       navigationControl: false,
       geolocateControl: false,
     });
@@ -45,6 +45,21 @@ export function useMapInstance() {
       windLayer.on("animationTimeSet", () => {
         console.log("⏱️ WindLayer animation time:", windLayer.getAnimationTimeDate());
       });
+
+      map.addSource("seamark", {
+        type: "raster",
+        tiles: ["https://tiles.openseamap.org/seamark/{z}/{x}/{y}.png"],
+        tileSize: 256,
+      });
+
+      map.addLayer({
+        id: "seamark-layer",
+        type: "raster",
+        source: "seamark",
+        paint: {
+          "raster-opacity": 1,
+        },
+      });
     });
   }, []);
 
@@ -64,21 +79,14 @@ export function useMapInstance() {
   ): Promise<{ speed: number; dir: number } | null> => {
     const windLayer = windLayerRef.current;
 
-    if (!windLayer) {
-      console.warn("⚠️ WindLayer nie jest jeszcze dostępny");
-      return null;
-    }
-
-    if (!readyRef.current) {
-      console.warn("⚠️ WindLayer source nie jest jeszcze gotowy");
-      return null;
-    }
+    if (!windLayer) return null;
+    if (!readyRef.current) return null;
 
     try {
       const rounded = roundTo3Hours(date);
       const tsSec = Math.floor(rounded.getTime() / 1000);
 
-      const waitForTimeSet = new Promise<void>((resolve) => {
+      await new Promise<void>((resolve) => {
         const handler = () => {
           windLayer.off("animationTimeSet", handler);
           resolve();
@@ -92,27 +100,14 @@ export function useMapInstance() {
         }, 500);
       });
 
-      await waitForTimeSet;
-      await new Promise((r) => setTimeout(r, 50));
-
       const windData = windLayer.pickAt(lon, lat);
 
-      if (!windData || windData.speedMetersPerSecond === undefined) {
-        console.warn(`⚠️ Brak danych wiatru dla ${lon.toFixed(2)},${lat.toFixed(2)}`);
-        console.log("WindData:", windData);
-        return null;
-      }
+      if (!windData || windData.speedMetersPerSecond === undefined) return null;
 
-      const speed = windData.speedMetersPerSecond;
-      const dir = windData.directionAngle ?? 0;
-
-      console.log(
-        `🌬️ Wiatr @${lon.toFixed(2)},${lat.toFixed(2)} [${rounded.toISOString()}] = ${speed.toFixed(
-          1
-        )} m/s (${windData.speedKnots?.toFixed(1)} kn), ${dir.toFixed(0)}°`
-      );
-
-      return { speed, dir };
+      return {
+        speed: windData.speedMetersPerSecond,
+        dir: windData.directionAngle ?? 0,
+      };
     } catch (err) {
       console.error("❌ Błąd przy pobieraniu danych wiatru:", err);
       return null;
