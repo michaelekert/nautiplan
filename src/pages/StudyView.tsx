@@ -3,6 +3,8 @@ import { BottomNavbar } from "@/components/BottomNavbar"
 import { Button } from "@/components/ui/button"
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card"
 import { Progress } from "@/components/ui/progress"
+import { Confetti } from "@/components/Confetti"
+import { ArrowLeft } from "lucide-react"
 
 type Question = {
   id: number
@@ -23,56 +25,36 @@ const tests: Test[] = [
     title: "Podstawy żeglarstwa",
     description: "Sprawdź swoją wiedzę z podstawowych zasad żeglowania.",
     questions: [
-      {
-        id: 1,
-        text: "Jak nazywa się przednia część jachtu?",
-        options: [
-          { id: "a", text: "Rufa", correct: false },
-          { id: "b", text: "Bakburta", correct: false },
-          { id: "c", text: "Dziób", correct: true },
-          { id: "d", text: "Ster", correct: false },
-        ],
-      },
-      {
-        id: 2,
-        text: "Co oznacza komenda 'klar na żagle'?",
-        options: [
-          { id: "a", text: "Zwinąć żagle", correct: false },
-          { id: "b", text: "Przygotować żagle do postawienia", correct: true },
-          { id: "c", text: "Podnieść kotwicę", correct: false },
-          { id: "d", text: "Zrzucić żagle", correct: false },
-        ],
-      },
-      {
-        id: 3,
-        text: "Jak nazywa się lina służąca do podnoszenia żagla?",
-        options: [
-          { id: "a", text: "Fał", correct: true },
-          { id: "b", text: "Szot", correct: false },
-          { id: "c", text: "Cumka", correct: false },
-          { id: "d", text: "Odbijacz", correct: false },
-        ],
-      },
-      {
-        id: 4,
-        text: "Jakie światło pokazuje jacht żaglowy w nocy?",
-        options: [
-          { id: "a", text: "Zielone i czerwone z przodu oraz białe z tyłu", correct: true },
-          { id: "b", text: "Tylko białe", correct: false },
-          { id: "c", text: "Czerwone i niebieskie", correct: false },
-          { id: "d", text: "Pomarańczowe i białe", correct: false },
-        ],
-      },
-      {
-        id: 5,
-        text: "Z której strony należy wyprzedzać inny jacht?",
-        options: [
-          { id: "a", text: "Od strony zawietrznej", correct: true },
-          { id: "b", text: "Od strony nawietrznej", correct: false },
-          { id: "c", text: "Od dziobu", correct: false },
-          { id: "d", text: "Od rufy", correct: false },
-        ],
-      },
+      { id: 1, text: "Jak nazywa się przednia część jachtu?", options: [
+        { id: "a", text: "Rufa", correct: false },
+        { id: "b", text: "Bakburta", correct: false },
+        { id: "c", text: "Dziób", correct: true },
+        { id: "d", text: "Ster", correct: false },
+      ]},
+      { id: 2, text: "Co oznacza komenda 'klar na żagle'?", options: [
+        { id: "a", text: "Zwinąć żagle", correct: false },
+        { id: "b", text: "Przygotować żagle do postawienia", correct: true },
+        { id: "c", text: "Podnieść kotwicę", correct: false },
+        { id: "d", text: "Zrzucić żagle", correct: false },
+      ]},
+      { id: 3, text: "Jak nazywa się lina służąca do podnoszenia żagla?", options: [
+        { id: "a", text: "Fał", correct: true },
+        { id: "b", text: "Szot", correct: false },
+        { id: "c", text: "Cumka", correct: false },
+        { id: "d", text: "Odbijacz", correct: false },
+      ]},
+      { id: 4, text: "Jakie światło pokazuje jacht żaglowy w nocy?", options: [
+        { id: "a", text: "Zielone i czerwone z przodu oraz białe z tyłu", correct: true },
+        { id: "b", text: "Tylko białe", correct: false },
+        { id: "c", text: "Czerwone i niebieskie", correct: false },
+        { id: "d", text: "Pomarańczowe i białe", correct: false },
+      ]},
+      { id: 5, text: "Z której strony należy wyprzedzać inny jacht?", options: [
+        { id: "a", text: "Od strony zawietrznej", correct: true },
+        { id: "b", text: "Od strony nawietrznej", correct: false },
+        { id: "c", text: "Od dziobu", correct: false },
+        { id: "d", text: "Od rufy", correct: false },
+      ]},
     ],
   },
   {
@@ -80,85 +62,105 @@ const tests: Test[] = [
     title: "Przepisy i bezpieczeństwo na wodzie",
     description: "Test z zasad pierwszeństwa i zachowania bezpieczeństwa na akwenie.",
     questions: [
-      {
-        id: 1,
-        text: "Który jacht ma pierwszeństwo – na lewym czy prawym halsie?",
-        options: [
-          { id: "a", text: "Na lewym halsie", correct: false },
-          { id: "b", text: "Na prawym halsie", correct: true },
-          { id: "c", text: "Ten większy", correct: false },
-          { id: "d", text: "Ten szybszy", correct: false },
-        ],
-      },
-      {
-        id: 2,
-        text: "Co należy zrobić, gdy jacht się wywróci?",
-        options: [
-          { id: "a", text: "Zostać przy jachcie i wzywać pomoc", correct: true },
-          { id: "b", text: "Płynąć do brzegu", correct: false },
-          { id: "c", text: "Odpłynąć od jachtu", correct: false },
-          { id: "d", text: "Zanurkować pod jachtem", correct: false },
-        ],
-      },
-      {
-        id: 3,
-        text: "Jakie sygnały oznaczają człowieka za burtą?",
-        options: [
-          { id: "a", text: "Krzyk 'Człowiek za burtą!' i wskazanie ręką", correct: true },
-          { id: "b", text: "Trzy krótkie gwizdki", correct: false },
-          { id: "c", text: "Podniesienie czerwonej flagi", correct: false },
-          { id: "d", text: "Włączenie świateł pozycyjnych", correct: false },
-        ],
-      },
-      {
-        id: 4,
-        text: "Jakie elementy obowiązkowo muszą być na pokładzie jachtu?",
-        options: [
-          { id: "a", text: "Kamizelki ratunkowe, apteczka, gaśnica", correct: true },
-          { id: "b", text: "Tylko wiosło i lina", correct: false },
-          { id: "c", text: "Radio i flaga", correct: false },
-          { id: "d", text: "Zapasowe żagle", correct: false },
-        ],
-      },
-      {
-        id: 5,
-        text: "Kiedy jacht musi ustąpić jednostce napędzanej silnikiem?",
-        options: [
-          { id: "a", text: "Gdy jednostka nie może manewrować", correct: true },
-          { id: "b", text: "Zawsze", correct: false },
-          { id: "c", text: "Nigdy", correct: false },
-          { id: "d", text: "Tylko na jeziorze", correct: false },
-        ],
-      },
+      { id: 1, text: "Który jacht ma pierwszeństwo – na lewym czy prawym halsie?", options: [
+        { id: "a", text: "Na lewym halsie", correct: false },
+        { id: "b", text: "Na prawym halsie", correct: true },
+        { id: "c", text: "Ten większy", correct: false },
+        { id: "d", text: "Ten szybszy", correct: false },
+      ]},
+      { id: 2, text: "Co należy zrobić, gdy jacht się wywróci?", options: [
+        { id: "a", text: "Zostać przy jachcie i wzywać pomoc", correct: true },
+        { id: "b", text: "Płynąć do brzegu", correct: false },
+        { id: "c", text: "Odpłynąć od jachtu", correct: false },
+        { id: "d", text: "Zanurkować pod jachtem", correct: false },
+      ]},
+      { id: 3, text: "Jakie sygnały oznaczają człowieka za burtą?", options: [
+        { id: "a", text: "Krzyk 'Człowiek za burtą!' i wskazanie ręką", correct: true },
+        { id: "b", text: "Trzy krótkie gwizdki", correct: false },
+        { id: "c", text: "Podniesienie czerwonej flagi", correct: false },
+        { id: "d", text: "Włączenie świateł pozycyjnych", correct: false },
+      ]},
+      { id: 4, text: "Jakie elementy obowiązkowo muszą być na pokładzie jachtu?", options: [
+        { id: "a", text: "Kamizelki ratunkowe, apteczka, gaśnica", correct: true },
+        { id: "b", text: "Tylko wiosło i lina", correct: false },
+        { id: "c", text: "Radio i flaga", correct: false },
+        { id: "d", text: "Zapasowe żagle", correct: false },
+      ]},
+      { id: 5, text: "Kiedy jacht musi ustąpić jednostce napędzanej silnikiem?", options: [
+        { id: "a", text: "Gdy jednostka nie może manewrować", correct: true },
+        { id: "b", text: "Zawsze", correct: false },
+        { id: "c", text: "Nigdy", correct: false },
+        { id: "d", text: "Tylko na jeziorze", correct: false },
+      ]},
     ],
   },
 ]
 
-function useAccurateTimer(active: boolean) {
+function useAccurateTimer(active: boolean, resetSignal: boolean) {
   const [elapsed, setElapsed] = useState(0)
   const startRef = useRef<number | null>(null)
   const frameRef = useRef<number | null>(null)
 
   useEffect(() => {
+    if (resetSignal) setElapsed(0)
     if (active) {
       startRef.current = performance.now() - elapsed * 1000
-
       const update = () => {
         const now = performance.now()
-        if (startRef.current != null) {
-          setElapsed(Math.floor((now - startRef.current) / 1000))
-        }
+        if (startRef.current != null) setElapsed(Math.floor((now - startRef.current) / 1000))
         frameRef.current = requestAnimationFrame(update)
       }
-
       frameRef.current = requestAnimationFrame(update)
       return () => cancelAnimationFrame(frameRef.current!)
     } else if (!active && frameRef.current) {
       cancelAnimationFrame(frameRef.current)
     }
-  }, [active])
+  }, [active, resetSignal])
 
   return elapsed
+}
+
+function AnimatedCircle({ percentage }: { percentage: number }) {
+  const radius = 60
+  const circumference = 2 * Math.PI * radius
+  const circleColor = percentage >= 80 ? "#22c55e" : "#ef4444"
+  const [animatedPercent, setAnimatedPercent] = useState(0)
+  const [animatedOffset, setAnimatedOffset] = useState(circumference)
+
+  useEffect(() => {
+    let start: number | null = null
+    const animate = (timestamp: number) => {
+      if (!start) start = timestamp
+      const progress = Math.min((timestamp - start) / 1500, 1)
+      setAnimatedPercent(Math.round(progress * percentage))
+      setAnimatedOffset(circumference - (progress * percentage) / 100 * circumference)
+      if (progress < 1) requestAnimationFrame(animate)
+    }
+    requestAnimationFrame(animate)
+  }, [percentage, circumference])
+
+  return (
+    <div className="relative w-[150px] h-[150px] mb-4">
+      <svg width={150} height={150}>
+        <circle cx={75} cy={75} r={radius} stroke="#e5e7eb" strokeWidth={12} fill="transparent" />
+        <circle
+          cx={75}
+          cy={75}
+          r={radius}
+          stroke={circleColor}
+          strokeWidth={12}
+          fill="transparent"
+          strokeDasharray={circumference}
+          strokeDashoffset={animatedOffset}
+          strokeLinecap="round"
+          transform="rotate(-90 75 75)"
+        />
+      </svg>
+      <div className="absolute inset-0 flex items-center justify-center text-2xl font-bold" style={{ color: circleColor }}>
+        {animatedPercent}%
+      </div>
+    </div>
+  )
 }
 
 export default function StudyView() {
@@ -168,8 +170,8 @@ export default function StudyView() {
   const [score, setScore] = useState(0)
   const [finished, setFinished] = useState(false)
   const [timerActive, setTimerActive] = useState(false)
-
-  const time = useAccurateTimer(timerActive)
+  const [resetTimer, setResetTimer] = useState(false)
+  const time = useAccurateTimer(timerActive, resetTimer)
 
   const formatTime = (seconds: number) => {
     const mins = Math.floor(seconds / 60).toString().padStart(2, "0")
@@ -188,6 +190,7 @@ export default function StudyView() {
               onClick={() => {
                 setSelectedTest(test)
                 setTimerActive(true)
+                setResetTimer(true)
               }}
             >
               <CardHeader>
@@ -195,9 +198,7 @@ export default function StudyView() {
                 <CardDescription>{test.description}</CardDescription>
               </CardHeader>
               <CardContent>
-                <p className="text-sm text-muted-foreground">
-                  Liczba pytań: {test.questions.length}
-                </p>
+                <p className="text-sm text-muted-foreground">Liczba pytań: {test.questions.length}</p>
               </CardContent>
             </Card>
           ))}
@@ -234,18 +235,20 @@ export default function StudyView() {
     setScore(0)
     setFinished(false)
     setTimerActive(false)
+    setResetTimer(true)
   }
 
   if (finished) {
+    const percentage = Math.round((score / questions.length) * 100)
+
     return (
-      <div className="flex flex-col items-center justify-center min-h-screen text-center p-4">
-        <h2 className="text-3xl font-bold mb-4">Twój wynik</h2>
-        <p className="text-xl mb-2">
-          Odpowiedziałeś poprawnie na {score} z {questions.length} pytań (
-          {Math.round((score / questions.length) * 100)}%)
-        </p>
-        <p className="text-lg mb-6">Czas rozwiązania: {formatTime(time)}</p>
+      <div className="flex flex-col items-center justify-center min-h-screen text-center p-4 space-y-6">
+        <h2 className="text-3xl font-bold">Twój wynik</h2>
+        <AnimatedCircle percentage={percentage} />
+        <p className="text-xl">Poprawne odpowiedzi: {score} / {questions.length}</p>
+        <p className="text-lg">Czas rozwiązania: {formatTime(time)}</p>
         <Button onClick={handleRestart}>Wróć do wyboru testu</Button>
+        {percentage >= 80 && <Confetti />}
         <BottomNavbar />
       </div>
     )
@@ -254,13 +257,22 @@ export default function StudyView() {
   return (
     <div className="flex flex-col items-center justify-center min-h-screen p-4">
       <div className="w-full max-w-2xl text-center space-y-6">
-        <div className="flex justify-between items-center">
-          <h2 className="text-2xl font-semibold">
-            Pytanie {currentQuestionIndex + 1} z {questions.length}
-          </h2>
+        <div className="flex justify-between items-center w-full">
+          <Button
+            variant="ghost"
+            className="flex items-center gap-2"
+            onClick={handleRestart}
+          >
+            <ArrowLeft />
+            
+          </Button>
           <span className="text-lg font-mono">{formatTime(time)}</span>
         </div>
-        <Progress value={((currentQuestionIndex + 1) / questions.length) * 100} />
+
+        <h2 className="text-2xl font-semibold">
+          Pytanie {currentQuestionIndex + 1} z {questions.length}
+        </h2>
+        <Progress value={((currentQuestionIndex + 1) / questions.length) * 100} className="h-2 rounded-full" />
         <div className="text-xl font-bold">{currentQuestion.text}</div>
 
         <div className="flex flex-col gap-2 mt-4">

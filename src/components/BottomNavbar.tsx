@@ -9,8 +9,8 @@ export function BottomNavbar() {
   const navItems = [
     { name: t("Home"), to: "/", icon: Home },
     { name: t("Passage Plan"), to: "/passage-view", icon: Compass },
-    { name: t("Study"), to: "/study-view", icon: BookOpen },
     { name: t("Skipper"), to: "/skipper-view", icon: CheckSquare },
+    { name: t("Study"), to: "/study-view", icon: BookOpen },
   ]
 
   return (
