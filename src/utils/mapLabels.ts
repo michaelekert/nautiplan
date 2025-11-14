@@ -5,7 +5,8 @@ import type { Segment } from "../types/passagePlan";
 export function updateLabelsOnMap(
   segments: Segment[],
   features: any[],
-  map: Map
+  map: Map,
+  startDate?: string
 ) {
   const updateSourceData = (sourceId: string, features: any[]) => {
     if (map.getSource(sourceId)) {
@@ -60,14 +61,22 @@ export function updateLabelsOnMap(
   if (segments.length > 0 && features.length > 0) {
     const firstSeg = segments[0];
     const firstCoord = (features[0].geometry.coordinates as [number, number][])[0];
+    
+    const startTime = startDate 
+      ? new Date(startDate.includes('T') ? startDate : startDate + 'T00:00')
+      : new Date();
+    
+    const dayName = startTime.toLocaleDateString('pl-PL', { weekday: 'short' });
+    const timeStr = startTime.toLocaleTimeString('pl-PL', {
+      hour: '2-digit',
+      minute: '2-digit',
+    });
+    
     endpointFeatures.push({
       type: "Feature",
       geometry: { type: "Point", coordinates: firstCoord },
       properties: {
-        label: `${firstSeg.startName} · ${firstSeg.arrivalTime.toLocaleTimeString([], {
-          hour: "2-digit",
-          minute: "2-digit",
-        })}`,
+        label: `${firstSeg.startName} · ${dayName} ${timeStr}`,
       },
     });
   }
@@ -80,7 +89,9 @@ export function updateLabelsOnMap(
 
     const coords = f.geometry.coordinates as [number, number][];
     const end = coords[coords.length - 1];
-    const arrivalTime = seg.arrivalTime.toLocaleTimeString([], {
+    
+    const dayName = seg.arrivalTime.toLocaleDateString('pl-PL', { weekday: 'short' });
+    const arrivalTime = seg.arrivalTime.toLocaleTimeString('pl-PL', {
       hour: "2-digit",
       minute: "2-digit",
     });
@@ -88,7 +99,7 @@ export function updateLabelsOnMap(
     endpointFeatures.push({
       type: "Feature",
       geometry: { type: "Point", coordinates: end },
-      properties: { label: `${seg.endName} · ${arrivalTime}` },
+      properties: { label: `${seg.endName} · ${dayName} ${arrivalTime}` },
     });
   }
 
