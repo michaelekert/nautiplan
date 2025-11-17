@@ -9,8 +9,9 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { useTranslation } from "react-i18next"
+import { RouteSaveManager } from "../../components/RouteSaveManager"
 import type { Segment } from "../../types/passagePlan"
-
+import type { SavedRoute } from "../../hooks/useRouteSave"
 interface PassagePlanMobileDrawerProps {
   startDate: string
   defaultSpeed: number
@@ -24,6 +25,10 @@ interface PassagePlanMobileDrawerProps {
     field: "startName" | "endName",
     value: string
   ) => void
+  onSaveRoute?: (name: string) => void
+  onLoadRoute?: (routeId: string) => void
+  onDeleteRoute?: (routeId: string) => void
+  getSavedRoutes?: () => SavedRoute[]
 }
 
 export function PassagePlanMobileDrawer({
@@ -35,6 +40,10 @@ export function PassagePlanMobileDrawer({
   onSpeedChange,
   onStopChange,
   onNameChange,
+  onSaveRoute,
+  onLoadRoute,
+  onDeleteRoute,
+  getSavedRoutes,
 }: PassagePlanMobileDrawerProps) {
   const { t } = useTranslation()
 
@@ -53,6 +62,21 @@ export function PassagePlanMobileDrawer({
         </DrawerHeader>
 
         <div className="flex-1 overflow-y-auto p-4 space-y-6">
+          {onSaveRoute && onLoadRoute && onDeleteRoute && getSavedRoutes && (
+            <div className="p-4 bg-slate-700 rounded-lg">
+              <h3 className="text-sm font-semibold mb-3 text-slate-200">
+                💾 {t("Route management")}
+              </h3>
+              <RouteSaveManager
+                onSave={onSaveRoute}
+                onLoad={onLoadRoute}
+                onDelete={onDeleteRoute}
+                getSavedRoutes={getSavedRoutes}
+                hasActiveRoute={segments.length > 0}
+              />
+            </div>
+          )}
+
           <div className="flex flex-row gap-2">
             <div className="flex flex-col flex-[7]">
               <Label htmlFor="startDate" className="mb-2">
