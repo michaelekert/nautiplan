@@ -9,7 +9,7 @@ const resources = {
       Study: "Study",
       Skipper: "Skipper",
       "Departure date and time": "Departure date and time",
-      "Default speed (knots)": "Default speed (knots)",
+      "Default speed": "Default speed",
       "Press Enter to add a stop or continue clicking": "Press Enter to add a stop or continue clicking",
       "Click to add points • Esc cancels": "Click to add points • Esc cancels",
       "Undo last": "Undo last",
@@ -62,7 +62,7 @@ const resources = {
       Study: "Nauka",
       Skipper: "Sternik",
       "Departure date and time": "Data i godzina wypłynięcia",
-      "Default speed (knots)": "Domyślna prędkość (węzły)",
+      "Default speed": "Domyślna prędkość",
       "Press Enter to add a stop or continue clicking": "✓ Naciśnij Enter, aby dodać postój lub klikaj dalej",
       "Click to add points • Esc cancels": "Kliknij, aby dodać punkty • Esc anuluje",
       "Undo last": "Cofnij ostatni",
@@ -105,7 +105,7 @@ const resources = {
       "knots": "w.",
       "Start": "Start",
       "Are you sure you want to delete this route?": "Czy na pewno chcesz usunąć tę trasę?",
-      "Route management": "Zarządzanie trasami"
+      "Route management": "Zarządzanie trasami",
     },
   },
 }

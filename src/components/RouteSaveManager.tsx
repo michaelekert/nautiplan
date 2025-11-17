@@ -73,7 +73,7 @@ export function RouteSaveManager({
     })
 
   return (
-    <div className="flex flex-col gap-2 relative">
+    <div className="flex flex-row gap-4 relative">
       <Button
         onClick={() => setShowSaveDialog(true)}
         disabled={!hasActiveRoute}

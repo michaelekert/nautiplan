@@ -1,5 +1,3 @@
-// PassagePlan.tsx - alert() i confirm() usunięte
-
 import { useState } from "react";
 import { BottomNavbar } from "@/components/BottomNavbar";
 import { useMapInstance } from "../../hooks/useMapInstance";
@@ -58,7 +56,6 @@ export default function PassagePlan() {
     clearAllSegments,
   } = drawing;
 
-  // Hook do zapisywania tras
   const { saveRoute, loadRoute, deleteRoute, getSavedRoutes } = useRouteSave(
     mapRef,
     drawRef,
@@ -67,7 +64,6 @@ export default function PassagePlan() {
     defaultSpeed
   );
 
-  // Handlery do RouteSaveManager – alerty usunięte
   const handleSaveRoute = (name: string) => {
     saveRoute(name);
   };
@@ -120,23 +116,23 @@ export default function PassagePlan() {
       </PassagePlanMap>
 
       <div className="hidden md:block w-full max-w-6xl bg-slate-800 p-6 rounded-lg space-y-6 shadow-lg">
-        <PassagePlanControls
-          startDate={startDate}
-          defaultSpeed={defaultSpeed}
-          segmentsCount={segments.length}
-          showRouteActions={showRouteActions}
-          isDrawingMode={isDrawingMode}
-          onStartDateChange={setStartDate}
-          onDefaultSpeedChange={setDefaultSpeed}
-          onStartRouteDrawing={startRouteDrawing}
-          onStartDrawing={startDrawing}
-          onFinishDrawing={finishDrawing}
-          onCancelDrawing={cancelDrawing}
-          onUndoLastSegment={undoLastSegment}
-          onClearAllSegments={clearAllSegments}
-        />
+        <div className="flex flex-row flex-wrap items-end gap-1">
+          <PassagePlanControls
+            startDate={startDate}
+            defaultSpeed={defaultSpeed}
+            segmentsCount={segments.length}
+            showRouteActions={showRouteActions}
+            isDrawingMode={isDrawingMode}
+            onStartDateChange={setStartDate}
+            onDefaultSpeedChange={setDefaultSpeed}
+            onStartRouteDrawing={startRouteDrawing}
+            onStartDrawing={startDrawing}
+            onFinishDrawing={finishDrawing}
+            onCancelDrawing={cancelDrawing}
+            onUndoLastSegment={undoLastSegment}
+            onClearAllSegments={clearAllSegments}
+          />
 
-        <div className="flex justify-center">
           <RouteSaveManager
             onSave={handleSaveRoute}
             onLoad={handleLoadRoute}
