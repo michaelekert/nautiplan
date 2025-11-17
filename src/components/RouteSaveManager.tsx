@@ -1,22 +1,17 @@
-import { useState, useEffect } from "react";
-import { Save, FolderOpen, Trash2, X } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import type { SavedRoute } from "../hooks/useRouteSave";
+import { useState, useEffect } from "react"
+import { Save, FolderOpen, X } from "lucide-react"
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
+import { toast } from "sonner"
+import type { SavedRoute } from "../hooks/useRouteSave"
 
 interface RouteSaveManagerProps {
-  onSave: (name: string) => void;
-  onLoad: (routeId: string) => void;
-  onDelete: (routeId: string) => void;
-  getSavedRoutes: () => SavedRoute[];
-  hasActiveRoute: boolean;
-}
-
-interface Notification {
-  id: number;
-  type: "success" | "error" | "info";
-  message: string;
+  onSave: (name: string) => void
+  onLoad: (routeId: string) => void
+  onDelete: (routeId: string) => void
+  getSavedRoutes: () => SavedRoute[]
+  hasActiveRoute: boolean
 }
 
 export function RouteSaveManager({
@@ -26,112 +21,77 @@ export function RouteSaveManager({
   getSavedRoutes,
   hasActiveRoute,
 }: RouteSaveManagerProps) {
-  const [showSaveDialog, setShowSaveDialog] = useState(false);
-  const [showLoadDialog, setShowLoadDialog] = useState(false);
-  const [routeName, setRouteName] = useState("");
-  const [savedRoutes, setSavedRoutes] = useState<SavedRoute[]>([]);
-  const [notifications, setNotifications] = useState<Notification[]>([]);
-  const [routeToDelete, setRouteToDelete] = useState<string | null>(null);
+  const [showSaveDialog, setShowSaveDialog] = useState(false)
+  const [showLoadDialog, setShowLoadDialog] = useState(false)
+  const [routeName, setRouteName] = useState("")
+  const [savedRoutes, setSavedRoutes] = useState<SavedRoute[]>([])
+  const [routeToDelete, setRouteToDelete] = useState<string | null>(null)
 
-  const refreshRoutes = () => {
-    setSavedRoutes(getSavedRoutes());
-  };
+  const refreshRoutes = () => setSavedRoutes(getSavedRoutes())
 
   useEffect(() => {
-    refreshRoutes();
-  }, []);
-
-  const addNotification = (message: string, type: Notification["type"] = "info") => {
-    const id = Date.now();
-    setNotifications((prev) => [...prev, { id, type, message }]);
-    setTimeout(() => {
-      setNotifications((prev) => prev.filter((n) => n.id !== id));
-    }, 3000);
-  };
+    refreshRoutes()
+  }, [])
 
   const handleSave = () => {
     if (!routeName.trim()) {
-      addNotification("Podaj nazwę trasy!", "error");
-      return;
+      toast.error("Podaj nazwę trasy!")
+      return
     }
-    onSave(routeName.trim());
-    setRouteName("");
-    setShowSaveDialog(false);
-    refreshRoutes();
-    addNotification("Trasa zapisana!", "success");
-  };
+    onSave(routeName.trim())
+    setRouteName("")
+    setShowSaveDialog(false)
+    refreshRoutes()
+    toast.success("Trasa zapisana!")
+  }
 
   const handleLoad = (routeId: string) => {
-    onLoad(routeId);
-    setShowLoadDialog(false);
-    addNotification("Trasa wczytana!", "success");
-  };
+    onLoad(routeId)
+    setShowLoadDialog(false)
+    toast.success("Trasa wczytana!")
+  }
 
-  const confirmDelete = (routeId: string) => {
-    setRouteToDelete(routeId);
-  };
+  const confirmDelete = (routeId: string) => setRouteToDelete(routeId)
 
   const handleDelete = () => {
-    if (routeToDelete) {
-      onDelete(routeToDelete);
-      refreshRoutes();
-      addNotification("Trasa usunięta!", "success");
-      setRouteToDelete(null);
-    }
-  };
+    if (!routeToDelete) return
+    onDelete(routeToDelete)
+    refreshRoutes()
+    toast.success("Trasa usunięta!")
+    setRouteToDelete(null)
+  }
 
-  const cancelDelete = () => {
-    setRouteToDelete(null);
-  };
+  const cancelDelete = () => setRouteToDelete(null)
 
-  const formatDate = (dateStr: string) => {
-    const date = new Date(dateStr);
-    return date.toLocaleString("pl-PL", {
+  const formatDate = (dateStr: string) =>
+    new Date(dateStr).toLocaleString("pl-PL", {
       day: "2-digit",
       month: "2-digit",
       year: "numeric",
       hour: "2-digit",
       minute: "2-digit",
-    });
-  };
+    })
 
   return (
     <div className="flex flex-col gap-2 relative">
-      <div className="fixed top-4 right-4 flex flex-col gap-2 z-50">
-        {notifications.map((n) => (
-          <div
-            key={n.id}
-            className={`px-4 py-2 rounded shadow text-white ${
-              n.type === "success"
-                ? "bg-green-600"
-                : n.type === "error"
-                ? "bg-red-600"
-                : "bg-blue-600"
-            }`}
-          >
-            {n.message}
-          </div>
-        ))}
-      </div>
-
       <Button
         onClick={() => setShowSaveDialog(true)}
         disabled={!hasActiveRoute}
         className="flex items-center gap-2 bg-green-600 hover:bg-green-700 disabled:bg-gray-400 disabled:cursor-not-allowed"
       >
         <Save size={20} />
-        <span className="inline">Zapisz trasę</span>
+        <span>Zapisz trasę</span>
       </Button>
 
       <Button
         onClick={() => {
-          refreshRoutes();
-          setShowLoadDialog(true);
+          refreshRoutes()
+          setShowLoadDialog(true)
         }}
         className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700"
       >
         <FolderOpen size={20} />
-        <span className="inline">Wczytaj trasę</span>
+        <span>Wczytaj trasę</span>
       </Button>
 
       {showSaveDialog && (
@@ -255,5 +215,5 @@ export function RouteSaveManager({
         </div>
       )}
     </div>
-  );
+  )
 }
