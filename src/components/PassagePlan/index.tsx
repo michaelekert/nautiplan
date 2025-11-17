@@ -1,9 +1,12 @@
+// PassagePlan.tsx - alert() i confirm() usunięte
+
 import { useState } from "react";
 import { BottomNavbar } from "@/components/BottomNavbar";
 import { useMapInstance } from "../../hooks/useMapInstance";
 import { useMapDraw } from "../../hooks/useMapDraw";
 import { useSegments } from "../../hooks/useSegments";
 import { useDrawingMode } from "../../hooks/useDrawingMode";
+import { useRouteSave } from "../../hooks/useRouteSave";
 import { PassagePlanMap } from "./PassagePlanMap";
 import { PassagePlanControls } from "./PassagePlanControls";
 import { PassagePlanSegmentsList } from "./PassagePlanSegmentsList";
@@ -11,14 +14,15 @@ import { PassagePlanMobileButtons } from "./PassagePlanMobileButtons";
 import { PassagePlanDesktopButtons } from "./PassagePlanDesktopButtons";
 import { PassagePlanMobileDrawer } from "./PassagePlanMobileDrawer";
 import { PassagePlanTimeline } from "./PassagePlanTimeline";
-import { WindInfoBox } from "@/components/WindInfoBox"; // ✅ nowy import
+import { WindInfoBox } from "@/components/WindInfoBox";
+import { RouteSaveManager } from "@/components/RouteSaveManager";
 
 export default function PassagePlan() {
   const [startDate, setStartDate] = useState<string>(
     new Date().toISOString().slice(0, 16)
   );
   const [defaultSpeed, setDefaultSpeed] = useState<number>(5);
-  const [currentWind, setCurrentWind] = useState<{ speed: number; dir: number } | null>(null); // ✅ nowy stan
+  const [currentWind, setCurrentWind] = useState<{ speed: number; dir: number } | null>(null);
 
   const { mapRef, setTime, getWindAt } = useMapInstance();
   const updateSegmentsRef = { current: async () => {} };
@@ -54,10 +58,36 @@ export default function PassagePlan() {
     clearAllSegments,
   } = drawing;
 
+  // Hook do zapisywania tras
+  const { saveRoute, loadRoute, deleteRoute, getSavedRoutes } = useRouteSave(
+    mapRef,
+    drawRef,
+    segments,
+    startDate,
+    defaultSpeed
+  );
+
+  // Handlery do RouteSaveManager – alerty usunięte
+  const handleSaveRoute = (name: string) => {
+    saveRoute(name);
+  };
+
+  const handleLoadRoute = (routeId: string) => {
+    const success = loadRoute(routeId, updateSegments);
+    if (success) {
+      const routes = getSavedRoutes();
+      const loadedRoute = routes.find((r) => r.id === routeId);
+      if (loadedRoute) {
+        setStartDate(loadedRoute.startDate);
+        setDefaultSpeed(loadedRoute.defaultSpeed);
+      }
+    }
+  };
+
   return (
     <div className="flex flex-col items-center gap-6 p-0 md:p-6 text-white relative">
       <PassagePlanMap isDrawingMode={isDrawingMode} showCursorOnMobile={showCursorOnMobile}>
-        {currentWind && <WindInfoBox wind={currentWind} />} {/* ✅ wyświetlanie nad mapą */}
+        {currentWind && <WindInfoBox wind={currentWind} />}
 
         <PassagePlanMobileButtons
           showRouteActions={showRouteActions}
@@ -106,6 +136,16 @@ export default function PassagePlan() {
           onClearAllSegments={clearAllSegments}
         />
 
+        <div className="flex justify-center">
+          <RouteSaveManager
+            onSave={handleSaveRoute}
+            onLoad={handleLoadRoute}
+            onDelete={deleteRoute}
+            getSavedRoutes={getSavedRoutes}
+            hasActiveRoute={segments.length > 0}
+          />
+        </div>
+
         <PassagePlanSegmentsList
           segments={segments}
           onSpeedChange={handleSpeedChange}
@@ -123,6 +163,10 @@ export default function PassagePlan() {
         onSpeedChange={handleSpeedChange}
         onStopChange={handleStopChange}
         onNameChange={handleNameChange}
+        onSaveRoute={handleSaveRoute}
+        onLoadRoute={handleLoadRoute}
+        onDeleteRoute={deleteRoute}
+        getSavedRoutes={getSavedRoutes}
       />
 
       <BottomNavbar />
