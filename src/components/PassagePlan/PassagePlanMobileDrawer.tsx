@@ -52,9 +52,9 @@ export function PassagePlanMobileDrawer({
           <DrawerTitle className="text-white">⚓ {t("Route settings")}</DrawerTitle>
         </DrawerHeader>
 
-        <div className="flex-1 overflow-y-auto p-6 space-y-6">
-          <div className="flex flex-col gap-3">
-            <div className="flex flex-col">
+        <div className="flex-1 overflow-y-auto p-4 space-y-6">
+          <div className="flex flex-row gap-2">
+            <div className="flex flex-col flex-[7]">
               <Label htmlFor="startDate" className="mb-2">
                 📅 {t("Departure date and time")}
               </Label>
@@ -67,22 +67,44 @@ export function PassagePlanMobileDrawer({
               />
             </div>
 
-            <div className="flex flex-col">
+            <div className="flex flex-col flex-[3] items-center">
               <Label htmlFor="defaultSpeed" className="mb-2">
-                ⚓ {t("Default speed (knots)")}
+                ⚓ {t("Default speed")}
               </Label>
-              <Input
-                id="defaultSpeed"
-                type="number"
-                min={0}
-                step={1}
-                value={defaultSpeed}
-                onChange={(e) => {
-                  const val = e.target.value
-                  onDefaultSpeedChange(val === "" ? NaN : Number(val))
-                }}
-                className="w-full h-10 px-2 rounded-lg border border-slate-600 bg-slate-900 text-white"
-              />
+
+              <div className="flex items-center gap-1">
+                <Button
+                  size="sm"
+                  onClick={() => onDefaultSpeedChange(Math.max(0, defaultSpeed - 1))}
+                >
+                  -
+                </Button>
+
+                <div className="relative w-16">
+                  <Input
+                    id="defaultSpeed"
+                    type="number"
+                    min={0}
+                    step={1}
+                    value={defaultSpeed}
+                    onChange={(e) => {
+                      const val = e.target.value
+                      onDefaultSpeedChange(val === "" ? NaN : Number(val))
+                    }}
+                    className="w-full h-10 pr-8 text-center rounded-lg border border-slate-600 bg-slate-900 text-white"
+                  />
+                  <span className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-300 text-sm pointer-events-none">
+                    KN
+                  </span>
+                </div>
+
+                <Button
+                  size="sm"
+                  onClick={() => onDefaultSpeedChange(defaultSpeed + 1)}
+                >
+                  +
+                </Button>
+              </div>
             </div>
           </div>
 
@@ -163,15 +185,21 @@ export function PassagePlanMobileDrawer({
                       <Label className="text-slate-200 text-sm mb-1">
                         {t("Stop (hours)")}
                       </Label>
-                      <Input
-                        type="number"
-                        value={s.stopHours}
-                        onChange={(e) => {
-                          const val = e.target.value
-                          onStopChange(s.id, val === "" ? NaN : Number(val))
-                        }}
-                        className="rounded-lg border border-slate-600 bg-slate-900 text-white w-1/2"
-                      />
+                      <div className="flex items-center">
+                        <Button
+                          size="sm"
+                          onClick={() => onStopChange(s.id, Math.max(0, s.stopHours - 1))}
+                        >
+                          -
+                        </Button>
+                        <div className="w-12 text-center">{s.stopHours}</div>
+                        <Button
+                          size="sm"
+                          onClick={() => onStopChange(s.id, s.stopHours + 1)}
+                        >
+                          +
+                        </Button>
+                      </div>
                     </div>
                   </div>
 
