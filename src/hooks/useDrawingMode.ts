@@ -119,6 +119,51 @@ export function useDrawingMode(
     onUpdateSegments();
   }, [drawRef, mapRef, tempRoutePoints, onUpdateSegments, lastCoordRef, isMobile]);
 
+  // NOWA FUNKCJA: Dodaj punkt postojowy w miejscu celownika, a następnie finalizuj
+  const finishWithWaypoint = useCallback(() => {
+    const map = mapRef.current;
+    if (!map || !isDrawingMode || tempRoutePoints.length < 1) return;
+
+    // Pobierz współrzędne środka mapy (tam gdzie jest celownik)
+    const center = map.getCenter();
+    const waypointCoord: [number, number] = [center.lng, center.lat];
+
+    // Dodaj punkt postojowy do tymczasowych punktów
+    const updatedPoints = [...tempRoutePoints, waypointCoord];
+    
+    // Teraz zakończ rysowanie z tym nowym punktem
+    const draw = drawRef.current;
+    if (!draw) return;
+
+    draw.getAll().features
+      .filter((f) => f.properties?.temp)
+      .forEach((f) => draw.delete(f.id));
+
+    updatedPoints.forEach((_, i) => {
+      const pointId = `click-point-${i + 1}`;
+      if (map.getLayer(pointId)) map.removeLayer(pointId);
+      if (map.getSource(pointId)) map.removeSource(pointId);
+    });
+
+    draw.add({
+      type: "Feature",
+      properties: {},
+      geometry: { type: "LineString", coordinates: updatedPoints },
+    });
+
+    if (isMobile) {
+      lastCoordRef.current = updatedPoints[updatedPoints.length - 1];
+      setTempRoutePoints([lastCoordRef.current]);
+    } else {
+      setIsDrawingMode(false);
+      setTempRoutePoints([]);
+      setShowRouteActions(false);
+      setShowCursorOnMobile(false);
+    }
+    
+    onUpdateSegments();
+  }, [mapRef, drawRef, isDrawingMode, tempRoutePoints, onUpdateSegments, lastCoordRef, isMobile]);
+
   const cancelDrawing = useCallback(() => {
     const draw = drawRef.current;
     const map = mapRef.current;
@@ -344,6 +389,7 @@ export function useDrawingMode(
     showCursorOnMobile,
     addPointAtCenter,
     finishDrawing,
+    finishWithWaypoint, // NOWA FUNKCJA
     cancelDrawing,
     exitDrawingMode,
     startRouteDrawing,
