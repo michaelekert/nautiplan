@@ -9,6 +9,7 @@ interface PassagePlanMobileButtonsProps {
   onStartRouteDrawing: () => void;
   onAddPointAtCenter: () => void;
   onFinishDrawing: () => void;
+  onFinishWithWaypoint?: () => void;
   onCancelDrawing: () => void;
   onUndoLastSegment: () => void;
   onClearAllSegments: () => void;
@@ -21,11 +22,13 @@ export function PassagePlanMobileButtons({
   onStartRouteDrawing,
   onAddPointAtCenter,
   onFinishDrawing,
+  onFinishWithWaypoint,
   onCancelDrawing,
   onUndoLastSegment,
   onClearAllSegments,
 }: PassagePlanMobileButtonsProps) {
   const { t } = useTranslation()
+  
   return (
     <div className="md:hidden fixed left-1/2 bottom-1/4 -translate-x-1/2 z-50">
       {!showRouteActions ? (
@@ -48,9 +51,9 @@ export function PassagePlanMobileButtons({
           >
             <XCircle className="h-5 w-5" />
           </Button>
-          {tempRoutePointsCount >= 2 && (
+          {tempRoutePointsCount >= 1 && (
             <Button
-              onClick={onFinishDrawing}
+              onClick={onFinishWithWaypoint || onFinishDrawing}
               className="bg-green-600 hover:bg-green-700"
               size="icon"
             >

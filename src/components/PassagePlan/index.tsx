@@ -48,6 +48,7 @@ export default function PassagePlan() {
     showRouteActions,
     showCursorOnMobile,
     addPointAtCenter,
+    finishWithWaypoint,
     finishDrawing,
     cancelDrawing,
     startRouteDrawing,
@@ -91,6 +92,7 @@ export default function PassagePlan() {
           tempRoutePointsCount={tempRoutePoints.length}
           onStartRouteDrawing={startRouteDrawing}
           onAddPointAtCenter={addPointAtCenter}
+          onFinishWithWaypoint={finishWithWaypoint}
           onFinishDrawing={finishDrawing}
           onCancelDrawing={cancelDrawing}
           onUndoLastSegment={undoLastSegment}
