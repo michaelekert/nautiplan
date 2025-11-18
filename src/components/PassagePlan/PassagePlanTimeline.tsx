@@ -157,7 +157,7 @@ export function PassagePlanTimeline({
       <div
         className="
           flex md:hidden items-center gap-2 w-[90%] max-w-md
-          absolute bottom-[140px] left-1/2 -translate-x-1/2 z-50
+          absolute bottom-[35px] left-1/2 -translate-x-1/2 z-50
           bg-slate-900/80 backdrop-blur-md p-2 rounded-xl shadow-lg text-gray-200
         "
       >

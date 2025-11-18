@@ -6,17 +6,22 @@ export function WindInfoBox({ wind }: WindInfoBoxProps) {
   return (
     <div
       className="
-        absolute top-4 left-4 md:top-6 md:left-6
-        bg-slate-900/70 backdrop-blur-md
-        px-4 py-2 rounded-xl shadow-lg
-        text-sm text-white
-        flex items-center gap-2
+        absolute
+        top-0 left-0              /* mobile: przyklejony do lewego górnego rogu */
+        w-[30%]                   /* mobile: szerokość 30% */
+        md:top-4 md:left-6        /* desktop: większe marginesy */
+        md:w-auto                 /* desktop: szerokość auto */
+        bg-slate-800/95 backdrop-blur-md
+        px-4 py-2 md:rounded-xl shadow-lg
+        text-white
+        flex flex-col items-center justify-center gap-1
         z-50
+        h-[70px]
       "
     >
-      <span className="text-lg">Wiatr:</span>
-      <div>
-        <div>{wind.speed.toFixed(1)} m/s ({(wind.speed * 1.94384).toFixed(1)} kn)</div>
+      <span className="text-md md:text-sm font-medium">Wiatr:</span>
+      <div className="text-lg md:text-xl font-bold">
+        {(wind.speed * 1.94384).toFixed(1)} kn
       </div>
     </div>
   );
