@@ -1,5 +1,5 @@
 import { Button } from "@/components/ui/button";
-import { PlusCircle, Flag, XCircle, CornerUpLeft, Trash } from "lucide-react";
+import { PlusCircle, Flag, XCircle, CornerUpLeft } from "lucide-react";
 import { useTranslation } from "react-i18next";
 
 interface PassagePlanMobileButtonsProps {
