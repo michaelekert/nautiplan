@@ -12,7 +12,7 @@ const resources = {
       "Default speed": "Default speed",
       "Press Enter to add a stop or continue clicking": "Press Enter to add a stop or continue clicking",
       "Click to add points • Esc cancels": "Click to add points • Esc cancels",
-      "Undo last": "Undo last",
+      "Undo": "Undo",
       "Clear all": "Clear all",
       "Draw route": "Draw route",
       "Start route": "Start route",
@@ -52,7 +52,8 @@ const resources = {
       "knots": "kn",
       "Start": "Start",
       "Are you sure you want to delete this route?": "Are you sure you want to delete this route?",
-      "Route management": "Route Management"
+      "Route management": "Route Management",
+      "Exit": "Exit",
     },
   },
   pl: {
@@ -65,7 +66,7 @@ const resources = {
       "Default speed": "Domyślna prędkość",
       "Press Enter to add a stop or continue clicking": "✓ Naciśnij Enter, aby dodać postój lub klikaj dalej",
       "Click to add points • Esc cancels": "Kliknij, aby dodać punkty • Esc anuluje",
-      "Undo last": "Cofnij ostatni",
+      "Undo": "Cofnij",
       "Clear all": "Usuń wszystko",
       "Draw route": "Rysuj trasę",
       "Start route": "Zacznij trasę",
@@ -106,6 +107,7 @@ const resources = {
       "Start": "Start",
       "Are you sure you want to delete this route?": "Czy na pewno chcesz usunąć tę trasę?",
       "Route management": "Zarządzanie trasami",
+      "Exit": "Wyjdź",
     },
   },
 }
