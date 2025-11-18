@@ -27,7 +27,7 @@ export function PassagePlanMobileButtons({
   onUndoLastSegment,
   onClearAllSegments,
 }: PassagePlanMobileButtonsProps) {
-  const { t } = useTranslation();
+  const { t } = useTranslation()
   
   return (
     <div className="md:hidden fixed left-1/2 bottom-1/4 -translate-x-1/2 z-50">
