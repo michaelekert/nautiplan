@@ -53,7 +53,7 @@ export function PassagePlanMobileButtons({
           </Button>
           {tempRoutePointsCount >= 1 && (
             <Button
-              onClick={onFinishWithWaypoint || onFinishDrawing} // Użyj nowej funkcji jeśli dostępna
+              onClick={onFinishWithWaypoint || onFinishDrawing}
               className="bg-green-600 hover:bg-green-700"
               size="icon"
             >
