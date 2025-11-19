@@ -5,6 +5,17 @@ import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/com
 import { Progress } from "@/components/ui/progress"
 import { Confetti } from "@/components/Confetti"
 import { ArrowLeft } from "lucide-react"
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog"
 
 type Question = {
   id: number
@@ -171,12 +182,46 @@ export default function StudyView() {
   const [finished, setFinished] = useState(false)
   const [timerActive, setTimerActive] = useState(false)
   const [resetTimer, setResetTimer] = useState(false)
+  const [showConfirm, setShowConfirm] = useState(false)
+
   const time = useAccurateTimer(timerActive, resetTimer)
+  const questions = selectedTest?.questions || []
+  const currentQuestion = questions[currentQuestionIndex]
 
   const formatTime = (seconds: number) => {
     const mins = Math.floor(seconds / 60).toString().padStart(2, "0")
     const secs = (seconds % 60).toString().padStart(2, "0")
     return `${mins}:${secs}`
+  }
+
+  const handleOptionClick = (optionId: string) => {
+    if (selectedOptionId) return
+    setSelectedOptionId(optionId)
+    const option = currentQuestion.options.find((o) => o.id === optionId)
+    if (option?.correct) setScore((s) => s + 1)
+
+    if (currentQuestionIndex + 1 < questions.length) {
+      setTimeout(() => {
+        setSelectedOptionId(null)
+        setCurrentQuestionIndex((prev) => prev + 1)
+      }, 3000)
+    }
+  }
+
+  const handleFinishTest = () => {
+    setFinished(true)
+    setTimerActive(false)
+  }
+
+  const handleRestart = () => {
+    setSelectedTest(null)
+    setCurrentQuestionIndex(0)
+    setSelectedOptionId(null)
+    setScore(0)
+    setFinished(false)
+    setTimerActive(false)
+    setResetTimer(true)
+    setShowConfirm(false)
   }
 
   if (!selectedTest) {
@@ -208,36 +253,6 @@ export default function StudyView() {
     )
   }
 
-  const questions = selectedTest.questions
-  const currentQuestion = questions[currentQuestionIndex]
-
-  const handleOptionClick = (optionId: string) => {
-    if (selectedOptionId) return
-    setSelectedOptionId(optionId)
-    const option = currentQuestion.options.find((o) => o.id === optionId)
-    if (option?.correct) setScore((s) => s + 1)
-  }
-
-  const handleNext = () => {
-    if (currentQuestionIndex + 1 < questions.length) {
-      setSelectedOptionId(null)
-      setCurrentQuestionIndex((prev) => prev + 1)
-    } else {
-      setFinished(true)
-      setTimerActive(false)
-    }
-  }
-
-  const handleRestart = () => {
-    setSelectedTest(null)
-    setCurrentQuestionIndex(0)
-    setSelectedOptionId(null)
-    setScore(0)
-    setFinished(false)
-    setTimerActive(false)
-    setResetTimer(true)
-  }
-
   if (finished) {
     const percentage = Math.round((score / questions.length) * 100)
 
@@ -258,14 +273,25 @@ export default function StudyView() {
     <div className="flex flex-col items-center justify-center min-h-screen p-4">
       <div className="w-full max-w-2xl text-center space-y-6">
         <div className="flex justify-between items-center w-full">
-          <Button
-            variant="ghost"
-            className="flex items-center gap-2"
-            onClick={handleRestart}
-          >
-            <ArrowLeft />
-            
-          </Button>
+          <AlertDialog open={showConfirm} onOpenChange={setShowConfirm}>
+            <AlertDialogTrigger asChild>
+              <Button variant="ghost" className="flex items-center gap-2">
+                <ArrowLeft />
+              </Button>
+            </AlertDialogTrigger>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>Na pewno chcesz wyjść?</AlertDialogTitle>
+                <AlertDialogDescription>
+                  Jeśli wrócisz, Twój postęp w teście zostanie utracony.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel>Anuluj</AlertDialogCancel>
+                <AlertDialogAction onClick={handleRestart}>Tak, wyjdź</AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
           <span className="text-lg font-mono">{formatTime(time)}</span>
         </div>
 
@@ -299,9 +325,9 @@ export default function StudyView() {
           })}
         </div>
 
-        {selectedOptionId && (
-          <Button className="mt-4" onClick={handleNext}>
-            {currentQuestionIndex + 1 === questions.length ? "Zakończ test" : "Następne pytanie"}
+        {selectedOptionId && currentQuestionIndex + 1 === questions.length && (
+          <Button className="mt-4" onClick={handleFinishTest}>
+            Zakończ test
           </Button>
         )}
       </div>
