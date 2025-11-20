@@ -27,33 +27,27 @@ export function useSegments(
   }, [segments]);
 
   const resetUnknownCounter = useCallback(() => {
-    // Znajdź najwyższy numer "Punkt X" w istniejących segmentach
     let maxPointNumber = 0;
     
     segmentsRef.current.forEach((seg) => {
-      // Sprawdź startName
       if (seg.startName.startsWith("Punkt ")) {
         const num = parseInt(seg.startName.replace("Punkt ", ""));
         if (!isNaN(num)) maxPointNumber = Math.max(maxPointNumber, num);
       }
-      // Sprawdź endName
       if (seg.endName.startsWith("Punkt ")) {
         const num = parseInt(seg.endName.replace("Punkt ", ""));
         if (!isNaN(num)) maxPointNumber = Math.max(maxPointNumber, num);
       }
-      // Sprawdź autoStartName
       if (seg.autoStartName.startsWith("Punkt ")) {
         const num = parseInt(seg.autoStartName.replace("Punkt ", ""));
         if (!isNaN(num)) maxPointNumber = Math.max(maxPointNumber, num);
       }
-      // Sprawdź autoEndName
       if (seg.autoEndName.startsWith("Punkt ")) {
         const num = parseInt(seg.autoEndName.replace("Punkt ", ""));
         if (!isNaN(num)) maxPointNumber = Math.max(maxPointNumber, num);
       }
     });
     
-    // Ustaw licznik na najwyższy znaleziony + 1 (lub 1 jeśli nie znaleziono żadnych)
     unknownCounterRef.current = maxPointNumber > 0 ? maxPointNumber + 1 : 1;
     
     console.log("Reset licznika: najwyższy punkt =", maxPointNumber, "nowy licznik =", unknownCounterRef.current);
@@ -124,7 +118,6 @@ export function useSegments(
     const newSegments: Segment[] = [];
     let lastEndName: string | null = null;
     
-    // NOWE: Znajdź najwyższy użyty numer "Punkt X" w poprzednich segmentach
     let maxUsedPointNumber = 0;
     prevSegments.forEach((seg) => {
       [seg.startName, seg.endName, seg.autoStartName, seg.autoEndName].forEach((name) => {
@@ -135,10 +128,8 @@ export function useSegments(
       });
     });
     
-    // Ustaw licznik na najwyższy użyty + 1
     if (maxUsedPointNumber > 0) {
       unknownCounterRef.current = maxUsedPointNumber + 1;
-
     }
 
     for (const f of data.features) {
