@@ -27,7 +27,36 @@ export function useSegments(
   }, [segments]);
 
   const resetUnknownCounter = useCallback(() => {
-    unknownCounterRef.current = 1;
+    // Znajdź najwyższy numer "Punkt X" w istniejących segmentach
+    let maxPointNumber = 0;
+    
+    segmentsRef.current.forEach((seg) => {
+      // Sprawdź startName
+      if (seg.startName.startsWith("Punkt ")) {
+        const num = parseInt(seg.startName.replace("Punkt ", ""));
+        if (!isNaN(num)) maxPointNumber = Math.max(maxPointNumber, num);
+      }
+      // Sprawdź endName
+      if (seg.endName.startsWith("Punkt ")) {
+        const num = parseInt(seg.endName.replace("Punkt ", ""));
+        if (!isNaN(num)) maxPointNumber = Math.max(maxPointNumber, num);
+      }
+      // Sprawdź autoStartName
+      if (seg.autoStartName.startsWith("Punkt ")) {
+        const num = parseInt(seg.autoStartName.replace("Punkt ", ""));
+        if (!isNaN(num)) maxPointNumber = Math.max(maxPointNumber, num);
+      }
+      // Sprawdź autoEndName
+      if (seg.autoEndName.startsWith("Punkt ")) {
+        const num = parseInt(seg.autoEndName.replace("Punkt ", ""));
+        if (!isNaN(num)) maxPointNumber = Math.max(maxPointNumber, num);
+      }
+    });
+    
+    // Ustaw licznik na najwyższy znaleziony + 1 (lub 1 jeśli nie znaleziono żadnych)
+    unknownCounterRef.current = maxPointNumber > 0 ? maxPointNumber + 1 : 1;
+    
+    console.log("Reset licznika: najwyższy punkt =", maxPointNumber, "nowy licznik =", unknownCounterRef.current);
   }, []);
 
   const recalcSegments = useCallback(
@@ -94,6 +123,23 @@ export function useSegments(
     const prevSegments = segmentsRef.current;
     const newSegments: Segment[] = [];
     let lastEndName: string | null = null;
+    
+    // NOWE: Znajdź najwyższy użyty numer "Punkt X" w poprzednich segmentach
+    let maxUsedPointNumber = 0;
+    prevSegments.forEach((seg) => {
+      [seg.startName, seg.endName, seg.autoStartName, seg.autoEndName].forEach((name) => {
+        if (name?.startsWith("Punkt ")) {
+          const num = parseInt(name.replace("Punkt ", ""));
+          if (!isNaN(num)) maxUsedPointNumber = Math.max(maxUsedPointNumber, num);
+        }
+      });
+    });
+    
+    // Ustaw licznik na najwyższy użyty + 1
+    if (maxUsedPointNumber > 0) {
+      unknownCounterRef.current = maxUsedPointNumber + 1;
+
+    }
 
     for (const f of data.features) {
       if (f.geometry.type !== "LineString" || f.properties?.temp) continue;
@@ -209,7 +255,6 @@ export function useSegments(
     [recalcSegments]
   );
 
-  // naem changing points
   const handleNameChange = useCallback(
     (id: string, field: "startName" | "endName", value: string) => {
       setSegments((prev) => {

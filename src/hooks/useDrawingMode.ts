@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { Map } from "@maptiler/sdk";
 import MapboxDraw from "@mapbox/mapbox-gl-draw";
 
@@ -14,6 +14,8 @@ export function useDrawingMode(
   const [showRouteActions, setShowRouteActions] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
   const [showCursorOnMobile, setShowCursorOnMobile] = useState(false);
+  
+  const clickPointsRef = useRef<Set<string>>(new Set());
 
   useEffect(() => {
     const checkMobile = () => {
@@ -29,6 +31,30 @@ export function useDrawingMode(
       setIsDrawingMode(true);
     }
   }, [isMobile, isDrawingMode]);
+
+  const removeAllClickPoints = useCallback(() => {
+    const map = mapRef.current;
+    if (!map) return;
+
+    clickPointsRef.current.forEach((pointId) => {
+      try {
+        if (map.getLayer(pointId)) {
+          map.removeLayer(pointId);
+        }
+      } catch (e) {
+      }
+      try {
+        if (map.getSource(pointId)) {
+          map.removeSource(pointId);
+        }
+      } catch (e) {
+        console.error("Błąd usuwania źródła:", pointId, e);
+      }
+    });
+    
+    clickPointsRef.current.clear();
+
+  }, [mapRef]);
 
   const addPointAtCenter = useCallback(() => {
     const map = mapRef.current;
@@ -79,6 +105,7 @@ export function useDrawingMode(
             "circle-stroke-width": 1.5,
           },
         });
+        clickPointsRef.current.add(pointId);
       }
 
       return updated;
@@ -94,11 +121,7 @@ export function useDrawingMode(
       .filter((f) => f.properties?.temp)
       .forEach((f) => draw.delete(f.id));
 
-    tempRoutePoints.forEach((_, i) => {
-      const pointId = `click-point-${i + 1}`;
-      if (map.getLayer(pointId)) map.removeLayer(pointId);
-      if (map.getSource(pointId)) map.removeSource(pointId);
-    });
+    removeAllClickPoints();
 
     draw.add({
       type: "Feature",
@@ -117,7 +140,7 @@ export function useDrawingMode(
     }
     
     onUpdateSegments();
-  }, [drawRef, mapRef, tempRoutePoints, onUpdateSegments, lastCoordRef, isMobile]);
+  }, [drawRef, mapRef, tempRoutePoints, onUpdateSegments, lastCoordRef, isMobile, removeAllClickPoints]);
 
   const finishWithWaypoint = useCallback(() => {
     const map = mapRef.current;
@@ -135,11 +158,7 @@ export function useDrawingMode(
       .filter((f) => f.properties?.temp)
       .forEach((f) => draw.delete(f.id));
 
-    updatedPoints.forEach((_, i) => {
-      const pointId = `click-point-${i + 1}`;
-      if (map.getLayer(pointId)) map.removeLayer(pointId);
-      if (map.getSource(pointId)) map.removeSource(pointId);
-    });
+    removeAllClickPoints();
 
     draw.add({
       type: "Feature",
@@ -158,23 +177,18 @@ export function useDrawingMode(
     }
     
     onUpdateSegments();
-  }, [mapRef, drawRef, isDrawingMode, tempRoutePoints, onUpdateSegments, lastCoordRef, isMobile]);
+  }, [mapRef, drawRef, isDrawingMode, tempRoutePoints, onUpdateSegments, lastCoordRef, isMobile, removeAllClickPoints]);
 
   const cancelDrawing = useCallback(() => {
     const draw = drawRef.current;
-    const map = mapRef.current;
 
     if (draw)
       draw
         .getAll()
         .features.filter((f) => f.properties?.temp)
         .forEach((f) => draw.delete(f.id));
-    if (map)
-      tempRoutePoints.forEach((_, i) => {
-        const pointId = `click-point-${i + 1}`;
-        if (map.getLayer(pointId)) map.removeLayer(pointId);
-        if (map.getSource(pointId)) map.removeSource(pointId);
-      });
+    
+    removeAllClickPoints();
 
     setIsDrawingMode(false);
     setTempRoutePoints([]);
@@ -188,7 +202,7 @@ export function useDrawingMode(
         lastCoordRef.current = null;
       }
     }
-  }, [drawRef, mapRef, tempRoutePoints, lastCoordRef]);
+  }, [drawRef, removeAllClickPoints, lastCoordRef]);
 
   const exitDrawingMode = useCallback(() => {
     cancelDrawing();
@@ -209,13 +223,14 @@ export function useDrawingMode(
     if (isMobile) setShowCursorOnMobile(true);
   }, [lastCoordRef, isMobile]);
 
-  const undoLastSegment = useCallback(() => {
+  const undoLastSegment = useCallback(async () => {
     const draw = drawRef.current;
     if (!draw) return;
     const lines = draw
       .getAll()
       .features.filter((f) => f.geometry.type === "LineString");
     if (lines.length === 0) return;
+    
     
     draw.delete(lines[lines.length - 1].id);
     
@@ -233,8 +248,10 @@ export function useDrawingMode(
       setTempRoutePoints(lastCoordRef.current ? [lastCoordRef.current] : []);
     }
     
-    onUpdateSegments();
-  }, [drawRef, onUpdateSegments, lastCoordRef, isDrawingMode]);
+    removeAllClickPoints();
+    
+    await onUpdateSegments();
+  }, [drawRef, onUpdateSegments, lastCoordRef, isDrawingMode, removeAllClickPoints]);
 
   const clearAllSegments = useCallback(() => {
     const draw = drawRef.current;
@@ -242,11 +259,8 @@ export function useDrawingMode(
     if (!draw || !map) return;
 
     draw.deleteAll();
-    tempRoutePoints.forEach((_, i) => {
-      const pointId = `click-point-${i + 1}`;
-      if (map.getLayer(pointId)) map.removeLayer(pointId);
-      if (map.getSource(pointId)) map.removeSource(pointId);
-    });
+    
+    removeAllClickPoints();
 
     onUpdateSegments();
     setTempRoutePoints([]);
@@ -257,7 +271,7 @@ export function useDrawingMode(
     if (segmentsHook?.resetUnknownCounter) {
       segmentsHook.resetUnknownCounter();
     }
-  }, [drawRef, mapRef, tempRoutePoints, onUpdateSegments, segmentsHook]);
+  }, [drawRef, mapRef, onUpdateSegments, segmentsHook, removeAllClickPoints]);
 
   useEffect(() => {
     const map = mapRef.current;
@@ -314,6 +328,7 @@ export function useDrawingMode(
               "circle-stroke-width": 1.5,
             },
           });
+          clickPointsRef.current.add(pointId);
         }
 
         return newPoints;
