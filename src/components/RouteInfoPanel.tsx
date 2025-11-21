@@ -139,22 +139,24 @@ export function RouteInfoPanel({
             </div>
 
             {segments.length > 0 && (
-              <Button
-                onClick={onClearAllSegments}
-                className="bg-red-600 hover:bg-red-700 flex flex-col items-center justify-center gap-1 py-2 px-2 w-11 h-11 text-center"
-              >
-                <Trash className="h-3 w-3" />
-                <span className="text-[5px] truncate">{t("Clear all")}</span>
-              </Button>
-            )}
+              <>
+                <Button
+                  onClick={onClearAllSegments}
+                  className="bg-red-600 hover:bg-red-700 flex flex-col items-center justify-center gap-1 py-2 px-2 w-11 h-11 text-center"
+                >
+                  <Trash className="h-3 w-3" />
+                  <span className="text-[5px] truncate">{t("Clear all")}</span>
+                </Button>
 
-            <Button
-              onClick={() => setIsExpanded(!isExpanded)}
-              className="bg-blue-600 hover:bg-blue-700 flex flex-col items-center justify-center gap-1 py-2 px-2 w-11 h-11 text-center"
-            >
-              <LocateFixed className="h-3 w-3" />
-              <span className="text-[5px] truncate">Show coords</span>
-            </Button>
+                <Button
+                  onClick={() => setIsExpanded(!isExpanded)}
+                  className="bg-blue-600 hover:bg-blue-700 flex flex-col items-center justify-center gap-1 py-2 px-2 w-11 h-11 text-center"
+                >
+                  <LocateFixed className="h-3 w-3" />
+                  <span className="text-[5px] truncate">Show coords</span>
+                </Button>
+              </>
+            )}
           </div>
         </div>
 
