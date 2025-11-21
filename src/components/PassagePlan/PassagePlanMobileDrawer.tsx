@@ -12,6 +12,7 @@ import { useTranslation } from "react-i18next"
 import { RouteSaveManager } from "../../components/RouteSaveManager"
 import type { Segment } from "../../types/passagePlan"
 import type { SavedRoute } from "../../hooks/useRouteSave"
+
 interface PassagePlanMobileDrawerProps {
   startDate: string
   defaultSpeed: number
@@ -188,14 +189,36 @@ export function PassagePlanMobileDrawer({
                       <Label className="text-slate-200 text-sm mb-1">
                         {t("Speed (knots)")}
                       </Label>
-                      <div className="flex items-center">
+                      <div className="flex items-center gap-1">
                         <Button
                           size="sm"
-                          onClick={() => onSpeedChange(s.id, Math.max(0, s.speed - 1))}
+                          onClick={() =>
+                            onSpeedChange(s.id, Math.max(0, s.speed - 1))
+                          }
                         >
                           -
                         </Button>
-                        <div className="w-12 text-center">{s.speed}</div>
+
+                        <div className="relative w-16">
+                          <Input
+                            type="number"
+                            min={0}
+                            step={1}
+                            value={isNaN(s.speed) ? "" : s.speed}
+                            onChange={(e) => {
+                              const val = e.target.value
+                              onSpeedChange(s.id, val === "" ? NaN : Number(val))
+                            }}
+                            onBlur={() => {
+                              if (isNaN(s.speed)) onSpeedChange(s.id, 5)
+                            }}
+                            className="w-full h-10 pr-8 text-center rounded-lg border border-slate-600 bg-slate-900 text-white"
+                          />
+                          <span className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-300 text-sm pointer-events-none">
+                            KN
+                          </span>
+                        </div>
+
                         <Button
                           size="sm"
                           onClick={() => onSpeedChange(s.id, s.speed + 1)}
@@ -209,14 +232,36 @@ export function PassagePlanMobileDrawer({
                       <Label className="text-slate-200 text-sm mb-1">
                         {t("Stop (hours)")}
                       </Label>
-                      <div className="flex items-center">
+                      <div className="flex items-center gap-1">
                         <Button
                           size="sm"
-                          onClick={() => onStopChange(s.id, Math.max(0, s.stopHours - 1))}
+                          onClick={() =>
+                            onStopChange(s.id, Math.max(0, s.stopHours - 1))
+                          }
                         >
                           -
                         </Button>
-                        <div className="w-12 text-center">{s.stopHours}</div>
+
+                        <div className="relative w-16">
+                          <Input
+                            type="number"
+                            min={0}
+                            step={1}
+                            value={isNaN(s.stopHours) ? "" : s.stopHours}
+                            onChange={(e) => {
+                              const val = e.target.value
+                              onStopChange(s.id, val === "" ? NaN : Number(val))
+                            }}
+                            onBlur={() => {
+                              if (isNaN(s.stopHours)) onStopChange(s.id, 0)
+                            }}
+                            className="w-full h-10 pr-8 text-center rounded-lg border border-slate-600 bg-slate-900 text-white"
+                          />
+                          <span className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-300 text-sm pointer-events-none">
+                            H
+                          </span>
+                        </div>
+
                         <Button
                           size="sm"
                           onClick={() => onStopChange(s.id, s.stopHours + 1)}
@@ -231,11 +276,11 @@ export function PassagePlanMobileDrawer({
                     {t("Estimated arrival time")}: {s.arrivalTime.toLocaleString()}
                   </div>
                 </div>
-              );
+              )
             })}
           </div>
         </div>
       </DrawerContent>
     </Drawer>
-  );
+  )
 }
