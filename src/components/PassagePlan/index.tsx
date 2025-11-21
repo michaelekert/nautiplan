@@ -89,7 +89,8 @@ export default function PassagePlan() {
         <RouteInfoPanel
           segments={segments}
           drawRef={drawRef}
-          isDrawingMode={isDrawingMode} 
+          isDrawingMode={isDrawingMode}
+          defaultSpeed={defaultSpeed} 
           mapRef={mapRef}
           tempRoutePoints={tempRoutePoints}
           onClearAllSegments={clearAllSegments}

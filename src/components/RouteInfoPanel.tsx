@@ -13,6 +13,7 @@ interface RouteInfoPanelProps {
   tempRoutePoints: [number, number][];
   mapRef: React.RefObject<any>;
   isDrawingMode: boolean;
+  defaultSpeed: number;
   onClearAllSegments: () => void;
 }
 
@@ -22,16 +23,18 @@ export function RouteInfoPanel({
   tempRoutePoints,
   mapRef,
   isDrawingMode,
+  defaultSpeed,
   onClearAllSegments,
 }: RouteInfoPanelProps) {
   const { t } = useTranslation();
   const [isExpanded, setIsExpanded] = useState(false);
   const [cursorPos, setCursorPos] = useState<[number, number] | null>(null);
 
-  // całkowita długość istniejących segmentów
-  const totalDistanceNm = useMemo(() => segments.reduce((sum, seg) => sum + seg.distanceNm, 0), [segments]);
+  const totalDistanceNm = useMemo(
+    () => segments.reduce((sum, seg) => sum + seg.distanceNm, 0),
+    [segments]
+  );
 
-  // helper do pobrania współrzędnych segmentu z drawRef
   const getSegmentCoordinates = (segmentId: string) => {
     const draw = drawRef.current;
     if (!draw) return null;
@@ -41,7 +44,6 @@ export function RouteInfoPanel({
     return { start: coords[0], end: coords[coords.length - 1] };
   };
 
-  // lista unikalnych punktów do tabeli
   const points = useMemo(() => {
     const arr: { name: string; lat: number; lon: number }[] = [];
     segments.forEach((segment) => {
@@ -56,53 +58,54 @@ export function RouteInfoPanel({
     return [...unique.values()];
   }, [segments, drawRef]);
 
-  // dystans "na żywo" od ostatniego punktu temp do kursora
-  const liveDistanceNm = useMemo(() => {
-    // Jeśli nie jesteśmy w trybie rysowania, pokaż tylko sumę segmentów
-    if (!isDrawingMode || !cursorPos) return totalDistanceNm;
-    
+  const lastSegmentDistanceNm = useMemo(() => {
+    if (!isDrawingMode || !cursorPos) return 0;
+
     let lastPoint: [number, number] | null = null;
     let tempDistance = 0;
-    
-    // Jeśli są temp points i więcej niż 1, oblicz dystans między nimi
+
     if (tempRoutePoints.length > 1) {
       for (let i = 0; i < tempRoutePoints.length - 1; i++) {
-        const meters = distance(
-          point(tempRoutePoints[i]), 
-          point(tempRoutePoints[i + 1]), 
-          { units: "meters" }
-        );
+        const meters = distance(point(tempRoutePoints[i]), point(tempRoutePoints[i + 1]), { units: "meters" });
         tempDistance += meters / 1852;
       }
       lastPoint = tempRoutePoints[tempRoutePoints.length - 1];
-    }
-    // Jeśli jest tylko 1 temp point (tryb mobile po dodaniu punktu)
-    else if (tempRoutePoints.length === 1) {
+    } else if (tempRoutePoints.length === 1) {
       lastPoint = tempRoutePoints[0];
-    }
-    // Jeśli nie ma temp points, ale są segmenty
-    else if (segments.length > 0) {
+    } else if (segments.length > 0) {
       const lastSegment = segments[segments.length - 1];
       const coords = getSegmentCoordinates(lastSegment.id);
-      if (coords) {
-        lastPoint = coords.end;
-      }
+      if (coords) lastPoint = coords.end;
     }
-    
-    // Jeśli mamy punkt bazowy, oblicz dystans do kursora
-    if (lastPoint) {
-      const meters = distance(
-        point([lastPoint[0], lastPoint[1]]), 
-        point([cursorPos[0], cursorPos[1]]), 
-        { units: "meters" }
-      );
-      return totalDistanceNm + tempDistance + meters / 1852;
-    }
-    
-    return totalDistanceNm + tempDistance;
-  }, [totalDistanceNm, tempRoutePoints, cursorPos, segments, isDrawingMode]);
 
-  // listener kursora
+    if (!lastPoint) return 0;
+
+    const metersToCursor = distance(
+      point([lastPoint[0], lastPoint[1]]),
+      point([cursorPos[0], cursorPos[1]]),
+      { units: "meters" }
+    );
+
+    return tempDistance + metersToCursor / 1852;
+  }, [tempRoutePoints, cursorPos, segments, isDrawingMode]);
+
+  const totalDistanceWithCursor = useMemo(
+    () => totalDistanceNm + lastSegmentDistanceNm,
+    [totalDistanceNm, lastSegmentDistanceNm]
+  );
+
+  const timeToCursorHours = useMemo(() => {
+    if (!defaultSpeed || defaultSpeed <= 0) return 0;
+    return lastSegmentDistanceNm / defaultSpeed;
+  }, [lastSegmentDistanceNm, defaultSpeed]);
+
+  const timeToCursorFormatted = useMemo(() => {
+    const totalMinutes = Math.round(timeToCursorHours * 60);
+    const h = Math.floor(totalMinutes / 60);
+    const m = totalMinutes % 60;
+    return `${h}h ${m}m`;
+  }, [timeToCursorHours]);
+
   useEffect(() => {
     const map = mapRef.current;
     if (!map) return;
@@ -122,7 +125,6 @@ export function RouteInfoPanel({
     };
   }, [mapRef]);
 
-  // Pokaż panel jeśli są segmenty LUB temp points (tryb rysowania)
   if (segments.length === 0 && tempRoutePoints.length === 0) return null;
 
   return (
@@ -130,12 +132,19 @@ export function RouteInfoPanel({
       <div className="bg-slate-800/95 text-white md:rounded-lg border border-slate-700 shadow-xl overflow-hidden">
         <div className="w-full px-4 py-3 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <Waypoints className="text-blue-400" size={20} />
-            <div>
-              <div className="font-semibold text-lg">
-                {liveDistanceNm > 0 ? liveDistanceNm.toFixed(1) : "0.0"} NM
+            <Waypoints className="text-blue-400" size={30} />
+            <div className="flex flex-col">
+
+              <div className="font-semibold text-sm">{totalDistanceWithCursor.toFixed(1)} NM</div>
+              <div className="text-[9px] text-slate-400">Total route length</div>
+
+              <div className="border-t border-slate-600 my-1" />
+
+              <div className="text-sm text-slate-300">
+                {lastSegmentDistanceNm.toFixed(1)} NM
               </div>
-              <div className="text-xs text-slate-400">{t("Total route length")}</div>
+              <div className="text-xs text-slate-400">{timeToCursorFormatted}</div>
+              <div className="text-[9px] text-slate-400">from last point</div>
             </div>
 
             {segments.length > 0 && (

@@ -16,7 +16,7 @@ export function WindInfoBox({ wind }: WindInfoBoxProps) {
         text-white
         flex flex-col items-center justify-center gap-1
         z-50
-        h-[70px]
+        h-[130px]
       "
     >
       <span className="text-md md:text-sm font-medium">Wiatr:</span>
