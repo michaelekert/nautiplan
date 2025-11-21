@@ -86,7 +86,15 @@ export default function PassagePlan() {
     <div className="flex flex-col items-center gap-6 p-0 md:p-6 text-white relative">
       <PassagePlanMap isDrawingMode={isDrawingMode} showCursorOnMobile={showCursorOnMobile}>
         {currentWind && <WindInfoBox wind={currentWind} />}
-        <RouteInfoPanel segments={segments} drawRef={drawRef} onClearAllSegments={clearAllSegments} />
+        <RouteInfoPanel
+          segments={segments}
+          drawRef={drawRef}
+          isDrawingMode={isDrawingMode} 
+          mapRef={mapRef}
+          tempRoutePoints={tempRoutePoints}
+          onClearAllSegments={clearAllSegments}
+        />
+
         <PassagePlanMobileButtons
           showRouteActions={showRouteActions}
           segmentsCount={segments.length}
