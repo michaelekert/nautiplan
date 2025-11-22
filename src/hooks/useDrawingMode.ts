@@ -26,11 +26,8 @@ export function useDrawingMode(
     return () => window.removeEventListener("resize", checkMobile);
   }, []);
 
-  useEffect(() => {
-    if (!isMobile && !isDrawingMode) {
-      setIsDrawingMode(true);
-    }
-  }, [isMobile, isDrawingMode]);
+  // USUNIĘTE: automatyczne włączanie trybu rysowania na desktopie
+  // Teraz tryb rysowania włącza się tylko manualnie
 
   const removeAllClickPoints = useCallback(() => {
     const map = mapRef.current;
@@ -42,6 +39,7 @@ export function useDrawingMode(
           map.removeLayer(pointId);
         }
       } catch (e) {
+        // ignore
       }
       try {
         if (map.getSource(pointId)) {

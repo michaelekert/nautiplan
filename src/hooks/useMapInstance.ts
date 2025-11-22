@@ -9,11 +9,6 @@ export function useMapInstance() {
   const windLayerRef = useRef<any>(null);
   const readyRef = useRef(false);
 
-  const roundTo3Hours = (date: Date) => {
-    const ms = 3 * 3600 * 1000;
-    return new Date(Math.floor(date.getTime() / ms) * ms);
-  };
-
   useEffect(() => {
     if (mapRef.current) return;
 
@@ -37,7 +32,7 @@ export function useMapInstance() {
       windLayer.on("sourceReady", () => {
         readyRef.current = true;
         console.log("✅ WindLayer source ready (dane pogodowe załadowane)");
-        const now = roundTo3Hours(new Date());
+        const now = new Date();
         const tsSec = Math.floor(now.getTime() / 1000);
         windLayer.setAnimationTime(tsSec);
       });
@@ -65,10 +60,10 @@ export function useMapInstance() {
 
   const setTime = (date: Date) => {
     const windLayer = windLayerRef.current;
-    if (!windLayer?.setAnimationTime) return;
+    if (!windLayer?.setAnimationTime || !readyRef.current) return;
 
-    const rounded = roundTo3Hours(date);
-    const tsSec = Math.floor(rounded.getTime() / 1000);
+    // DOKŁADNIE jak w przykładzie MapTiler - bez zaokrąglania!
+    const tsSec = Math.floor(date.getTime() / 1000);
     windLayer.setAnimationTime(tsSec);
   };
 
@@ -83,23 +78,7 @@ export function useMapInstance() {
     if (!readyRef.current) return null;
 
     try {
-      const rounded = roundTo3Hours(date);
-      const tsSec = Math.floor(rounded.getTime() / 1000);
-
-      await new Promise<void>((resolve) => {
-        const handler = () => {
-          windLayer.off("animationTimeSet", handler);
-          resolve();
-        };
-        windLayer.once("animationTimeSet", handler);
-        windLayer.setAnimationTime(tsSec);
-
-        setTimeout(() => {
-          windLayer.off("animationTimeSet", handler);
-          resolve();
-        }, 500);
-      });
-
+      // Po prostu odczytaj aktualne dane z warstwy - bez zmiany czasu!
       const windData = windLayer.pickAt(lon, lat);
 
       if (!windData || windData.speedMetersPerSecond === undefined) return null;

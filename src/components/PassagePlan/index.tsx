@@ -5,6 +5,7 @@ import { useMapDraw } from "../../hooks/useMapDraw";
 import { useSegments } from "../../hooks/useSegments";
 import { useDrawingMode } from "../../hooks/useDrawingMode";
 import { useRouteSave } from "../../hooks/useRouteSave";
+import { useWindPreviewMode } from "../../hooks/useWindPreviewMode";
 import { PassagePlanMap } from "./PassagePlanMap";
 import { PassagePlanControls } from "./PassagePlanControls";
 import { PassagePlanSegmentsList } from "./PassagePlanSegmentsList";
@@ -12,7 +13,7 @@ import { PassagePlanMobileButtons } from "./PassagePlanMobileButtons";
 import { PassagePlanDesktopButtons } from "./PassagePlanDesktopButtons";
 import { PassagePlanMobileDrawer } from "./PassagePlanMobileDrawer";
 import { PassagePlanTimeline } from "./PassagePlanTimeline";
-import { WindInfoBox } from "@/components/WindInfoBox";
+import { WindPreviewControls } from "./WindPreviewControls";
 import { RouteSaveManager } from "@/components/RouteSaveManager";
 import { RouteInfoPanel } from "../RouteInfoPanel";
 
@@ -21,9 +22,21 @@ export default function PassagePlan() {
     new Date().toISOString().slice(0, 16)
   );
   const [defaultSpeed, setDefaultSpeed] = useState<number>(5);
-  const [currentWind, setCurrentWind] = useState<{ speed: number; dir: number } | null>(null);
 
-  const { mapRef, setTime, getWindAt } = useMapInstance();
+  const { mapRef, windLayerRef, setTime, getWindAt } = useMapInstance();
+  
+  // Wind Preview Mode - domyślnie włączony
+  const windPreview = useWindPreviewMode(mapRef, windLayerRef, getWindAt);
+  const {
+    isWindPreviewMode,
+    windData,
+    previewTime,
+    timeRange,
+    setPreviewTime,
+    disableWindPreviewMode,
+    enableWindPreviewMode,
+  } = windPreview;
+
   const updateSegmentsRef = { current: async () => {} };
   const drawRef = useMapDraw(mapRef, {
     enforceSingleLine: async (_e: any) => {},
@@ -82,100 +95,159 @@ export default function PassagePlan() {
     }
   };
 
+  // Funkcje przełączania trybów
+  const handleStartRouteDrawing = () => {
+    disableWindPreviewMode();
+    startRouteDrawing();
+  };
+
+  const handleStartDrawing = () => {
+    disableWindPreviewMode();
+    startDrawing();
+  };
+
+  const handleCancelDrawing = () => {
+    cancelDrawing();
+    enableWindPreviewMode();
+  };
+
+  const handleFinishDrawing = () => {
+    finishDrawing();
+    // Na mobile zostajemy w trybie rysowania, na desktop wracamy do Wind Preview
+    if (window.innerWidth >= 768) {
+      enableWindPreviewMode();
+    }
+  };
+
+  const handleFinishWithWaypoint = () => {
+    finishWithWaypoint();
+    // Na mobile zostajemy w trybie rysowania, na desktop wracamy do Wind Preview
+    if (window.innerWidth >= 768) {
+      enableWindPreviewMode();
+    }
+  };
+
   return (
     <div className="flex flex-col items-center gap-6 p-0 md:p-6 text-white relative">
       <PassagePlanMap isDrawingMode={isDrawingMode} showCursorOnMobile={showCursorOnMobile}>
-        {currentWind && <WindInfoBox wind={currentWind} />}
-        <RouteInfoPanel
-          segments={segments}
-          drawRef={drawRef}
-          isDrawingMode={isDrawingMode}
-          defaultSpeed={defaultSpeed} 
-          mapRef={mapRef}
-          tempRoutePoints={tempRoutePoints}
-          onClearAllSegments={clearAllSegments}
-        />
+        
+        {/* Wind Preview Controls - wyświetlane gdy aktywny jest Wind Preview Mode */}
+        {isWindPreviewMode && (
+          <WindPreviewControls
+            windData={windData}
+            previewTime={previewTime}
+            timeRange={timeRange}
+            onTimeChange={setPreviewTime}
+          />
+        )}
 
+        {/* Route Info Panel - wyświetlane gdy są segmenty i NIE ma Wind Preview */}
+        {!isWindPreviewMode && segments.length > 0 && (
+          <RouteInfoPanel 
+            segments={segments} 
+            drawRef={drawRef}
+            isDrawingMode={isDrawingMode}
+            defaultSpeed={defaultSpeed} 
+            mapRef={mapRef}
+            tempRoutePoints={tempRoutePoints}
+            onClearAllSegments={clearAllSegments} 
+          />
+        )}
+
+        {/* Mobile Buttons */}
         <PassagePlanMobileButtons
           showRouteActions={showRouteActions}
           segmentsCount={segments.length}
           tempRoutePointsCount={tempRoutePoints.length}
-          onStartRouteDrawing={startRouteDrawing}
+          onStartRouteDrawing={handleStartRouteDrawing}
           onAddPointAtCenter={addPointAtCenter}
-          onFinishWithWaypoint={finishWithWaypoint}
-          onFinishDrawing={finishDrawing}
-          onCancelDrawing={cancelDrawing}
+          onFinishWithWaypoint={handleFinishWithWaypoint}
+          onFinishDrawing={handleFinishDrawing}
+          onCancelDrawing={handleCancelDrawing}
           onUndoLastSegment={undoLastSegment}
           onClearAllSegments={clearAllSegments}
         />
 
+        {/* Desktop Buttons */}
         <PassagePlanDesktopButtons
+          isWindPreviewMode={isWindPreviewMode}
+          isDrawingMode={isDrawingMode}
           segmentsCount={segments.length}
           tempRoutePointsCount={tempRoutePoints.length}
+          onStartRouteDrawing={handleStartRouteDrawing}
           onUndoLastSegment={undoLastSegment}
           onClearAllSegments={clearAllSegments}
         />
 
-        <PassagePlanTimeline
-          mapRef={mapRef}
-          drawRef={drawRef}
-          segments={segments}
-          startDate={startDate}
-          setTime={setTime}
-          getWindAt={getWindAt}
-          onWindInfoChange={setCurrentWind}
-        />
+        {/* Timeline - wyświetlane gdy są segmenty i nie ma Wind Preview Mode */}
+        {!isWindPreviewMode && segments.length > 0 && (
+          <PassagePlanTimeline
+            mapRef={mapRef}
+            drawRef={drawRef}
+            segments={segments}
+            startDate={startDate}
+            setTime={setTime}
+            getWindAt={getWindAt}
+            onWindInfoChange={() => {}}
+          />
+        )}
       </PassagePlanMap>
 
-      <div className="hidden md:block w-full max-w-6xl bg-slate-800 p-6 rounded-lg space-y-6 shadow-lg">
-        <div className="flex flex-row flex-wrap items-end gap-1">
-          <PassagePlanControls
-            startDate={startDate}
-            defaultSpeed={defaultSpeed}
-            segmentsCount={segments.length}
-            showRouteActions={showRouteActions}
-            isDrawingMode={isDrawingMode}
-            onStartDateChange={setStartDate}
-            onDefaultSpeedChange={setDefaultSpeed}
-            onStartRouteDrawing={startRouteDrawing}
-            onStartDrawing={startDrawing}
-            onFinishDrawing={finishDrawing}
-            onCancelDrawing={cancelDrawing}
-            onUndoLastSegment={undoLastSegment}
-            onClearAllSegments={clearAllSegments}
-          />
+      {/* Desktop Controls Panel - tylko gdy nie ma Wind Preview */}
+      {!isWindPreviewMode && (
+        <div className="hidden md:block w-full max-w-6xl bg-slate-800 p-6 rounded-lg space-y-6 shadow-lg">
+          <div className="flex flex-row flex-wrap items-end gap-1">
+            <PassagePlanControls
+              startDate={startDate}
+              defaultSpeed={defaultSpeed}
+              segmentsCount={segments.length}
+              showRouteActions={showRouteActions}
+              isDrawingMode={isDrawingMode}
+              onStartDateChange={setStartDate}
+              onDefaultSpeedChange={setDefaultSpeed}
+              onStartRouteDrawing={handleStartRouteDrawing}
+              onStartDrawing={handleStartDrawing}
+              onFinishDrawing={handleFinishDrawing}
+              onCancelDrawing={handleCancelDrawing}
+              onUndoLastSegment={undoLastSegment}
+              onClearAllSegments={clearAllSegments}
+            />
 
-          <RouteSaveManager
-            onSave={handleSaveRoute}
-            onLoad={handleLoadRoute}
-            onDelete={deleteRoute}
-            getSavedRoutes={getSavedRoutes}
-            hasActiveRoute={segments.length > 0}
+            <RouteSaveManager
+              onSave={handleSaveRoute}
+              onLoad={handleLoadRoute}
+              onDelete={deleteRoute}
+              getSavedRoutes={getSavedRoutes}
+              hasActiveRoute={segments.length > 0}
+            />
+          </div>
+
+          <PassagePlanSegmentsList
+            segments={segments}
+            onSpeedChange={handleSpeedChange}
+            onStopChange={handleStopChange}
+            onNameChange={handleNameChange}
           />
         </div>
+      )}
 
-        <PassagePlanSegmentsList
+      {/* Mobile Drawer - tylko gdy nie ma Wind Preview */}
+      {!isWindPreviewMode && (
+        <PassagePlanMobileDrawer
+          startDate={startDate}
+          defaultSpeed={defaultSpeed}
           segments={segments}
+          onStartDateChange={setStartDate}
+          onDefaultSpeedChange={setDefaultSpeed}
           onSpeedChange={handleSpeedChange}
           onStopChange={handleStopChange}
           onNameChange={handleNameChange}
+          onSaveRoute={handleSaveRoute}
+          onLoadRoute={handleLoadRoute}
+          onDeleteRoute={deleteRoute}
+          getSavedRoutes={getSavedRoutes}
         />
-      </div>
-
-      <PassagePlanMobileDrawer
-        startDate={startDate}
-        defaultSpeed={defaultSpeed}
-        segments={segments}
-        onStartDateChange={setStartDate}
-        onDefaultSpeedChange={setDefaultSpeed}
-        onSpeedChange={handleSpeedChange}
-        onStopChange={handleStopChange}
-        onNameChange={handleNameChange}
-        onSaveRoute={handleSaveRoute}
-        onLoadRoute={handleLoadRoute}
-        onDeleteRoute={deleteRoute}
-        getSavedRoutes={getSavedRoutes}
-      />
+      )}
 
       <BottomNavbar />
     </div>
