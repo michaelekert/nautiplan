@@ -62,19 +62,32 @@ export function PassagePlanTimeline({
     return null;
   };
 
+  // POPRAWKA: Czyść czerwoną kropkę gdy nie ma segmentów
   useEffect(() => {
     const map = mapRef.current;
     if (!map) return;
     const id = "sim-position";
 
     if (segments.length === 0) {
-      if (map.getLayer(id)) map.removeLayer(id);
-      if (map.getSource(id)) map.removeSource(id);
+      if (map.getLayer(id)) {
+        try {
+          map.removeLayer(id);
+        } catch (e) {
+          console.error("Error removing layer:", e);
+        }
+      }
+      if (map.getSource(id)) {
+        try {
+          map.removeSource(id);
+        } catch (e) {
+          console.error("Error removing source:", e);
+        }
+      }
       setSimTime(null);
       setWindInfo(null);
       onWindInfoChange?.(null);
     }
-  }, [segments]);
+  }, [segments, mapRef, onWindInfoChange]);
 
   useEffect(() => {
     const map = mapRef.current;
@@ -122,7 +135,7 @@ export function PassagePlanTimeline({
       setWindInfo(info);
       onWindInfoChange?.(info);
     });
-  }, [simTime, segments]);
+  }, [simTime, segments, startDate, setTime, getWindAt, onWindInfoChange, mapRef, drawRef]);
 
   useEffect(() => {
     if (!isPlaying || segments.length === 0 || totalTravelTime === 0) return;

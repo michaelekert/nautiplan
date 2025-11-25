@@ -113,23 +113,42 @@ export default function PassagePlan() {
 
   const handleFinishDrawing = () => {
     finishDrawing();
-    // Na mobile zostajemy w trybie rysowania, na desktop wracamy do Wind Preview
-    if (window.innerWidth >= 768) {
-      enableWindPreviewMode();
-    }
+    // POPRAWKA: Na mobile zostajemy w trybie rysowania, na desktop NIE wracamy automatycznie
+    // Użytkownik sam musi kliknąć "Wind preview"
   };
 
   const handleFinishWithWaypoint = () => {
     finishWithWaypoint();
-    // Na mobile zostajemy w trybie rysowania, na desktop wracamy do Wind Preview
-    if (window.innerWidth >= 768) {
-      enableWindPreviewMode();
-    }
+    // POPRAWKA: Na mobile zostajemy w trybie rysowania, na desktop NIE wracamy automatycznie
+  };
+
+  const handleEnableWindPreview = () => {
+    enableWindPreviewMode();
+  };
+
+  const handleClearAllSegments = () => {
+    clearAllSegments();
+    // POPRAWKA: Po usunięciu wszystkich segmentów wracamy do Wind Preview Mode
+    enableWindPreviewMode();
+  };
+
+  const handleUndoLastSegment = () => {
+    undoLastSegment();
+    // POPRAWKA: Jeśli po cofnięciu nie ma już segmentów, wracamy do Wind Preview
+    setTimeout(() => {
+      if (segments.length <= 1) {
+        enableWindPreviewMode();
+      }
+    }, 100);
   };
 
   return (
     <div className="flex flex-col items-center gap-6 p-0 md:p-6 text-white relative">
-      <PassagePlanMap isDrawingMode={isDrawingMode} showCursorOnMobile={showCursorOnMobile}>
+      <PassagePlanMap 
+        isDrawingMode={isDrawingMode} 
+        isWindPreviewMode={isWindPreviewMode}
+        showCursorOnMobile={showCursorOnMobile}
+      >
         
         {/* Wind Preview Controls - wyświetlane gdy aktywny jest Wind Preview Mode */}
         {isWindPreviewMode && (
@@ -141,8 +160,8 @@ export default function PassagePlan() {
           />
         )}
 
-        {/* Route Info Panel - wyświetlane gdy są segmenty i NIE ma Wind Preview */}
-        {!isWindPreviewMode && segments.length > 0 && (
+        {/* Route Info Panel - wyświetlane gdy są segmenty LUB tempRoutePoints */}
+        {!isWindPreviewMode && (segments.length > 0 || tempRoutePoints.length > 0) && (
           <RouteInfoPanel 
             segments={segments} 
             drawRef={drawRef}
@@ -150,22 +169,24 @@ export default function PassagePlan() {
             defaultSpeed={defaultSpeed} 
             mapRef={mapRef}
             tempRoutePoints={tempRoutePoints}
-            onClearAllSegments={clearAllSegments} 
+            onClearAllSegments={handleClearAllSegments} 
           />
         )}
 
         {/* Mobile Buttons */}
         <PassagePlanMobileButtons
+          isWindPreviewMode={isWindPreviewMode}
           showRouteActions={showRouteActions}
           segmentsCount={segments.length}
           tempRoutePointsCount={tempRoutePoints.length}
           onStartRouteDrawing={handleStartRouteDrawing}
+          onEnableWindPreview={handleEnableWindPreview}
           onAddPointAtCenter={addPointAtCenter}
           onFinishWithWaypoint={handleFinishWithWaypoint}
           onFinishDrawing={handleFinishDrawing}
           onCancelDrawing={handleCancelDrawing}
-          onUndoLastSegment={undoLastSegment}
-          onClearAllSegments={clearAllSegments}
+          onUndoLastSegment={handleUndoLastSegment}
+          onClearAllSegments={handleClearAllSegments}
         />
 
         {/* Desktop Buttons */}
@@ -175,8 +196,9 @@ export default function PassagePlan() {
           segmentsCount={segments.length}
           tempRoutePointsCount={tempRoutePoints.length}
           onStartRouteDrawing={handleStartRouteDrawing}
-          onUndoLastSegment={undoLastSegment}
-          onClearAllSegments={clearAllSegments}
+          onEnableWindPreview={handleEnableWindPreview}
+          onUndoLastSegment={handleUndoLastSegment}
+          onClearAllSegments={handleClearAllSegments}
         />
 
         {/* Timeline - wyświetlane gdy są segmenty i nie ma Wind Preview Mode */}
@@ -209,8 +231,8 @@ export default function PassagePlan() {
               onStartDrawing={handleStartDrawing}
               onFinishDrawing={handleFinishDrawing}
               onCancelDrawing={handleCancelDrawing}
-              onUndoLastSegment={undoLastSegment}
-              onClearAllSegments={clearAllSegments}
+              onUndoLastSegment={handleUndoLastSegment}
+              onClearAllSegments={handleClearAllSegments}
             />
 
             <RouteSaveManager

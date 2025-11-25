@@ -4,105 +4,54 @@ import { Map } from "@maptiler/sdk";
 export function useWindPreviewMode(
   mapRef: React.RefObject<Map | null>,
   windLayerRef: React.RefObject<any>,
-  getWindAt: (lon: number, lat: number, date: Date) => Promise<{ speed: number; dir: number } | null>
+  getWindAt: (
+    lon: number,
+    lat: number,
+    date: Date,
+    options?: { signal?: AbortSignal }
+  ) => Promise<{ speed: number; dir: number } | null>
 ) {
   const [isWindPreviewMode, setIsWindPreviewMode] = useState(true);
   const [previewTime, setPreviewTime] = useState<Date>(new Date());
   const [windData, setWindData] = useState<{ speed: number; dir: number } | null>(null);
   const [timeRange, setTimeRange] = useState<{ min: Date; max: Date }>({
     min: new Date(),
-    max: new Date(Date.now() + 4 * 24 * 60 * 60 * 1000) // +4 dni
+    max: new Date(Date.now() + 4 * 24 * 60 * 60 * 1000),
   });
-  
-  const crosshairSourceId = "wind-preview-crosshair";
-  const updateTimerRef = useRef<NodeJS.Timeout | null>(null);
 
-  // Aktualizacja danych wiatru dla centrum mapy
+  const updateTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const abortControllerRef = useRef<AbortController | null>(null);
+  const lastUpdateRef = useRef(0);
+
+  // Aktualizacja danych wiatru dla centrum mapy z throttle
   const updateWindData = useCallback(async () => {
+    const now = Date.now();
+    if (now - lastUpdateRef.current < 200) return;
+    lastUpdateRef.current = now;
+
     const map = mapRef.current;
     if (!map || !isWindPreviewMode) return;
+
+    if (abortControllerRef.current) abortControllerRef.current.abort();
+    const controller = new AbortController();
+    abortControllerRef.current = controller;
 
     const center = map.getCenter();
-    const wind = await getWindAt(center.lng, center.lat, previewTime);
-    setWindData(wind);
+    try {
+      const wind = await getWindAt(center.lng, center.lat, previewTime, { signal: controller.signal });
+      setWindData(wind);
+    } catch (e) {
+      if ((e as any).name === "AbortError") return;
+    }
   }, [mapRef, isWindPreviewMode, previewTime, getWindAt]);
 
-  // Dodanie czerwonej kropki na środku mapy
-  useEffect(() => {
-    const map = mapRef.current;
-    if (!map || !isWindPreviewMode) return;
-
-    const addCrosshair = () => {
-      const center = map.getCenter();
-      
-      if (!map.getSource(crosshairSourceId)) {
-        map.addSource(crosshairSourceId, {
-          type: "geojson",
-          data: {
-            type: "Feature",
-            geometry: {
-              type: "Point",
-              coordinates: [center.lng, center.lat]
-            },
-            properties: {}
-          }
-        });
-
-        map.addLayer({
-          id: crosshairSourceId,
-          type: "circle",
-          source: crosshairSourceId,
-          paint: {
-            "circle-radius": 8,
-            "circle-color": "#ef4444",
-            "circle-stroke-width": 2,
-            "circle-stroke-color": "#ffffff",
-            "circle-opacity": 0.9
-          }
-        });
-      }
-    };
-
-    if (map.loaded()) {
-      addCrosshair();
-    } else {
-      map.once("load", addCrosshair);
-    }
-
-    return () => {
-      if (map.getLayer(crosshairSourceId)) {
-        map.removeLayer(crosshairSourceId);
-      }
-      if (map.getSource(crosshairSourceId)) {
-        map.removeSource(crosshairSourceId);
-      }
-    };
-  }, [mapRef, isWindPreviewMode]);
-
-  // Aktualizacja pozycji kropki przy ruchu mapy
+  // Aktualizacja danych przy ruchu mapy z debounce
   useEffect(() => {
     const map = mapRef.current;
     if (!map || !isWindPreviewMode) return;
 
     const handleMove = () => {
-      const center = map.getCenter();
-      const source = map.getSource(crosshairSourceId) as any;
-      
-      if (source) {
-        source.setData({
-          type: "Feature",
-          geometry: {
-            type: "Point",
-            coordinates: [center.lng, center.lat]
-          },
-          properties: {}
-        });
-      }
-
-      // Debounce wind data updates
-      if (updateTimerRef.current) {
-        clearTimeout(updateTimerRef.current);
-      }
+      if (updateTimerRef.current) clearTimeout(updateTimerRef.current);
       updateTimerRef.current = setTimeout(() => {
         updateWindData();
       }, 200);
@@ -111,26 +60,20 @@ export function useWindPreviewMode(
     map.on("move", handleMove);
     return () => {
       map.off("move", handleMove);
-      if (updateTimerRef.current) {
-        clearTimeout(updateTimerRef.current);
-      }
+      if (updateTimerRef.current) clearTimeout(updateTimerRef.current);
     };
   }, [mapRef, isWindPreviewMode, updateWindData]);
 
-  // Inicjalna aktualizacja danych wiatru
+  // Aktualizacja danych wiatru przy zmianie previewTime
   useEffect(() => {
-    if (isWindPreviewMode) {
-      updateWindData();
-    }
-  }, [isWindPreviewMode, previewTime, updateWindData]);
+    if (isWindPreviewMode) updateWindData();
+  }, [previewTime, updateWindData, isWindPreviewMode]);
 
-  // Aktualizacja czasu w WindLayer gdy zmienia się previewTime
+  // Aktualizacja czasu w Warstwie Wiatru
   useEffect(() => {
     const windLayer = windLayerRef.current;
     if (!windLayer || !isWindPreviewMode) return;
-
-    const tsSec = Math.floor(previewTime.getTime() / 1000);
-    windLayer.setAnimationTime(tsSec);
+    windLayer.setAnimationTime(Math.floor(previewTime.getTime() / 1000));
   }, [windLayerRef, previewTime, isWindPreviewMode]);
 
   // Synchronizacja zakresu czasowego z WindLayer
@@ -141,17 +84,11 @@ export function useWindPreviewMode(
     const handleSourceReady = () => {
       const startDate = windLayer.getAnimationStartDate();
       const endDate = windLayer.getAnimationEndDate();
-      
-      if (startDate && endDate) {
-        setTimeRange({ min: startDate, max: endDate });
-      }
+      if (startDate && endDate) setTimeRange({ min: startDate, max: endDate });
     };
 
     windLayer.on("sourceReady", handleSourceReady);
-    
-    return () => {
-      windLayer.off("sourceReady", handleSourceReady);
-    };
+    return () => windLayer.off("sourceReady", handleSourceReady);
   }, [windLayerRef]);
 
   const enableWindPreviewMode = useCallback(() => {
