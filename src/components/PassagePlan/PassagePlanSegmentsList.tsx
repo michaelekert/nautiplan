@@ -108,11 +108,14 @@ export function PassagePlanSegmentsList({
               </div>
 
               <div className="col-span-2 flex flex-col justify-end">
-                <Label className="text-slate-200 text-sm mb-1">
-                  {t("Estimated arrival time")}
-                </Label>
+                <Label className="text-slate-200 text-sm mt-2 mb-1">ETA</Label>
                 <div className="text-slate-300 text-sm">
                   {s.arrivalTime.toLocaleString()}
+                </div>
+
+                <Label className="text-slate-200 text-sm mb-1">DEP</Label>
+                <div className="text-slate-300 text-sm">
+                  {new Date(s.arrivalTime.getTime() + (s.stopHours ?? 0) * 3600_000).toLocaleString()}
                 </div>
               </div>
             </div>

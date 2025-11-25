@@ -273,7 +273,8 @@ export function PassagePlanMobileDrawer({
                   </div>
 
                   <div className="text-sm text-slate-300">
-                    {t("Estimated arrival time")}: {s.arrivalTime.toLocaleString()}
+                    <div>ETA: {s.arrivalTime.toLocaleString()}</div>
+                    <div>DEP: {new Date(s.arrivalTime.getTime() + (s.stopHours ?? 0) * 3600_000).toLocaleString()}</div>
                   </div>
                 </div>
               )
