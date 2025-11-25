@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo, useEffect, useCallback } from "react";
 import { Waypoints, LocateFixed, Trash } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import type { Segment } from "@/types/passagePlan";
@@ -35,14 +35,14 @@ export function RouteInfoPanel({
     [segments]
   );
 
-  const getSegmentCoordinates = (segmentId: string) => {
+  const getSegmentCoordinates = useCallback((segmentId: string) => {
     const draw = drawRef.current;
     if (!draw) return null;
     const feature = draw.getAll().features.find((f) => String(f.id) === segmentId);
     if (!feature || feature.geometry.type !== "LineString") return null;
     const coords = feature.geometry.coordinates as [number, number][];
     return { start: coords[0], end: coords[coords.length - 1] };
-  };
+  }, [drawRef]);
 
   const points = useMemo(() => {
     const arr: { name: string; lat: number; lon: number }[] = [];
@@ -56,7 +56,7 @@ export function RouteInfoPanel({
     const unique = new Map();
     arr.forEach((p) => unique.set(p.name, p));
     return [...unique.values()];
-  }, [segments, drawRef]);
+  }, [segments, getSegmentCoordinates]);
 
   const lastSegmentDistanceNm = useMemo(() => {
     if (!isDrawingMode || !cursorPos) return 0;
@@ -87,7 +87,7 @@ export function RouteInfoPanel({
     );
 
     return tempDistance + metersToCursor / 1852;
-  }, [tempRoutePoints, cursorPos, segments, isDrawingMode]);
+  }, [tempRoutePoints, cursorPos, segments, isDrawingMode, getSegmentCoordinates]);
 
   const totalDistanceWithCursor = useMemo(
     () => totalDistanceNm + lastSegmentDistanceNm,
@@ -108,22 +108,56 @@ export function RouteInfoPanel({
 
   useEffect(() => {
     const map = mapRef.current;
-    if (!map) return;
+    
+    if (typeof window === 'undefined' || !map) return;
 
-    const handleMouseMove = (e: any) => setCursorPos([e.lngLat.lng, e.lngLat.lat]);
-    const handleMapMove = () => {
-      const center = map.getCenter();
-      setCursorPos([center.lng, center.lat]);
+    const setupListeners = () => {
+      const mapInstance = mapRef.current;
+      if (!mapInstance) return;
+
+      const handleMouseMove = (e: any) => {
+        if (isDrawingMode) {
+          setCursorPos([e.lngLat.lng, e.lngLat.lat]);
+        }
+      };
+
+      const handleMapMove = () => {
+        if (isDrawingMode && mapInstance) {
+          const center = mapInstance.getCenter();
+          setCursorPos([center.lng, center.lat]);
+        }
+      };
+
+      mapInstance.on("mousemove", handleMouseMove);
+      mapInstance.on("move", handleMapMove);
+
+      return () => {
+        if (mapInstance) {
+          mapInstance.off("mousemove", handleMouseMove);
+          mapInstance.off("move", handleMapMove);
+        }
+      };
     };
 
-    map.on("mousemove", handleMouseMove);
-    map.on("move", handleMapMove);
+    if (map.loaded && map.loaded()) {
+      return setupListeners();
+    } else {
+      const onLoad = () => {
+        setupListeners();
+      };
+      map.once('load', onLoad);
+      
+      return () => {
+        map.off('load', onLoad);
+      };
+    }
+  }, [mapRef, isDrawingMode]);
 
-    return () => {
-      map.off("mousemove", handleMouseMove);
-      map.off("move", handleMapMove);
-    };
-  }, [mapRef]);
+  useEffect(() => {
+    if (!isDrawingMode) {
+      setCursorPos(null);
+    }
+  }, [isDrawingMode]);
 
   if (segments.length === 0 && tempRoutePoints.length === 0) return null;
 
@@ -144,7 +178,7 @@ export function RouteInfoPanel({
                 {lastSegmentDistanceNm.toFixed(1)} NM
               </div>
               <div className="text-xs text-slate-400">{timeToCursorFormatted}</div>
-              <div className="text-[9px] text-slate-400">from last point</div>
+              <div className="text-[9px] text-slate-400">from last stop</div>
             </div>
 
             {segments.length > 0 && (
