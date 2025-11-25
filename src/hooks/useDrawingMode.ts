@@ -14,7 +14,7 @@ export function useDrawingMode(
   const [showRouteActions, setShowRouteActions] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
   const [showCursorOnMobile, setShowCursorOnMobile] = useState(false);
-  
+
   const clickPointsRef = useRef<Set<string>>(new Set());
 
   useEffect(() => {
@@ -51,10 +51,27 @@ export function useDrawingMode(
         console.error("Błąd usuwania źródła:", pointId, e);
       }
     });
-    
-    clickPointsRef.current.clear();
 
+    clickPointsRef.current.clear();
   }, [mapRef]);
+
+  const removeAllTempDrawFeatures = useCallback(() => {
+    const draw = drawRef.current;
+    if (!draw) return;
+    try {
+      draw
+        .getAll()
+        .features.filter((f) => f.properties?.temp)
+        .forEach((f) => {
+          try {
+            draw.delete(f.id);
+          } catch (e) {
+          }
+        });
+    } catch (e) {
+      // ignore
+    }
+  }, [drawRef]);
 
   const addPointAtCenter = useCallback(() => {
     const map = mapRef.current;
@@ -69,8 +86,14 @@ export function useDrawingMode(
 
       const draw = drawRef.current;
       if (draw && updated.length >= 2) {
-        const tempFeature = draw.getAll().features.find((f) => f.properties?.temp);
-        if (tempFeature) draw.delete(tempFeature.id);
+        try {
+          draw
+            .getAll()
+            .features.filter((f) => f.properties?.temp)
+            .forEach((f) => draw.delete(f.id));
+        } catch (e) {
+          // ignore
+        }
 
         draw.add({
           type: "Feature",
@@ -81,31 +104,35 @@ export function useDrawingMode(
 
       const pointId = `click-point-${updated.length}`;
       if (map && !map.getSource(pointId)) {
-        map.addSource(pointId, {
-          type: "geojson",
-          data: {
-            type: "FeatureCollection",
-            features: [
-              {
-                type: "Feature",
-                geometry: { type: "Point", coordinates: newPoint },
-                properties: null,
-              },
-            ],
-          },
-        });
-        map.addLayer({
-          id: pointId,
-          type: "circle",
-          source: pointId,
-          paint: {
-            "circle-radius": 5,
-            "circle-color": "#facc15",
-            "circle-stroke-color": "#fff",
-            "circle-stroke-width": 1.5,
-          },
-        });
-        clickPointsRef.current.add(pointId);
+        try {
+          map.addSource(pointId, {
+            type: "geojson",
+            data: {
+              type: "FeatureCollection",
+              features: [
+                {
+                  type: "Feature",
+                  geometry: { type: "Point", coordinates: newPoint },
+                  properties: null,
+                },
+              ],
+            },
+          });
+          map.addLayer({
+            id: pointId,
+            type: "circle",
+            source: pointId,
+            paint: {
+              "circle-radius": 5,
+              "circle-color": "#facc15",
+              "circle-stroke-color": "#fff",
+              "circle-stroke-width": 1.5,
+            },
+          });
+          clickPointsRef.current.add(pointId);
+        } catch (e) {
+          console.error("Błąd dodawania punktu:", e);
+        }
       }
 
       return updated;
@@ -117,9 +144,7 @@ export function useDrawingMode(
     const map = mapRef.current;
     if (!draw || !map || tempRoutePoints.length < 2) return;
 
-    draw.getAll().features
-      .filter((f) => f.properties?.temp)
-      .forEach((f) => draw.delete(f.id));
+    removeAllTempDrawFeatures();
 
     removeAllClickPoints();
 
@@ -138,9 +163,9 @@ export function useDrawingMode(
       setShowRouteActions(false);
       setShowCursorOnMobile(false);
     }
-    
+
     onUpdateSegments();
-  }, [drawRef, mapRef, tempRoutePoints, onUpdateSegments, lastCoordRef, isMobile, removeAllClickPoints]);
+  }, [drawRef, mapRef, tempRoutePoints, onUpdateSegments, lastCoordRef, isMobile, removeAllClickPoints, removeAllTempDrawFeatures]);
 
   const finishWithWaypoint = useCallback(() => {
     const map = mapRef.current;
@@ -150,13 +175,11 @@ export function useDrawingMode(
     const waypointCoord: [number, number] = [center.lng, center.lat];
 
     const updatedPoints = [...tempRoutePoints, waypointCoord];
-    
+
     const draw = drawRef.current;
     if (!draw) return;
 
-    draw.getAll().features
-      .filter((f) => f.properties?.temp)
-      .forEach((f) => draw.delete(f.id));
+    removeAllTempDrawFeatures();
 
     removeAllClickPoints();
 
@@ -175,26 +198,31 @@ export function useDrawingMode(
       setShowRouteActions(false);
       setShowCursorOnMobile(false);
     }
-    
+
     onUpdateSegments();
-  }, [mapRef, drawRef, isDrawingMode, tempRoutePoints, onUpdateSegments, lastCoordRef, isMobile, removeAllClickPoints]);
+  }, [mapRef, drawRef, isDrawingMode, tempRoutePoints, onUpdateSegments, lastCoordRef, isMobile, removeAllClickPoints, removeAllTempDrawFeatures]);
 
   const cancelDrawing = useCallback(() => {
     const draw = drawRef.current;
 
-    if (draw)
-      draw
-        .getAll()
-        .features.filter((f) => f.properties?.temp)
-        .forEach((f) => draw.delete(f.id));
-    
+    if (draw) {
+      try {
+        draw
+          .getAll()
+          .features.filter((f) => f.properties?.temp)
+          .forEach((f) => draw.delete(f.id));
+      } catch (e) {
+        // ignore
+      }
+    }
+
     removeAllClickPoints();
 
     setIsDrawingMode(false);
     setTempRoutePoints([]);
     setShowRouteActions(false);
     setShowCursorOnMobile(false);
-    
+
     const draw2 = drawRef.current;
     if (draw2) {
       const lines = draw2.getAll().features.filter((f) => f.geometry.type === "LineString");
@@ -226,14 +254,76 @@ export function useDrawingMode(
   const undoLastSegment = useCallback(async () => {
     const draw = drawRef.current;
     if (!draw) return;
+
+    try {
+      draw
+        .getAll()
+        .features.filter((f) => f.properties?.temp)
+        .forEach((f) => draw.delete(f.id));
+    } catch (e) {
+      // ignore
+    }
+
+    const hasTempPoints = tempRoutePoints.length > 1;
+
+    if (hasTempPoints) {
+      setTempRoutePoints((prev) => {
+        if (prev.length <= 1) return prev;
+        const updated = prev.slice(0, -1);
+
+        const lastPointId = `click-point-${prev.length}`;
+        const map = mapRef.current;
+        if (map) {
+          try {
+            if (map.getLayer(lastPointId)) map.removeLayer(lastPointId);
+          } catch (e) {
+            // ignore
+          }
+          try {
+            if (map.getSource(lastPointId)) map.removeSource(lastPointId);
+          } catch (e) {
+            // ignore
+          }
+          clickPointsRef.current.delete(lastPointId);
+        }
+
+        if (updated.length >= 2) {
+          try {
+            draw.add({
+              type: "Feature",
+              properties: { temp: true },
+              geometry: { type: "LineString", coordinates: updated },
+            });
+          } catch (e) {
+            // ignore
+          }
+        }
+
+        return updated;
+      });
+
+      return;
+    }
+
     const lines = draw
       .getAll()
-      .features.filter((f) => f.geometry.type === "LineString");
+      .features.filter((f) => f.geometry.type === "LineString" && !f.properties?.temp);
     if (lines.length === 0) return;
-    
-    
-    draw.delete(lines[lines.length - 1].id);
-    
+
+    try {
+      draw.delete(lines[lines.length - 1].id);
+    } catch (e) {
+      // ignore
+    }
+
+    try {
+      draw
+        .getAll()
+        .features.filter((f) => f.properties?.temp)
+        .forEach((f) => draw.delete(f.id));
+    } catch (e) {
+      // ignore
+    }
     if (lines.length > 1) {
       const prevLine = lines[lines.length - 2];
       if (prevLine.geometry.type === "LineString") {
@@ -243,15 +333,15 @@ export function useDrawingMode(
     } else {
       lastCoordRef.current = null;
     }
-    
+
     if (isDrawingMode) {
       setTempRoutePoints(lastCoordRef.current ? [lastCoordRef.current] : []);
     }
     
     removeAllClickPoints();
-    
+
     await onUpdateSegments();
-  }, [drawRef, onUpdateSegments, lastCoordRef, isDrawingMode, removeAllClickPoints]);
+  }, [drawRef, onUpdateSegments, lastCoordRef, isDrawingMode, tempRoutePoints, mapRef, removeAllClickPoints]);
 
   const clearAllSegments = useCallback(() => {
     const draw = drawRef.current;
@@ -259,7 +349,7 @@ export function useDrawingMode(
     if (!draw || !map) return;
 
     draw.deleteAll();
-    
+
     removeAllClickPoints();
 
     onUpdateSegments();
@@ -282,17 +372,21 @@ export function useDrawingMode(
 
       setTempRoutePoints((prev) => {
         let updated: [number, number][] = prev;
-        if (prev.length === 0 && lastCoordRef.current)
-          updated = [lastCoordRef.current];
+        if (prev.length === 0 && lastCoordRef.current) updated = [lastCoordRef.current];
         const newPoint: [number, number] = [lng, lat];
         const newPoints = [...updated, newPoint];
 
         const draw = drawRef.current;
         if (draw) {
-          draw
-            .getAll()
-            .features.filter((f) => f.properties?.temp)
-            .forEach((f) => draw.delete(f.id));
+          try {
+            draw
+              .getAll()
+              .features.filter((f) => f.properties?.temp)
+              .forEach((f) => draw.delete(f.id));
+          } catch (e) {
+            // ignore
+          }
+
           if (newPoints.length >= 2) {
             draw.add({
               type: "Feature",
@@ -304,31 +398,35 @@ export function useDrawingMode(
 
         const pointId = `click-point-${newPoints.length}`;
         if (!map.getSource(pointId)) {
-          map.addSource(pointId, {
-            type: "geojson",
-            data: {
-              type: "FeatureCollection",
-              features: [
-                {
-                  type: "Feature",
-                  geometry: { type: "Point", coordinates: newPoint },
-                  properties: null,
-                },
-              ],
-            },
-          });
-          map.addLayer({
-            id: pointId,
-            type: "circle",
-            source: pointId,
-            paint: {
-              "circle-radius": 5,
-              "circle-color": "#facc15",
-              "circle-stroke-color": "#fff",
-              "circle-stroke-width": 1.5,
-            },
-          });
-          clickPointsRef.current.add(pointId);
+          try {
+            map.addSource(pointId, {
+              type: "geojson",
+              data: {
+                type: "FeatureCollection",
+                features: [
+                  {
+                    type: "Feature",
+                    geometry: { type: "Point", coordinates: newPoint },
+                    properties: null,
+                  },
+                ],
+              },
+            });
+            map.addLayer({
+              id: pointId,
+              type: "circle",
+              source: pointId,
+              paint: {
+                "circle-radius": 5,
+                "circle-color": "#facc15",
+                "circle-stroke-color": "#fff",
+                "circle-stroke-width": 1.5,
+              },
+            });
+            clickPointsRef.current.add(pointId);
+          } catch (e) {
+            console.error("Błąd dodawania punktu:", e);
+          }
         }
 
         return newPoints;
@@ -337,21 +435,26 @@ export function useDrawingMode(
 
     const updatePreview = (lng: number, lat: number) => {
       if (!isDrawingMode || tempRoutePoints.length === 0) return;
-      const previewCoords: [number, number][] = [
-        ...tempRoutePoints,
-        [lng, lat],
-      ];
+      const previewCoords: [number, number][] = [...tempRoutePoints, [lng, lat]];
       const draw = drawRef.current;
       if (draw) {
-        draw
-          .getAll()
-          .features.filter((f) => f.properties?.temp)
-          .forEach((f) => draw.delete(f.id));
-        draw.add({
-          type: "Feature",
-          properties: { temp: true },
-          geometry: { type: "LineString", coordinates: previewCoords },
-        });
+        try {
+          draw
+            .getAll()
+            .features.filter((f) => f.properties?.temp)
+            .forEach((f) => draw.delete(f.id));
+        } catch (e) {
+          // ignore
+        }
+        try {
+          draw.add({
+            type: "Feature",
+            properties: { temp: true },
+            geometry: { type: "LineString", coordinates: previewCoords },
+          });
+        } catch (e) {
+          // ignore
+        }
       }
     };
 
@@ -364,7 +467,12 @@ export function useDrawingMode(
     };
 
     if (isDrawingMode) {
-      map.getCanvas().style.cursor = isMobile ? "" : "crosshair";
+      try {
+        map.getCanvas().style.cursor = isMobile ? "" : "crosshair";
+      } catch (e) {
+        // ignore
+      }
+
       if (isMobile) map.on("move", handleMapMove);
       else {
         map.on("click", handleClick);
@@ -372,7 +480,11 @@ export function useDrawingMode(
       }
 
       return () => {
-        map.getCanvas().style.cursor = "";
+        try {
+          map.getCanvas().style.cursor = "";
+        } catch (e) {
+          // ignore
+        }
         if (isMobile) map.off("move", handleMapMove);
         else {
           map.off("click", handleClick);
