@@ -23,24 +23,8 @@ export function useMapInstance() {
     });
     mapRef.current = map;
 
-    const windLayer = new WindLayer({ opacity: 0.4 }) as any;
-    windLayerRef.current = windLayer;
-
     map.on("load", () => {
-      map.addLayer(windLayer);
-
-      windLayer.on("sourceReady", () => {
-        readyRef.current = true;
-        console.log("✅ WindLayer source ready (dane pogodowe załadowane)");
-        const now = new Date();
-        const tsSec = Math.floor(now.getTime() / 1000);
-        windLayer.setAnimationTime(tsSec);
-      });
-
-      windLayer.on("animationTimeSet", () => {
-        console.log("⏱️ WindLayer animation time:", windLayer.getAnimationTimeDate());
-      });
-
+      // 1️⃣ Dodaj Seamark najpierw
       map.addSource("seamark", {
         type: "raster",
         tiles: ["https://tiles.openseamap.org/seamark/{z}/{x}/{y}.png"],
@@ -51,9 +35,25 @@ export function useMapInstance() {
         id: "seamark-layer",
         type: "raster",
         source: "seamark",
-        paint: {
-          "raster-opacity": 1,
-        },
+        paint: { "raster-opacity": 1 }, // możesz zmienić na np. 0.5
+      });
+
+      // 2️⃣ Dodaj WindLayer na wierzch
+      const windLayer = new WindLayer({ opacity: 0.4 }) as any;
+      windLayerRef.current = windLayer;
+
+      map.addLayer(windLayer); // undefined = na samej górze
+
+      // Obsługa gotowości danych wiatru
+      windLayer.on("sourceReady", () => {
+        readyRef.current = true;
+        console.log("✅ WindLayer source ready (dane pogodowe załadowane)");
+        const now = new Date();
+        windLayer.setAnimationTime(Math.floor(now.getTime() / 1000));
+      });
+
+      windLayer.on("animationTimeSet", () => {
+        console.log("⏱️ WindLayer animation time:", windLayer.getAnimationTimeDate());
       });
     });
   }, []);
@@ -62,25 +62,16 @@ export function useMapInstance() {
     const windLayer = windLayerRef.current;
     if (!windLayer?.setAnimationTime || !readyRef.current) return;
 
-    // DOKŁADNIE jak w przykładzie MapTiler - bez zaokrąglania!
     const tsSec = Math.floor(date.getTime() / 1000);
     windLayer.setAnimationTime(tsSec);
   };
 
-  const getWindAt = async (
-    lon: number,
-    lat: number,
-    date: Date
-  ): Promise<{ speed: number; dir: number } | null> => {
+  const getWindAt = async (lon: number, lat: number): Promise<{ speed: number; dir: number } | null> => {
     const windLayer = windLayerRef.current;
-
-    if (!windLayer) return null;
-    if (!readyRef.current) return null;
+    if (!windLayer || !readyRef.current) return null;
 
     try {
-      // Po prostu odczytaj aktualne dane z warstwy - bez zmiany czasu!
       const windData = windLayer.pickAt(lon, lat);
-
       if (!windData || windData.speedMetersPerSecond === undefined) return null;
 
       return {
