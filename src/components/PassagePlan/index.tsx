@@ -133,12 +133,16 @@ export default function PassagePlan() {
 
   const handleUndoLastSegment = async () => {
     await undoLastSegment();
-    // Sprawdź po krótkim opóźnieniu czy są jeszcze segmenty
+    
     setTimeout(() => {
       const draw = drawRef.current;
       if (!draw) return;
+
       const lines = draw.getAll().features.filter((f: any) => f.geometry.type === "LineString");
-      if (lines.length === 0) {
+      const hasSegments = lines.length > 0;
+      const hasTempPoints = tempRoutePoints.length > 0;
+
+      if (!hasSegments && !hasTempPoints) {
         enableWindPreviewMode();
       }
     }, 100);

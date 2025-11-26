@@ -61,6 +61,7 @@ export function useDrawingMode(
           try {
             draw.delete(f.id);
           } catch (e) {
+            // ignore
           }
         });
     } catch (e) {
@@ -81,14 +82,7 @@ export function useDrawingMode(
 
       const draw = drawRef.current;
       if (draw && updated.length >= 2) {
-        try {
-          draw
-            .getAll()
-            .features.filter((f) => f.properties?.temp)
-            .forEach((f) => draw.delete(f.id));
-        } catch (e) {
-          // ignore
-        }
+        removeAllTempDrawFeatures();
 
         draw.add({
           type: "Feature",
@@ -126,13 +120,13 @@ export function useDrawingMode(
           });
           clickPointsRef.current.add(pointId);
         } catch (e) {
-          console.error("Błąd dodawania punktu:", e);
+          // ignore
         }
       }
 
       return updated;
     });
-  }, [mapRef, drawRef, isDrawingMode, lastCoordRef]);
+  }, [mapRef, drawRef, isDrawingMode, lastCoordRef, removeAllTempDrawFeatures]);
 
   const finishDrawing = useCallback(() => {
     const draw = drawRef.current;
@@ -148,18 +142,12 @@ export function useDrawingMode(
       geometry: { type: "LineString", coordinates: tempRoutePoints },
     });
 
-    if (isMobile) {
-      lastCoordRef.current = tempRoutePoints[tempRoutePoints.length - 1];
-      setTempRoutePoints([lastCoordRef.current]);
-    } else {
-      setIsDrawingMode(false);
-      setTempRoutePoints([]);
-      setShowRouteActions(false);
-      setShowCursorOnMobile(false);
-    }
+    // Zawsze kontynuujemy rysowanie po dodaniu segmentu
+    lastCoordRef.current = tempRoutePoints[tempRoutePoints.length - 1];
+    setTempRoutePoints([lastCoordRef.current]);
 
     onUpdateSegments();
-  }, [drawRef, mapRef, tempRoutePoints, onUpdateSegments, lastCoordRef, isMobile, removeAllClickPoints, removeAllTempDrawFeatures]);
+  }, [drawRef, mapRef, tempRoutePoints, onUpdateSegments, lastCoordRef, removeAllClickPoints, removeAllTempDrawFeatures]);
 
   const finishWithWaypoint = useCallback(() => {
     const map = mapRef.current;
@@ -182,48 +170,41 @@ export function useDrawingMode(
       geometry: { type: "LineString", coordinates: updatedPoints },
     });
 
-    if (isMobile) {
-      lastCoordRef.current = updatedPoints[updatedPoints.length - 1];
-      setTempRoutePoints([lastCoordRef.current]);
-    } else {
-      setIsDrawingMode(false);
-      setTempRoutePoints([]);
-      setShowRouteActions(false);
-      setShowCursorOnMobile(false);
-    }
+    // Zawsze kontynuujemy rysowanie po dodaniu punktu postojowego
+    lastCoordRef.current = updatedPoints[updatedPoints.length - 1];
+    setTempRoutePoints([lastCoordRef.current]);
 
     onUpdateSegments();
-  }, [mapRef, drawRef, isDrawingMode, tempRoutePoints, onUpdateSegments, lastCoordRef, isMobile, removeAllClickPoints, removeAllTempDrawFeatures]);
+  }, [mapRef, drawRef, isDrawingMode, tempRoutePoints, onUpdateSegments, lastCoordRef, removeAllClickPoints, removeAllTempDrawFeatures]);
 
   const cancelDrawing = useCallback(() => {
     const draw = drawRef.current;
 
-    if (draw) {
-      try {
-        draw
-          .getAll()
-          .features.filter((f) => f.properties?.temp)
-          .forEach((f) => draw.delete(f.id));
-      } catch (e) {
-        // ignore
-      }
-    }
-
+    // Usuń wszystkie tymczasowe linie
+    removeAllTempDrawFeatures();
     removeAllClickPoints();
 
+    // Wyczyść stan rysowania
     setIsDrawingMode(false);
     setTempRoutePoints([]);
     setShowRouteActions(false);
     setShowCursorOnMobile(false);
 
-    const draw2 = drawRef.current;
-    if (draw2) {
-      const lines = draw2.getAll().features.filter((f) => f.geometry.type === "LineString");
-      if (lines.length === 0) {
+    // POPRAWKA: Ustaw lastCoordRef na podstawie ostatniego ZAPISANEGO segmentu
+    if (draw) {
+      const lines = draw.getAll().features.filter((f) => f.geometry.type === "LineString" && !f.properties?.temp);
+      if (lines.length > 0) {
+        // Pobierz ostatni zapisany segment (nie temp)
+        const lastLine = lines[lines.length - 1];
+        if (lastLine.geometry.type === "LineString") {
+          const coords = lastLine.geometry.coordinates as [number, number][];
+          lastCoordRef.current = coords[coords.length - 1];
+        }
+      } else {
         lastCoordRef.current = null;
       }
     }
-  }, [drawRef, removeAllClickPoints, lastCoordRef]);
+  }, [drawRef, removeAllClickPoints, removeAllTempDrawFeatures, lastCoordRef]);
 
   const exitDrawingMode = useCallback(() => {
     cancelDrawing();
@@ -232,15 +213,26 @@ export function useDrawingMode(
   const startRouteDrawing = useCallback(() => {
     setIsDrawingMode(true);
     setShowRouteActions(true);
-    setTempRoutePoints([]);
-    if (lastCoordRef.current) setTempRoutePoints([lastCoordRef.current]);
+
+    // Zawsze ustaw tempRoutePoints na podstawie lastCoordRef
+    if (lastCoordRef.current) {
+      setTempRoutePoints([lastCoordRef.current]);
+    } else {
+      setTempRoutePoints([]);
+    }
+
     if (isMobile) setShowCursorOnMobile(true);
   }, [lastCoordRef, isMobile]);
 
   const startDrawing = useCallback(() => {
     setIsDrawingMode(true);
-    setTempRoutePoints([]);
-    if (lastCoordRef.current) setTempRoutePoints([lastCoordRef.current]);
+
+    if (lastCoordRef.current) {
+      setTempRoutePoints([lastCoordRef.current]);
+    } else {
+      setTempRoutePoints([]);
+    }
+
     if (isMobile) setShowCursorOnMobile(true);
   }, [lastCoordRef, isMobile]);
 
@@ -248,22 +240,18 @@ export function useDrawingMode(
     const draw = drawRef.current;
     if (!draw) return;
 
-    try {
-      draw
-        .getAll()
-        .features.filter((f) => f.properties?.temp)
-        .forEach((f) => draw.delete(f.id));
-    } catch (e) {
-      // ignore
-    }
+    // Usuń wszystkie tymczasowe features
+    removeAllTempDrawFeatures();
 
     const hasTempPoints = tempRoutePoints.length > 1;
 
+    // Jeśli są tymczasowe punkty (nieukończony segment), cofnij ostatni punkt
     if (hasTempPoints) {
       setTempRoutePoints((prev) => {
         if (prev.length <= 1) return prev;
         const updated = prev.slice(0, -1);
 
+        // Usuń ostatni żółty punkt
         const lastPointId = `click-point-${prev.length}`;
         const map = mapRef.current;
         if (map) {
@@ -280,6 +268,7 @@ export function useDrawingMode(
           clickPointsRef.current.delete(lastPointId);
         }
 
+        // Jeśli nadal są >= 2 punkty, narysuj tymczasową linię
         if (updated.length >= 2) {
           try {
             draw.add({
@@ -298,6 +287,7 @@ export function useDrawingMode(
       return;
     }
 
+    // Jeśli nie ma tymczasowych punktów, usuń ostatni zapisany segment
     const lines = draw
       .getAll()
       .features.filter((f) => f.geometry.type === "LineString" && !f.properties?.temp);
@@ -309,14 +299,10 @@ export function useDrawingMode(
       // ignore
     }
 
-    try {
-      draw
-        .getAll()
-        .features.filter((f) => f.properties?.temp)
-        .forEach((f) => draw.delete(f.id));
-    } catch (e) {
-      // ignore
-    }
+    // Usuń ponownie temp features na wszelki wypadek
+    removeAllTempDrawFeatures();
+
+    // Zaktualizuj lastCoordRef
     if (lines.length > 1) {
       const prevLine = lines[lines.length - 2];
       if (prevLine.geometry.type === "LineString") {
@@ -330,11 +316,11 @@ export function useDrawingMode(
     if (isDrawingMode) {
       setTempRoutePoints(lastCoordRef.current ? [lastCoordRef.current] : []);
     }
-    
+
     removeAllClickPoints();
 
     await onUpdateSegments();
-  }, [drawRef, onUpdateSegments, lastCoordRef, isDrawingMode, tempRoutePoints, mapRef, removeAllClickPoints]);
+  }, [drawRef, onUpdateSegments, lastCoordRef, isDrawingMode, tempRoutePoints, mapRef, removeAllClickPoints, removeAllTempDrawFeatures]);
 
   const clearAllSegments = useCallback(() => {
     const draw = drawRef.current;
@@ -350,11 +336,12 @@ export function useDrawingMode(
     setIsDrawingMode(false);
     setShowRouteActions(false);
     setShowCursorOnMobile(false);
+    lastCoordRef.current = null;
 
     if (segmentsHook?.resetUnknownCounter) {
       segmentsHook.resetUnknownCounter();
     }
-  }, [drawRef, mapRef, onUpdateSegments, segmentsHook, removeAllClickPoints]);
+  }, [drawRef, mapRef, onUpdateSegments, segmentsHook, removeAllClickPoints, lastCoordRef]);
 
   useEffect(() => {
     const map = mapRef.current;
@@ -371,14 +358,7 @@ export function useDrawingMode(
 
         const draw = drawRef.current;
         if (draw) {
-          try {
-            draw
-              .getAll()
-              .features.filter((f) => f.properties?.temp)
-              .forEach((f) => draw.delete(f.id));
-          } catch (e) {
-            // ignore
-          }
+          removeAllTempDrawFeatures();
 
           if (newPoints.length >= 2) {
             draw.add({
@@ -418,7 +398,7 @@ export function useDrawingMode(
             });
             clickPointsRef.current.add(pointId);
           } catch (e) {
-            console.error("Błąd dodawania punktu:", e);
+            // ignore
           }
         }
 
@@ -427,18 +407,12 @@ export function useDrawingMode(
     };
 
     const updatePreview = (lng: number, lat: number) => {
+      // Nie pokazuj podglądu jeśli nie jesteśmy w trybie rysowania
       if (!isDrawingMode || tempRoutePoints.length === 0) return;
       const previewCoords: [number, number][] = [...tempRoutePoints, [lng, lat]];
       const draw = drawRef.current;
       if (draw) {
-        try {
-          draw
-            .getAll()
-            .features.filter((f) => f.properties?.temp)
-            .forEach((f) => draw.delete(f.id));
-        } catch (e) {
-          // ignore
-        }
+        removeAllTempDrawFeatures();
         try {
           draw.add({
             type: "Feature",
@@ -454,6 +428,7 @@ export function useDrawingMode(
     const handleClick = (e: any) => addPoint(e.lngLat.lng, e.lngLat.lat);
     const handleMouseMove = (e: any) => updatePreview(e.lngLat.lng, e.lngLat.lat);
     const handleMapMove = () => {
+      // Nie pokazuj podglądu jeśli nie jesteśmy w trybie rysowania
       if (!isDrawingMode || tempRoutePoints.length === 0 || !isMobile) return;
       const center = map.getCenter();
       updatePreview(center.lng, center.lat);
@@ -493,15 +468,15 @@ export function useDrawingMode(
       if (!isDrawingMode) return;
       if (e.key === "Enter" && tempRoutePoints.length >= 2) {
         e.preventDefault();
-        finishDrawing();
+        finishDrawing(); // Dodaje segment ale zostaje w trybie rysowania
       }
       if (e.key === "Escape") {
         e.preventDefault();
-        exitDrawingMode();
+        exitDrawingMode(); // Wychodzi z trybu rysowania
       }
       if (e.key === "Backspace") {
         e.preventDefault();
-        undoLastSegment();
+        undoLastSegment(); // Cofa ostatni punkt lub segment
       }
     };
     window.addEventListener("keydown", handleKeyDown);
