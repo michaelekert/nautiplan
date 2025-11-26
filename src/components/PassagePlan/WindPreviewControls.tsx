@@ -37,7 +37,6 @@ export function WindPreviewControls({
 
   return (
     <>
-      {/* Wind Info Box */}
       <div className="absolute top-4 left-1/2 -translate-x-1/2 z-50 w-[90%] max-w-xs">
         <div className="bg-slate-900/90 backdrop-blur-md rounded-xl p-4 shadow-lg border border-slate-700">
           <div className="flex items-center gap-3 mb-3">
@@ -45,7 +44,6 @@ export function WindPreviewControls({
               className="w-10 h-10 flex items-center justify-center bg-white-500 rounded-full transition-transform duration-500"
               style={windData ? { transform: `rotate(${windData.dir}deg)` } : {}}
             >
-              {/* Strzałka SVG skierowana w górę */}
               <svg
                 className="w-6 h-6 text-wite-500"
                 viewBox="0 0 24 24"
@@ -74,7 +72,7 @@ export function WindPreviewControls({
         </div>
       </div>
 
-      {/* Time Slider - Mobile */}
+      {/* Mobile */}
       <div className="md:hidden absolute bottom-[35px] left-1/2 -translate-x-1/2 z-50 w-[90%] max-w-md">
         <div className="bg-slate-900/80 backdrop-blur-md rounded-xl p-3 shadow-lg">
           <div className="flex items-center gap-2 mb-2">
@@ -102,7 +100,7 @@ export function WindPreviewControls({
         </div>
       </div>
 
-      {/* Time Slider - Desktop */}
+      {/* Desktop */}
       <div className="hidden md:block absolute bottom-6 left-1/2 -translate-x-1/2 z-50 w-1/2 min-w-[500px]">
         <div className="bg-slate-900/90 backdrop-blur-md rounded-xl p-4 shadow-lg">
           <div className="flex items-center gap-3 mb-2">

@@ -19,7 +19,6 @@ export function useWindPreviewMode(
     max: new Date(Date.now() + 4 * 24 * 60 * 60 * 1000),
   });
 
-  // Używamy typu uniwersalnego dla timerów w przeglądarce
   const updateTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const abortControllerRef = useRef<AbortController | null>(null);
   const lastUpdateRef = useRef(0);
@@ -45,7 +44,6 @@ export function useWindPreviewMode(
     }
   }, [mapRef, isWindPreviewMode, previewTime, getWindAt]);
 
-  // Aktualizacja danych przy ruchu mapy z debounce
   useEffect(() => {
     const map = mapRef.current;
     if (!map || !isWindPreviewMode) return;
@@ -64,19 +62,16 @@ export function useWindPreviewMode(
     };
   }, [mapRef, isWindPreviewMode, updateWindData]);
 
-  // Aktualizacja danych wiatru przy zmianie previewTime
   useEffect(() => {
     if (isWindPreviewMode) updateWindData();
   }, [previewTime, updateWindData, isWindPreviewMode]);
 
-  // Aktualizacja czasu w Warstwie Wiatru
   useEffect(() => {
     const windLayer = windLayerRef.current;
     if (!windLayer || !isWindPreviewMode) return;
     windLayer.setAnimationTime(Math.floor(previewTime.getTime() / 1000));
   }, [windLayerRef, previewTime, isWindPreviewMode]);
 
-  // Synchronizacja zakresu czasowego z WindLayer
   useEffect(() => {
     const windLayer = windLayerRef.current;
     if (!windLayer) return;

@@ -25,7 +25,6 @@ export default function PassagePlan() {
 
   const { mapRef, windLayerRef, setTime, getWindAt } = useMapInstance();
   
-  // Wind Preview Mode - domyślnie włączony
   const windPreview = useWindPreviewMode(mapRef, windLayerRef, getWindAt);
   const {
     isWindPreviewMode,
@@ -95,7 +94,6 @@ export default function PassagePlan() {
     }
   };
 
-  // Funkcje przełączania trybów
   const handleStartRouteDrawing = () => {
     disableWindPreviewMode();
     startRouteDrawing();
@@ -113,12 +111,10 @@ export default function PassagePlan() {
 
   const handleFinishDrawing = () => {
     finishDrawing();
-    // Na mobile zostajemy w trybie rysowania, na desktop też - użytkownik decyduje kiedy skończyć
   };
 
   const handleFinishWithWaypoint = () => {
     finishWithWaypoint();
-    // Kontynuujemy rysowanie po dodaniu punktu postojowego
   };
 
   const handleEnableWindPreview = () => {
@@ -127,13 +123,12 @@ export default function PassagePlan() {
 
   const handleClearAllSegments = () => {
     clearAllSegments();
-    // Po usunięciu wszystkich segmentów wracamy do Wind Preview Mode
     enableWindPreviewMode();
   };
 
   const handleUndoLastSegment = async () => {
     await undoLastSegment();
-    
+
     setTimeout(() => {
       const draw = drawRef.current;
       if (!draw) return;
@@ -156,7 +151,6 @@ export default function PassagePlan() {
         showCursorOnMobile={showCursorOnMobile}
       >
         
-        {/* Wind Preview Controls - wyświetlane gdy aktywny jest Wind Preview Mode */}
         {isWindPreviewMode && (
           <WindPreviewControls
             windData={windData}
@@ -166,7 +160,6 @@ export default function PassagePlan() {
           />
         )}
 
-        {/* Route Info Panel - wyświetlane gdy są segmenty LUB tempRoutePoints */}
         {!isWindPreviewMode && (segments.length > 0 || tempRoutePoints.length > 0) && (
           <RouteInfoPanel 
             segments={segments} 
@@ -179,7 +172,6 @@ export default function PassagePlan() {
           />
         )}
 
-        {/* Mobile Buttons */}
         <PassagePlanMobileButtons
           isWindPreviewMode={isWindPreviewMode}
           showRouteActions={showRouteActions}
@@ -195,7 +187,6 @@ export default function PassagePlan() {
           onClearAllSegments={handleClearAllSegments}
         />
 
-        {/* Desktop Buttons */}
         <PassagePlanDesktopButtons
           isWindPreviewMode={isWindPreviewMode}
           isDrawingMode={isDrawingMode}
@@ -207,7 +198,6 @@ export default function PassagePlan() {
           onClearAllSegments={handleClearAllSegments}
         />
 
-        {/* Timeline - wyświetlane gdy są segmenty i nie ma Wind Preview Mode */}
         
           <PassagePlanTimeline
             mapRef={mapRef}
@@ -222,7 +212,6 @@ export default function PassagePlan() {
         
       </PassagePlanMap>
 
-      {/* Desktop Controls Panel - tylko gdy nie ma Wind Preview */}
       {!isWindPreviewMode && (
         <div className="hidden md:block w-full max-w-6xl bg-slate-800 p-6 rounded-lg space-y-6 shadow-lg">
           <div className="flex flex-row flex-wrap items-end gap-1">
@@ -260,7 +249,6 @@ export default function PassagePlan() {
         </div>
       )}
 
-      {/* Mobile Drawer - tylko gdy nie ma Wind Preview */}
       {!isWindPreviewMode && (
         <PassagePlanMobileDrawer
           startDate={startDate}

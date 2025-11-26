@@ -142,7 +142,6 @@ export function useDrawingMode(
       geometry: { type: "LineString", coordinates: tempRoutePoints },
     });
 
-    // Zawsze kontynuujemy rysowanie po dodaniu segmentu
     lastCoordRef.current = tempRoutePoints[tempRoutePoints.length - 1];
     setTempRoutePoints([lastCoordRef.current]);
 
@@ -170,7 +169,6 @@ export function useDrawingMode(
       geometry: { type: "LineString", coordinates: updatedPoints },
     });
 
-    // Zawsze kontynuujemy rysowanie po dodaniu punktu postojowego
     lastCoordRef.current = updatedPoints[updatedPoints.length - 1];
     setTempRoutePoints([lastCoordRef.current]);
 
@@ -180,21 +178,17 @@ export function useDrawingMode(
   const cancelDrawing = useCallback(() => {
     const draw = drawRef.current;
 
-    // Usuń wszystkie tymczasowe linie
     removeAllTempDrawFeatures();
     removeAllClickPoints();
 
-    // Wyczyść stan rysowania
     setIsDrawingMode(false);
     setTempRoutePoints([]);
     setShowRouteActions(false);
     setShowCursorOnMobile(false);
 
-    // POPRAWKA: Ustaw lastCoordRef na podstawie ostatniego ZAPISANEGO segmentu
     if (draw) {
       const lines = draw.getAll().features.filter((f) => f.geometry.type === "LineString" && !f.properties?.temp);
       if (lines.length > 0) {
-        // Pobierz ostatni zapisany segment (nie temp)
         const lastLine = lines[lines.length - 1];
         if (lastLine.geometry.type === "LineString") {
           const coords = lastLine.geometry.coordinates as [number, number][];
@@ -214,7 +208,6 @@ export function useDrawingMode(
     setIsDrawingMode(true);
     setShowRouteActions(true);
 
-    // Zawsze ustaw tempRoutePoints na podstawie lastCoordRef
     if (lastCoordRef.current) {
       setTempRoutePoints([lastCoordRef.current]);
     } else {
@@ -240,18 +233,15 @@ export function useDrawingMode(
     const draw = drawRef.current;
     if (!draw) return;
 
-    // Usuń wszystkie tymczasowe features
     removeAllTempDrawFeatures();
 
     const hasTempPoints = tempRoutePoints.length > 1;
 
-    // Jeśli są tymczasowe punkty (nieukończony segment), cofnij ostatni punkt
     if (hasTempPoints) {
       setTempRoutePoints((prev) => {
         if (prev.length <= 1) return prev;
         const updated = prev.slice(0, -1);
 
-        // Usuń ostatni żółty punkt
         const lastPointId = `click-point-${prev.length}`;
         const map = mapRef.current;
         if (map) {
@@ -268,7 +258,6 @@ export function useDrawingMode(
           clickPointsRef.current.delete(lastPointId);
         }
 
-        // Jeśli nadal są >= 2 punkty, narysuj tymczasową linię
         if (updated.length >= 2) {
           try {
             draw.add({
@@ -287,7 +276,6 @@ export function useDrawingMode(
       return;
     }
 
-    // Jeśli nie ma tymczasowych punktów, usuń ostatni zapisany segment
     const lines = draw
       .getAll()
       .features.filter((f) => f.geometry.type === "LineString" && !f.properties?.temp);
@@ -299,10 +287,8 @@ export function useDrawingMode(
       // ignore
     }
 
-    // Usuń ponownie temp features na wszelki wypadek
     removeAllTempDrawFeatures();
 
-    // Zaktualizuj lastCoordRef
     if (lines.length > 1) {
       const prevLine = lines[lines.length - 2];
       if (prevLine.geometry.type === "LineString") {
@@ -407,7 +393,6 @@ export function useDrawingMode(
     };
 
     const updatePreview = (lng: number, lat: number) => {
-      // Nie pokazuj podglądu jeśli nie jesteśmy w trybie rysowania
       if (!isDrawingMode || tempRoutePoints.length === 0) return;
       const previewCoords: [number, number][] = [...tempRoutePoints, [lng, lat]];
       const draw = drawRef.current;
@@ -428,7 +413,6 @@ export function useDrawingMode(
     const handleClick = (e: any) => addPoint(e.lngLat.lng, e.lngLat.lat);
     const handleMouseMove = (e: any) => updatePreview(e.lngLat.lng, e.lngLat.lat);
     const handleMapMove = () => {
-      // Nie pokazuj podglądu jeśli nie jesteśmy w trybie rysowania
       if (!isDrawingMode || tempRoutePoints.length === 0 || !isMobile) return;
       const center = map.getCenter();
       updatePreview(center.lng, center.lat);
@@ -468,15 +452,15 @@ export function useDrawingMode(
       if (!isDrawingMode) return;
       if (e.key === "Enter" && tempRoutePoints.length >= 2) {
         e.preventDefault();
-        finishDrawing(); // Dodaje segment ale zostaje w trybie rysowania
+        finishDrawing();
       }
       if (e.key === "Escape") {
         e.preventDefault();
-        exitDrawingMode(); // Wychodzi z trybu rysowania
+        exitDrawingMode();
       }
       if (e.key === "Backspace") {
         e.preventDefault();
-        undoLastSegment(); // Cofa ostatni punkt lub segment
+        undoLastSegment();
       }
     };
     window.addEventListener("keydown", handleKeyDown);

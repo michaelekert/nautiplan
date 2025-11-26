@@ -64,7 +64,6 @@ export function PassagePlanTimeline({
     return null;
   };
 
-  // Czyść czerwoną kropkę gdy nie ma segmentów
   useEffect(() => {
     const map = mapRef.current;
     if (!map) return;

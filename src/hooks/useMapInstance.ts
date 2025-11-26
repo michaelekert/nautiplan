@@ -24,7 +24,6 @@ export function useMapInstance() {
     mapRef.current = map;
 
     map.on("load", () => {
-      // 1️⃣ Dodaj Seamark najpierw
       map.addSource("seamark", {
         type: "raster",
         tiles: ["https://tiles.openseamap.org/seamark/{z}/{x}/{y}.png"],
@@ -35,16 +34,14 @@ export function useMapInstance() {
         id: "seamark-layer",
         type: "raster",
         source: "seamark",
-        paint: { "raster-opacity": 1 }, // możesz zmienić na np. 0.5
+        paint: { "raster-opacity": 1 },
       });
 
-      // 2️⃣ Dodaj WindLayer na wierzch
       const windLayer = new WindLayer({ opacity: 0.4 }) as any;
       windLayerRef.current = windLayer;
 
-      map.addLayer(windLayer); // undefined = na samej górze
+      map.addLayer(windLayer);
 
-      // Obsługa gotowości danych wiatru
       windLayer.on("sourceReady", () => {
         readyRef.current = true;
         console.log("✅ WindLayer source ready (dane pogodowe załadowane)");

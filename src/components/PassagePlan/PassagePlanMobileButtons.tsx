@@ -55,14 +55,12 @@ export function PassagePlanMobileButtons({
 
   return (
     <div className="md:hidden fixed left-1/2 bottom-[200px] -translate-x-1/2 z-50">
-      {/* Tryb Wind Preview */}
       {isWindPreviewMode && (
         <Button onClick={onStartRouteDrawing} className="bg-slate-900 hover:bg-blue-700 px-2 py-2">
           {t("Draw route")}
         </Button>
       )}
 
-      {/* Przyciski rysowania */}
       {!isWindPreviewMode && showRouteActions && (
         <div className="flex gap-2 items-center justify-center">
           {iconButton(onAddPointAtCenter, PlusCircle, t("Add point"), "bg-blue-600 hover:bg-blue-700")}
@@ -84,7 +82,6 @@ export function PassagePlanMobileButtons({
         </div>
       )}
 
-      {/* Kontynuacja trasy / Wind Preview jeśli są segmenty, ale brak aktywnego rysowania */}
       {!isWindPreviewMode && !showRouteActions && segmentsCount > 0 && (
         <div className="flex gap-2">
           <Button

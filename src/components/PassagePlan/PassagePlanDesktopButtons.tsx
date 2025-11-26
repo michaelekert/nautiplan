@@ -25,7 +25,6 @@ export function PassagePlanDesktopButtons({
 
   return (
     <div className="hidden md:flex flex-col items-center gap-3 absolute left-1/2 bottom-30 -translate-x-1/2 z-50">
-      {/* Przycisk "Draw route" w Wind Preview Mode */}
       {isWindPreviewMode && (
         <Button 
           onClick={onStartRouteDrawing} 
@@ -36,7 +35,6 @@ export function PassagePlanDesktopButtons({
         </Button>
       )}
 
-      {/* Wskazówki podczas rysowania */}
       {!isWindPreviewMode && isDrawingMode && tempRoutePointsCount > 0 && (
         <div className="bg-slate-900/90 text-white px-4 py-2 rounded-lg text-sm shadow-lg">
           {tempRoutePointsCount >= 2 ? (
@@ -51,7 +49,6 @@ export function PassagePlanDesktopButtons({
         </div>
       )}
 
-      {/* NOWE: Przyciski gdy są segmenty ale nie ma aktywnego rysowania */}
       {!isWindPreviewMode && segmentsCount >= 0 && !isDrawingMode && (
         <div className="flex gap-2">
           <Button 
