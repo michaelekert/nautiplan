@@ -1,12 +1,14 @@
 import { Button } from "@/components/ui/button";
-import { PlusCircle, Flag, XCircle, CornerUpLeft } from "lucide-react";
+import { PlusCircle, Flag, XCircle, CornerUpLeft, Wind, Route } from "lucide-react";
 import { useTranslation } from "react-i18next";
 
 interface PassagePlanMobileButtonsProps {
+  isWindPreviewMode: boolean;
   showRouteActions: boolean;
   segmentsCount: number;
   tempRoutePointsCount: number;
   onStartRouteDrawing: () => void;
+  onEnableWindPreview: () => void;
   onAddPointAtCenter: () => void;
   onFinishDrawing: () => void;
   onFinishWithWaypoint?: () => void;
@@ -16,10 +18,12 @@ interface PassagePlanMobileButtonsProps {
 }
 
 export function PassagePlanMobileButtons({
+  isWindPreviewMode,
   showRouteActions,
   segmentsCount,
   tempRoutePointsCount,
   onStartRouteDrawing,
+  onEnableWindPreview,
   onAddPointAtCenter,
   onFinishDrawing,
   onFinishWithWaypoint,
@@ -47,15 +51,17 @@ export function PassagePlanMobileButtons({
   );
 
   const isAddStopDisabled = tempRoutePointsCount < 1;
-  const isUndoDisabled = segmentsCount <= 0;
+  const isUndoDisabled = tempRoutePointsCount <= 0;
 
   return (
     <div className="md:hidden fixed left-1/2 bottom-[200px] -translate-x-1/2 z-50">
-      {!showRouteActions ? (
+      {isWindPreviewMode && (
         <Button onClick={onStartRouteDrawing} className="bg-slate-900 hover:bg-blue-700 px-2 py-2">
           {t("Draw route")}
         </Button>
-      ) : (
+      )}
+
+      {!isWindPreviewMode && showRouteActions && (
         <div className="flex gap-2 items-center justify-center">
           {iconButton(onAddPointAtCenter, PlusCircle, t("Add point"), "bg-blue-600 hover:bg-blue-700")}
           {iconButton(onCancelDrawing, XCircle, t("Exit"), "bg-red-600 hover:bg-red-700")}
@@ -73,6 +79,25 @@ export function PassagePlanMobileButtons({
             "bg-orange-600 hover:bg-orange-700",
             isUndoDisabled
           )}
+        </div>
+      )}
+
+      {!isWindPreviewMode && !showRouteActions && segmentsCount > 0 && (
+        <div className="flex gap-2">
+          <Button
+            onClick={onStartRouteDrawing}
+            className="bg-blue-600 hover:bg-blue-700 px-4 py-2 text-base font-semibold flex items-center gap-2"
+          >
+            <Route className="w-5 h-5" />
+            {t("Continue route")}
+          </Button>
+          <Button
+            onClick={onEnableWindPreview}
+            className="bg-slate-600 hover:bg-slate-700 px-4 py-2 text-base font-semibold flex items-center gap-2"
+          >
+            <Wind className="w-5 h-5" />
+            {t("Wind preview")}
+          </Button>
         </div>
       )}
     </div>

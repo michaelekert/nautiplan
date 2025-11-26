@@ -26,12 +26,6 @@ export function useDrawingMode(
     return () => window.removeEventListener("resize", checkMobile);
   }, []);
 
-  useEffect(() => {
-    if (!isMobile && !isDrawingMode) {
-      setIsDrawingMode(true);
-    }
-  }, [isMobile, isDrawingMode]);
-
   const removeAllClickPoints = useCallback(() => {
     const map = mapRef.current;
     if (!map) return;
@@ -42,13 +36,14 @@ export function useDrawingMode(
           map.removeLayer(pointId);
         }
       } catch (e) {
+        // ignore
       }
       try {
         if (map.getSource(pointId)) {
           map.removeSource(pointId);
         }
       } catch (e) {
-        console.error("Błąd usuwania źródła:", pointId, e);
+        // ignore
       }
     });
 
@@ -66,6 +61,7 @@ export function useDrawingMode(
           try {
             draw.delete(f.id);
           } catch (e) {
+            // ignore
           }
         });
     } catch (e) {
@@ -86,14 +82,7 @@ export function useDrawingMode(
 
       const draw = drawRef.current;
       if (draw && updated.length >= 2) {
-        try {
-          draw
-            .getAll()
-            .features.filter((f) => f.properties?.temp)
-            .forEach((f) => draw.delete(f.id));
-        } catch (e) {
-          // ignore
-        }
+        removeAllTempDrawFeatures();
 
         draw.add({
           type: "Feature",
@@ -131,13 +120,13 @@ export function useDrawingMode(
           });
           clickPointsRef.current.add(pointId);
         } catch (e) {
-          console.error("Błąd dodawania punktu:", e);
+          // ignore
         }
       }
 
       return updated;
     });
-  }, [mapRef, drawRef, isDrawingMode, lastCoordRef]);
+  }, [mapRef, drawRef, isDrawingMode, lastCoordRef, removeAllTempDrawFeatures]);
 
   const finishDrawing = useCallback(() => {
     const draw = drawRef.current;
@@ -145,7 +134,6 @@ export function useDrawingMode(
     if (!draw || !map || tempRoutePoints.length < 2) return;
 
     removeAllTempDrawFeatures();
-
     removeAllClickPoints();
 
     draw.add({
@@ -154,18 +142,11 @@ export function useDrawingMode(
       geometry: { type: "LineString", coordinates: tempRoutePoints },
     });
 
-    if (isMobile) {
-      lastCoordRef.current = tempRoutePoints[tempRoutePoints.length - 1];
-      setTempRoutePoints([lastCoordRef.current]);
-    } else {
-      setIsDrawingMode(false);
-      setTempRoutePoints([]);
-      setShowRouteActions(false);
-      setShowCursorOnMobile(false);
-    }
+    lastCoordRef.current = tempRoutePoints[tempRoutePoints.length - 1];
+    setTempRoutePoints([lastCoordRef.current]);
 
     onUpdateSegments();
-  }, [drawRef, mapRef, tempRoutePoints, onUpdateSegments, lastCoordRef, isMobile, removeAllClickPoints, removeAllTempDrawFeatures]);
+  }, [drawRef, mapRef, tempRoutePoints, onUpdateSegments, lastCoordRef, removeAllClickPoints, removeAllTempDrawFeatures]);
 
   const finishWithWaypoint = useCallback(() => {
     const map = mapRef.current;
@@ -180,7 +161,6 @@ export function useDrawingMode(
     if (!draw) return;
 
     removeAllTempDrawFeatures();
-
     removeAllClickPoints();
 
     draw.add({
@@ -189,33 +169,16 @@ export function useDrawingMode(
       geometry: { type: "LineString", coordinates: updatedPoints },
     });
 
-    if (isMobile) {
-      lastCoordRef.current = updatedPoints[updatedPoints.length - 1];
-      setTempRoutePoints([lastCoordRef.current]);
-    } else {
-      setIsDrawingMode(false);
-      setTempRoutePoints([]);
-      setShowRouteActions(false);
-      setShowCursorOnMobile(false);
-    }
+    lastCoordRef.current = updatedPoints[updatedPoints.length - 1];
+    setTempRoutePoints([lastCoordRef.current]);
 
     onUpdateSegments();
-  }, [mapRef, drawRef, isDrawingMode, tempRoutePoints, onUpdateSegments, lastCoordRef, isMobile, removeAllClickPoints, removeAllTempDrawFeatures]);
+  }, [mapRef, drawRef, isDrawingMode, tempRoutePoints, onUpdateSegments, lastCoordRef, removeAllClickPoints, removeAllTempDrawFeatures]);
 
   const cancelDrawing = useCallback(() => {
     const draw = drawRef.current;
 
-    if (draw) {
-      try {
-        draw
-          .getAll()
-          .features.filter((f) => f.properties?.temp)
-          .forEach((f) => draw.delete(f.id));
-      } catch (e) {
-        // ignore
-      }
-    }
-
+    removeAllTempDrawFeatures();
     removeAllClickPoints();
 
     setIsDrawingMode(false);
@@ -223,14 +186,19 @@ export function useDrawingMode(
     setShowRouteActions(false);
     setShowCursorOnMobile(false);
 
-    const draw2 = drawRef.current;
-    if (draw2) {
-      const lines = draw2.getAll().features.filter((f) => f.geometry.type === "LineString");
-      if (lines.length === 0) {
+    if (draw) {
+      const lines = draw.getAll().features.filter((f) => f.geometry.type === "LineString" && !f.properties?.temp);
+      if (lines.length > 0) {
+        const lastLine = lines[lines.length - 1];
+        if (lastLine.geometry.type === "LineString") {
+          const coords = lastLine.geometry.coordinates as [number, number][];
+          lastCoordRef.current = coords[coords.length - 1];
+        }
+      } else {
         lastCoordRef.current = null;
       }
     }
-  }, [drawRef, removeAllClickPoints, lastCoordRef]);
+  }, [drawRef, removeAllClickPoints, removeAllTempDrawFeatures, lastCoordRef]);
 
   const exitDrawingMode = useCallback(() => {
     cancelDrawing();
@@ -239,15 +207,25 @@ export function useDrawingMode(
   const startRouteDrawing = useCallback(() => {
     setIsDrawingMode(true);
     setShowRouteActions(true);
-    setTempRoutePoints([]);
-    if (lastCoordRef.current) setTempRoutePoints([lastCoordRef.current]);
+
+    if (lastCoordRef.current) {
+      setTempRoutePoints([lastCoordRef.current]);
+    } else {
+      setTempRoutePoints([]);
+    }
+
     if (isMobile) setShowCursorOnMobile(true);
   }, [lastCoordRef, isMobile]);
 
   const startDrawing = useCallback(() => {
     setIsDrawingMode(true);
-    setTempRoutePoints([]);
-    if (lastCoordRef.current) setTempRoutePoints([lastCoordRef.current]);
+
+    if (lastCoordRef.current) {
+      setTempRoutePoints([lastCoordRef.current]);
+    } else {
+      setTempRoutePoints([]);
+    }
+
     if (isMobile) setShowCursorOnMobile(true);
   }, [lastCoordRef, isMobile]);
 
@@ -255,14 +233,7 @@ export function useDrawingMode(
     const draw = drawRef.current;
     if (!draw) return;
 
-    try {
-      draw
-        .getAll()
-        .features.filter((f) => f.properties?.temp)
-        .forEach((f) => draw.delete(f.id));
-    } catch (e) {
-      // ignore
-    }
+    removeAllTempDrawFeatures();
 
     const hasTempPoints = tempRoutePoints.length > 1;
 
@@ -316,14 +287,8 @@ export function useDrawingMode(
       // ignore
     }
 
-    try {
-      draw
-        .getAll()
-        .features.filter((f) => f.properties?.temp)
-        .forEach((f) => draw.delete(f.id));
-    } catch (e) {
-      // ignore
-    }
+    removeAllTempDrawFeatures();
+
     if (lines.length > 1) {
       const prevLine = lines[lines.length - 2];
       if (prevLine.geometry.type === "LineString") {
@@ -337,11 +302,11 @@ export function useDrawingMode(
     if (isDrawingMode) {
       setTempRoutePoints(lastCoordRef.current ? [lastCoordRef.current] : []);
     }
-    
+
     removeAllClickPoints();
 
     await onUpdateSegments();
-  }, [drawRef, onUpdateSegments, lastCoordRef, isDrawingMode, tempRoutePoints, mapRef, removeAllClickPoints]);
+  }, [drawRef, onUpdateSegments, lastCoordRef, isDrawingMode, tempRoutePoints, mapRef, removeAllClickPoints, removeAllTempDrawFeatures]);
 
   const clearAllSegments = useCallback(() => {
     const draw = drawRef.current;
@@ -357,11 +322,12 @@ export function useDrawingMode(
     setIsDrawingMode(false);
     setShowRouteActions(false);
     setShowCursorOnMobile(false);
+    lastCoordRef.current = null;
 
     if (segmentsHook?.resetUnknownCounter) {
       segmentsHook.resetUnknownCounter();
     }
-  }, [drawRef, mapRef, onUpdateSegments, segmentsHook, removeAllClickPoints]);
+  }, [drawRef, mapRef, onUpdateSegments, segmentsHook, removeAllClickPoints, lastCoordRef]);
 
   useEffect(() => {
     const map = mapRef.current;
@@ -378,14 +344,7 @@ export function useDrawingMode(
 
         const draw = drawRef.current;
         if (draw) {
-          try {
-            draw
-              .getAll()
-              .features.filter((f) => f.properties?.temp)
-              .forEach((f) => draw.delete(f.id));
-          } catch (e) {
-            // ignore
-          }
+          removeAllTempDrawFeatures();
 
           if (newPoints.length >= 2) {
             draw.add({
@@ -425,7 +384,7 @@ export function useDrawingMode(
             });
             clickPointsRef.current.add(pointId);
           } catch (e) {
-            console.error("Błąd dodawania punktu:", e);
+            // ignore
           }
         }
 
@@ -438,14 +397,7 @@ export function useDrawingMode(
       const previewCoords: [number, number][] = [...tempRoutePoints, [lng, lat]];
       const draw = drawRef.current;
       if (draw) {
-        try {
-          draw
-            .getAll()
-            .features.filter((f) => f.properties?.temp)
-            .forEach((f) => draw.delete(f.id));
-        } catch (e) {
-          // ignore
-        }
+        removeAllTempDrawFeatures();
         try {
           draw.add({
             type: "Feature",
@@ -492,18 +444,28 @@ export function useDrawingMode(
         }
       };
     }
-  }, [isDrawingMode, mapRef, drawRef, lastCoordRef, tempRoutePoints, isMobile]);
+  }, [isDrawingMode, mapRef, drawRef, lastCoordRef, tempRoutePoints, isMobile, removeAllTempDrawFeatures]);
 
-  // Enter / Escape
+  // Enter / Escape / Backspace
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (!isDrawingMode) return;
-      if (e.key === "Enter" && tempRoutePoints.length >= 2) finishDrawing();
-      if (e.key === "Escape") exitDrawingMode();
+      if (e.key === "Enter" && tempRoutePoints.length >= 2) {
+        e.preventDefault();
+        finishDrawing();
+      }
+      if (e.key === "Escape") {
+        e.preventDefault();
+        exitDrawingMode();
+      }
+      if (e.key === "Backspace") {
+        e.preventDefault();
+        undoLastSegment();
+      }
     };
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [isDrawingMode, tempRoutePoints, finishDrawing, exitDrawingMode]);
+  }, [isDrawingMode, tempRoutePoints, finishDrawing, exitDrawingMode, undoLastSegment]);
 
   return {
     isDrawingMode,

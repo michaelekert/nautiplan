@@ -8,6 +8,7 @@ interface Props {
   segments: import("@/types/passagePlan").Segment[];
   startDate: string;
   setTime: (date: Date) => void;
+  isWindPreviewMode?: boolean;
   getWindAt: (
     lon: number,
     lat: number,
@@ -24,6 +25,7 @@ export function PassagePlanTimeline({
   setTime,
   getWindAt,
   onWindInfoChange,
+  isWindPreviewMode,
 }: Props) {
   const [simTime, setSimTime] = useState<Date | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
@@ -68,13 +70,25 @@ export function PassagePlanTimeline({
     const id = "sim-position";
 
     if (segments.length === 0) {
-      if (map.getLayer(id)) map.removeLayer(id);
-      if (map.getSource(id)) map.removeSource(id);
+      if (map.getLayer(id)) {
+        try {
+          map.removeLayer(id);
+        } catch (e) {
+          console.error("Error removing layer:", e);
+        }
+      }
+      if (map.getSource(id)) {
+        try {
+          map.removeSource(id);
+        } catch (e) {
+          console.error("Error removing source:", e);
+        }
+      }
       setSimTime(null);
       setWindInfo(null);
       onWindInfoChange?.(null);
     }
-  }, [segments]);
+  }, [segments, mapRef, onWindInfoChange]);
 
   useEffect(() => {
     const map = mapRef.current;
@@ -122,7 +136,7 @@ export function PassagePlanTimeline({
       setWindInfo(info);
       onWindInfoChange?.(info);
     });
-  }, [simTime, segments]);
+  }, [simTime, segments, startDate, setTime, getWindAt, onWindInfoChange, mapRef, drawRef]);
 
   useEffect(() => {
     if (!isPlaying || segments.length === 0 || totalTravelTime === 0) return;
@@ -150,6 +164,8 @@ export function PassagePlanTimeline({
   }, [simTime, totalTravelTime, startDate]);
 
   if (segments.length === 0) return null;
+
+  if (isWindPreviewMode) return null;
 
   return (
     <>
@@ -200,7 +216,7 @@ export function PassagePlanTimeline({
       <div
         className="
           hidden md:flex flex-col items-center gap-2
-          absolute bottom-25 left-1/2 -translate-x-1/2 z-50
+          absolute bottom-10 left-1/2 -translate-x-1/2 z-50
           w-1/2 bg-slate-900/90 backdrop-blur-md p-3 rounded-xl shadow-lg
           text-gray-200
         "

@@ -30,11 +30,13 @@ export function RouteInfoPanel({
   const [isExpanded, setIsExpanded] = useState(false);
   const [cursorPos, setCursorPos] = useState<[number, number] | null>(null);
 
+  // całkowita odległość segmentów
   const totalDistanceNm = useMemo(
     () => segments.reduce((sum, seg) => sum + seg.distanceNm, 0),
     [segments]
   );
 
+  // funkcja pobierania współrzędnych segmentu
   const getSegmentCoordinates = useCallback((segmentId: string) => {
     const draw = drawRef.current;
     if (!draw) return null;
@@ -44,6 +46,7 @@ export function RouteInfoPanel({
     return { start: coords[0], end: coords[coords.length - 1] };
   }, [drawRef]);
 
+  // lista unikalnych punktów
   const points = useMemo(() => {
     const arr: { name: string; lat: number; lon: number }[] = [];
     segments.forEach((segment) => {
@@ -58,6 +61,7 @@ export function RouteInfoPanel({
     return [...unique.values()];
   }, [segments, getSegmentCoordinates]);
 
+  // odległość ostatniego segmentu
   const lastSegmentDistanceNm = useMemo(() => {
     if (!isDrawingMode || !cursorPos) return 0;
 
@@ -106,57 +110,34 @@ export function RouteInfoPanel({
     return `${h}h ${m}m`;
   }, [timeToCursorHours]);
 
+  // listener ruchu kursora
   useEffect(() => {
     const map = mapRef.current;
-    
-    if (typeof window === 'undefined' || !map) return;
+    if (!map) return;
 
-    const setupListeners = () => {
-      const mapInstance = mapRef.current;
-      if (!mapInstance) return;
-
-      const handleMouseMove = (e: any) => {
-        if (isDrawingMode) {
-          setCursorPos([e.lngLat.lng, e.lngLat.lat]);
-        }
-      };
-
-      const handleMapMove = () => {
-        if (isDrawingMode && mapInstance) {
-          const center = mapInstance.getCenter();
-          setCursorPos([center.lng, center.lat]);
-        }
-      };
-
-      mapInstance.on("mousemove", handleMouseMove);
-      mapInstance.on("move", handleMapMove);
-
-      return () => {
-        if (mapInstance) {
-          mapInstance.off("mousemove", handleMouseMove);
-          mapInstance.off("move", handleMapMove);
-        }
-      };
+    const handleMouseMove = (e: any) => {
+      if (isDrawingMode) setCursorPos([e.lngLat.lng, e.lngLat.lat]);
     };
 
-    if (map.loaded && map.loaded()) {
-      return setupListeners();
-    } else {
-      const onLoad = () => {
-        setupListeners();
-      };
-      map.once('load', onLoad);
-      
-      return () => {
-        map.off('load', onLoad);
-      };
-    }
+    const handleMapMove = () => {
+      if (isDrawingMode) {
+        const center = map.getCenter();
+        setCursorPos([center.lng, center.lat]);
+      }
+    };
+
+    map.on("mousemove", handleMouseMove);
+    map.on("move", handleMapMove);
+
+    return () => {
+      map.off("mousemove", handleMouseMove);
+      map.off("move", handleMapMove);
+    };
   }, [mapRef, isDrawingMode]);
 
+  // reset kursora przy wyłączeniu rysowania
   useEffect(() => {
-    if (!isDrawingMode) {
-      setCursorPos(null);
-    }
+    if (!isDrawingMode) setCursorPos(null);
   }, [isDrawingMode]);
 
   if (segments.length === 0 && tempRoutePoints.length === 0) return null;
