@@ -43,7 +43,7 @@ export function useDrawingMode(
           map.removeSource(pointId);
         }
       } catch (e) {
-        console.error("Błąd usuwania źródła:", pointId, e);
+        // ignore
       }
     });
 
@@ -140,7 +140,6 @@ export function useDrawingMode(
     if (!draw || !map || tempRoutePoints.length < 2) return;
 
     removeAllTempDrawFeatures();
-
     removeAllClickPoints();
 
     draw.add({
@@ -175,7 +174,6 @@ export function useDrawingMode(
     if (!draw) return;
 
     removeAllTempDrawFeatures();
-
     removeAllClickPoints();
 
     draw.add({
@@ -429,7 +427,6 @@ export function useDrawingMode(
     };
 
     const updatePreview = (lng: number, lat: number) => {
-      // Nie pokazuj podglądu jeśli nie jesteśmy w trybie rysowania
       if (!isDrawingMode || tempRoutePoints.length === 0) return;
       const previewCoords: [number, number][] = [...tempRoutePoints, [lng, lat]];
       const draw = drawRef.current;
@@ -457,7 +454,6 @@ export function useDrawingMode(
     const handleClick = (e: any) => addPoint(e.lngLat.lng, e.lngLat.lat);
     const handleMouseMove = (e: any) => updatePreview(e.lngLat.lng, e.lngLat.lat);
     const handleMapMove = () => {
-      // Nie pokazuj podglądu jeśli nie jesteśmy w trybie rysowania
       if (!isDrawingMode || tempRoutePoints.length === 0 || !isMobile) return;
       const center = map.getCenter();
       updatePreview(center.lng, center.lat);
@@ -489,19 +485,19 @@ export function useDrawingMode(
         }
       };
     }
-  }, [isDrawingMode, mapRef, drawRef, lastCoordRef, tempRoutePoints, isMobile]);
+  }, [isDrawingMode, mapRef, drawRef, lastCoordRef, tempRoutePoints, isMobile, removeAllTempDrawFeatures]);
 
-  // Enter / Escape - Enter tylko dodaje segment, Escape wychodzi z trybu
+  // Enter / Escape / Backspace
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (!isDrawingMode) return;
       if (e.key === "Enter" && tempRoutePoints.length >= 2) {
         e.preventDefault();
-        finishDrawing(); // Dodaje segment ale zostaje w trybie rysowania
+        finishDrawing();
       }
       if (e.key === "Escape") {
         e.preventDefault();
-        exitDrawingMode(); // Wychodzi z trybu rysowania
+        exitDrawingMode();
       }
       if (e.key === "Backspace") {
         e.preventDefault();
@@ -510,7 +506,7 @@ export function useDrawingMode(
     };
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [isDrawingMode, tempRoutePoints, finishDrawing, exitDrawingMode]);
+  }, [isDrawingMode, tempRoutePoints, finishDrawing, exitDrawingMode, undoLastSegment]);
 
   return {
     isDrawingMode,

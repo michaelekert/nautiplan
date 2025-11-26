@@ -8,6 +8,7 @@ interface Props {
   segments: import("@/types/passagePlan").Segment[];
   startDate: string;
   setTime: (date: Date) => void;
+  isWindPreviewMode?: boolean;
   getWindAt: (
     lon: number,
     lat: number,
@@ -24,6 +25,7 @@ export function PassagePlanTimeline({
   setTime,
   getWindAt,
   onWindInfoChange,
+  isWindPreviewMode,
 }: Props) {
   const [simTime, setSimTime] = useState<Date | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
@@ -163,6 +165,8 @@ export function PassagePlanTimeline({
   }, [simTime, totalTravelTime, startDate]);
 
   if (segments.length === 0) return null;
+
+  if (isWindPreviewMode) return null;
 
   return (
     <>

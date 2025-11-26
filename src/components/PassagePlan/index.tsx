@@ -204,7 +204,7 @@ export default function PassagePlan() {
         />
 
         {/* Timeline - wyświetlane gdy są segmenty i nie ma Wind Preview Mode */}
-        {!isWindPreviewMode && segments.length > 0 && (
+        
           <PassagePlanTimeline
             mapRef={mapRef}
             drawRef={drawRef}
@@ -213,8 +213,9 @@ export default function PassagePlan() {
             setTime={setTime}
             getWindAt={getWindAt}
             onWindInfoChange={() => {}}
+            isWindPreviewMode={isWindPreviewMode}
           />
-        )}
+        
       </PassagePlanMap>
 
       {/* Desktop Controls Panel - tylko gdy nie ma Wind Preview */}
