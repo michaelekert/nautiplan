@@ -26,9 +26,6 @@ export function useDrawingMode(
     return () => window.removeEventListener("resize", checkMobile);
   }, []);
 
-  // USUNIĘTE: automatyczne włączanie trybu rysowania na desktopie
-  // Teraz tryb rysowania włącza się tylko manualnie
-
   const removeAllClickPoints = useCallback(() => {
     const map = mapRef.current;
     if (!map) return;
@@ -432,6 +429,7 @@ export function useDrawingMode(
     };
 
     const updatePreview = (lng: number, lat: number) => {
+      // Nie pokazuj podglądu jeśli nie jesteśmy w trybie rysowania
       if (!isDrawingMode || tempRoutePoints.length === 0) return;
       const previewCoords: [number, number][] = [...tempRoutePoints, [lng, lat]];
       const draw = drawRef.current;
@@ -459,6 +457,7 @@ export function useDrawingMode(
     const handleClick = (e: any) => addPoint(e.lngLat.lng, e.lngLat.lat);
     const handleMouseMove = (e: any) => updatePreview(e.lngLat.lng, e.lngLat.lat);
     const handleMapMove = () => {
+      // Nie pokazuj podglądu jeśli nie jesteśmy w trybie rysowania
       if (!isDrawingMode || tempRoutePoints.length === 0 || !isMobile) return;
       const center = map.getCenter();
       updatePreview(center.lng, center.lat);
@@ -492,12 +491,22 @@ export function useDrawingMode(
     }
   }, [isDrawingMode, mapRef, drawRef, lastCoordRef, tempRoutePoints, isMobile]);
 
-  // Enter / Escape
+  // Enter / Escape - Enter tylko dodaje segment, Escape wychodzi z trybu
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (!isDrawingMode) return;
-      if (e.key === "Enter" && tempRoutePoints.length >= 2) finishDrawing();
-      if (e.key === "Escape") exitDrawingMode();
+      if (e.key === "Enter" && tempRoutePoints.length >= 2) {
+        e.preventDefault();
+        finishDrawing(); // Dodaje segment ale zostaje w trybie rysowania
+      }
+      if (e.key === "Escape") {
+        e.preventDefault();
+        exitDrawingMode(); // Wychodzi z trybu rysowania
+      }
+      if (e.key === "Backspace") {
+        e.preventDefault();
+        undoLastSegment();
+      }
     };
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);

@@ -113,13 +113,12 @@ export default function PassagePlan() {
 
   const handleFinishDrawing = () => {
     finishDrawing();
-    // POPRAWKA: Na mobile zostajemy w trybie rysowania, na desktop NIE wracamy automatycznie
-    // Użytkownik sam musi kliknąć "Wind preview"
+    // Na mobile zostajemy w trybie rysowania, na desktop też - użytkownik decyduje kiedy skończyć
   };
 
   const handleFinishWithWaypoint = () => {
     finishWithWaypoint();
-    // POPRAWKA: Na mobile zostajemy w trybie rysowania, na desktop NIE wracamy automatycznie
+    // Kontynuujemy rysowanie po dodaniu punktu postojowego
   };
 
   const handleEnableWindPreview = () => {
@@ -128,15 +127,18 @@ export default function PassagePlan() {
 
   const handleClearAllSegments = () => {
     clearAllSegments();
-    // POPRAWKA: Po usunięciu wszystkich segmentów wracamy do Wind Preview Mode
+    // Po usunięciu wszystkich segmentów wracamy do Wind Preview Mode
     enableWindPreviewMode();
   };
 
-  const handleUndoLastSegment = () => {
-    undoLastSegment();
-    // POPRAWKA: Jeśli po cofnięciu nie ma już segmentów, wracamy do Wind Preview
+  const handleUndoLastSegment = async () => {
+    await undoLastSegment();
+    // Sprawdź po krótkim opóźnieniu czy są jeszcze segmenty
     setTimeout(() => {
-      if (segments.length <= 1) {
+      const draw = drawRef.current;
+      if (!draw) return;
+      const lines = draw.getAll().features.filter((f: any) => f.geometry.type === "LineString");
+      if (lines.length === 0) {
         enableWindPreviewMode();
       }
     }, 100);

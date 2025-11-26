@@ -62,7 +62,7 @@ export function PassagePlanTimeline({
     return null;
   };
 
-  // POPRAWKA: Czyść czerwoną kropkę gdy nie ma segmentów
+  // Czyść czerwoną kropkę gdy nie ma segmentów
   useEffect(() => {
     const map = mapRef.current;
     if (!map) return;
@@ -213,7 +213,7 @@ export function PassagePlanTimeline({
       <div
         className="
           hidden md:flex flex-col items-center gap-2
-          absolute bottom-25 left-1/2 -translate-x-1/2 z-50
+          absolute bottom-10 left-1/2 -translate-x-1/2 z-50
           w-1/2 bg-slate-900/90 backdrop-blur-md p-3 rounded-xl shadow-lg
           text-gray-200
         "

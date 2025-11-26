@@ -19,11 +19,11 @@ export function useWindPreviewMode(
     max: new Date(Date.now() + 4 * 24 * 60 * 60 * 1000),
   });
 
-  const updateTimerRef = useRef<NodeJS.Timeout | null>(null);
+  // Używamy typu uniwersalnego dla timerów w przeglądarce
+  const updateTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const abortControllerRef = useRef<AbortController | null>(null);
   const lastUpdateRef = useRef(0);
 
-  // Aktualizacja danych wiatru dla centrum mapy z throttle
   const updateWindData = useCallback(async () => {
     const now = Date.now();
     if (now - lastUpdateRef.current < 200) return;
