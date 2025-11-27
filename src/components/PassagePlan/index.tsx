@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useSearchParams } from "react-router-dom";
 import { BottomNavbar } from "@/components/BottomNavbar";
 import { useMapInstance } from "../../hooks/useMapInstance";
 import { useMapDraw } from "../../hooks/useMapDraw";
@@ -16,8 +17,10 @@ import { PassagePlanTimeline } from "./PassagePlanTimeline";
 import { WindPreviewControls } from "./WindPreviewControls";
 import { RouteSaveManager } from "@/components/RouteSaveManager";
 import { RouteInfoPanel } from "../RouteInfoPanel";
+import { toast } from "sonner";
 
 export default function PassagePlan() {
+  const [searchParams, setSearchParams] = useSearchParams();
   const [startDate, setStartDate] = useState<string>(
     new Date().toISOString().slice(0, 16)
   );
@@ -77,6 +80,35 @@ export default function PassagePlan() {
     startDate,
     defaultSpeed
   );
+
+  // Automatyczne wczytanie trasy z parametru URL
+  useEffect(() => {
+    const routeId = searchParams.get("loadRoute");
+    if (routeId && mapRef.current && drawRef.current) {
+      // Dajemy chwilę na inicjalizację mapy i draw
+      setTimeout(() => {
+        try {
+          const success = loadRoute(routeId, updateSegments);
+          if (success) {
+            const routes = getSavedRoutes();
+            const loadedRoute = routes.find((r) => r.id === routeId);
+            if (loadedRoute) {
+              setStartDate(loadedRoute.startDate);
+              setDefaultSpeed(loadedRoute.defaultSpeed);
+              toast.success(`Wczytano trasę: ${loadedRoute.name}`);
+            }
+          } else {
+            toast.error("Nie udało się wczytać trasy");
+          }
+        } catch (error) {
+          console.error("Error loading route:", error);
+          toast.error("Błąd przy wczytywaniu trasy");
+        }
+        // Usuwamy parametr z URL
+        setSearchParams({});
+      }, 1500);
+    }
+  }, [searchParams, mapRef.current, drawRef.current]);
 
   const handleSaveRoute = (name: string) => {
     saveRoute(name);

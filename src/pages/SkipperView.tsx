@@ -12,12 +12,13 @@ import {
   SidebarHeader,
   SidebarTrigger,
 } from "@/components/ui/sidebar"
-import { ClipboardList, BookOpen, AlertCircle, Lightbulb, FileText } from "lucide-react"
+import { ClipboardList, BookOpen, AlertCircle, Lightbulb, FileText, Map } from "lucide-react"
 import { BottomNavbar } from "@/components/BottomNavbar"
 import { ChecklistSection } from "@/components/CheckListSection"
 import { RegulationsSection } from "@/components/RegulationSection"
+import { SavedRoutesSection } from "@/components/SavedRoutesSection"
 
-type Section = "checklisty" | "przepisy" | "usterki" | "porady" | "dokumenty"
+type Section = "checklisty" | "przepisy" | "usterki" | "porady" | "dokumenty" | "trasy"
 
 function AppSidebar({
   activeSection,
@@ -31,6 +32,7 @@ function AppSidebar({
   const sections: { name: string; icon: typeof ClipboardList; key: Section }[] = [
     { name: t("Checklists"), icon: ClipboardList, key: "checklisty" },
     { name: t("Regulations"), icon: BookOpen, key: "przepisy" },
+    { name: "Zapisane trasy", icon: Map, key: "trasy" },
     { name: t("Faults"), icon: AlertCircle, key: "usterki" },
     { name: t("Tips"), icon: Lightbulb, key: "porady" },
     { name: t("Documents"), icon: FileText, key: "dokumenty" },
@@ -79,6 +81,8 @@ export default function SkipperView() {
         return <ChecklistSection />
       case "przepisy":
         return <RegulationsSection />
+      case "trasy":
+        return <SavedRoutesSection />
       case "usterki":
         return <p>{t("Faults section placeholder")} 🚧</p>
       case "porady":
@@ -93,6 +97,7 @@ export default function SkipperView() {
   const sections: { name: string; key: Section }[] = [
     { name: t("Checklists"), key: "checklisty" },
     { name: t("Regulations"), key: "przepisy" },
+    { name: "Zapisane trasy", key: "trasy" },
     { name: t("Faults"), key: "usterki" },
     { name: t("Tips"), key: "porady" },
     { name: t("Documents"), key: "dokumenty" },
