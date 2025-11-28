@@ -1,8 +1,17 @@
 import { useState, useEffect } from "react"
 import { useNavigate } from "react-router-dom"
-import { Map, Trash2, Calendar, Navigation } from "lucide-react"
+import { Map, Trash2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { toast } from "sonner"
+
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table"
 
 export interface SavedRoute {
   id: string
@@ -23,10 +32,8 @@ export function SavedRoutesSection() {
   const loadSavedRoutes = () => {
     try {
       const routes = localStorage.getItem(ROUTES_STORAGE_KEY)
-      console.log("Raw routes from localStorage:", routes)
       if (routes) {
         const parsed = JSON.parse(routes)
-        console.log("Parsed routes:", parsed)
         setSavedRoutes(parsed)
       }
     } catch (error) {
@@ -40,7 +47,6 @@ export function SavedRoutesSection() {
   }, [])
 
   const handleLoadRoute = (routeId: string) => {
-    // Przekierowanie do mapy z parametrem trasy
     navigate(`/passage-view?loadRoute=${routeId}`)
   }
 
@@ -82,88 +88,69 @@ export function SavedRoutesSection() {
     })
   }
 
-  const formatStartDate = (dateStr: string) => {
-    return new Date(dateStr).toLocaleDateString("pl-PL", {
-      day: "2-digit",
-      month: "2-digit",
-      year: "numeric",
-      hour: "2-digit",
-      minute: "2-digit",
-    })
-  }
-
   return (
     <div className="space-y-6">
-      <div className="bg-white p-6 rounded-lg">
-        <div className="flex items-center gap-3 mb-4">
-          <Map className="h-6 w-6 text-blue-400" />
-          <h2 className="text-xl font-bold text-white">Zapisane trasy</h2>
-        </div>
 
-        {savedRoutes.length === 0 ? (
-          <div className="text-center py-12">
-            <Navigation className="h-16 w-16 text-gray-500 mx-auto mb-4" />
-            <p className="text-gray-400 text-lg">Brak zapisanych tras</p>
-            <p className="text-gray-500 text-sm mt-2">
-              Zapisz trasę w planowaniu przejścia, aby zobaczyć ją tutaj
-            </p>
-          </div>
-        ) : (
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-            {savedRoutes.map((route) => (
-              <div
-                key={route.id}
-                className="border border-slate-600 rounded-lg p-5 hover:bg-slate-700 transition-colors"
+<div className="rounded-md border border-slate-300 overflow-hidden">
+  <Table>
+    <TableHeader>
+      <TableRow className="bg-slate-800">
+        <TableHead className="text-slate-100">Nazwa</TableHead>
+        <TableHead className="text-slate-100">Zapisano</TableHead>
+        <TableHead className="text-right text-slate-100">Akcje</TableHead>
+      </TableRow>
+    </TableHeader>
+
+    <TableBody className="bg-white text-black">
+      {savedRoutes.length === 0 && (
+        <TableRow>
+          <TableCell
+            colSpan={3}
+            className="h-16 text-center text-gray-500"
+          >
+            Brak zapisanych tras
+          </TableCell>
+        </TableRow>
+      )}
+
+      {savedRoutes.map((route) => (
+        <TableRow key={route.id} className="hover:bg-gray-100">
+          <TableCell className="font-medium">
+            {route.name}
+          </TableCell>
+
+          <TableCell>
+            {formatDate(route.savedAt)}
+          </TableCell>
+
+          <TableCell className="text-right">
+            <div className="flex justify-end gap-2">
+              <Button
+                onClick={() => handleLoadRoute(route.id)}
+                className="bg-blue-600 hover:bg-blue-700 text-white"
+                size="sm"
               >
-                <div className="flex justify-between items-start mb-3">
-                  <h3 className="font-semibold text-lg text-white">{route.name}</h3>
-                </div>
+                <Map className="h-4 w-4 mr-1" />
+                Wczytaj
+              </Button>
 
-                <div className="space-y-2 text-sm text-gray-300 mb-4">
-                  <div className="flex items-center gap-2">
-                    <Calendar className="h-4 w-4 text-gray-400" />
-                    <span className="text-gray-400">Zapisano:</span>
-                    <span>{formatDate(route.savedAt)}</span>
-                  </div>
-                  
-                  <div className="grid grid-cols-2 gap-2 mt-3 pt-3 border-t border-slate-600">
-                    <div>
-                      <span className="font-medium text-gray-400">Segmentów:</span>
-                      <span className="ml-2 text-white">{route.segments.length}</span>
-                    </div>
-                    <div>
-                      <span className="font-medium text-gray-400">Prędkość:</span>
-                      <span className="ml-2 text-white">{route.defaultSpeed} w.</span>
-                    </div>
-                    <div className="col-span-2">
-                      <span className="font-medium text-gray-400">Start:</span>
-                      <span className="ml-2 text-white">{formatStartDate(route.startDate)}</span>
-                    </div>
-                  </div>
-                </div>
+              <Button
+                variant="destructive"
+                onClick={() => confirmDelete(route.id)}
+                size="sm"
+              >
+                <Trash2 className="h-4 w-4" />
+              </Button>
+            </div>
+          </TableCell>
+        </TableRow>
+      ))}
+    </TableBody>
+  </Table>
+</div>
 
-                <div className="flex gap-2">
-                  <Button
-                    onClick={() => handleLoadRoute(route.id)}
-                    className="flex-1 bg-blue-600 hover:bg-blue-700 text-white"
-                  >
-                    <Map className="h-4 w-4 mr-2" />
-                    Wczytaj
-                  </Button>
-                  <Button
-                    variant="destructive"
-                    onClick={() => confirmDelete(route.id)}
-                    className="px-3"
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
 
+      {/* MODAL USUWANIA */}
       {routeToDelete && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
           <div className="bg-slate-800 text-white rounded-lg shadow-xl max-w-sm w-full p-6">
