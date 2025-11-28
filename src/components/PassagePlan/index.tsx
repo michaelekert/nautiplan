@@ -249,7 +249,6 @@ export default function PassagePlan() {
         </div>
       )}
 
-      {!isWindPreviewMode && (
         <PassagePlanMobileDrawer
           startDate={startDate}
           defaultSpeed={defaultSpeed}
@@ -264,7 +263,6 @@ export default function PassagePlan() {
           onDeleteRoute={deleteRoute}
           getSavedRoutes={getSavedRoutes}
         />
-      )}
 
       <BottomNavbar />
     </div>
