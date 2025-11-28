@@ -1,5 +1,5 @@
 import { Button } from "@/components/ui/button";
-import { PlusCircle, Flag, XCircle, CornerUpLeft, Wind, Route } from "lucide-react";
+import { PlusCircle, Flag, Check, CornerUpLeft, Wind, Route } from "lucide-react";
 import { useTranslation } from "react-i18next";
 
 interface PassagePlanMobileButtonsProps {
@@ -64,7 +64,6 @@ export function PassagePlanMobileButtons({
       {!isWindPreviewMode && showRouteActions && (
         <div className="flex gap-2 items-center justify-center">
           {iconButton(onAddPointAtCenter, PlusCircle, t("Add point"), "bg-blue-600 hover:bg-blue-700")}
-          {iconButton(onCancelDrawing, XCircle, t("Exit"), "bg-red-600 hover:bg-red-700")}
           {iconButton(
             onFinishWithWaypoint || onFinishDrawing,
             Flag,
@@ -79,6 +78,7 @@ export function PassagePlanMobileButtons({
             "bg-orange-600 hover:bg-orange-700",
             isUndoDisabled
           )}
+          {iconButton(onCancelDrawing, Check, t("Exit"), "bg-red-600 hover:bg-red-700")}
         </div>
       )}
 

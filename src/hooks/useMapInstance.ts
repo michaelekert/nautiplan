@@ -24,7 +24,7 @@ export function useMapInstance() {
     mapRef.current = map;
 
     const compassControl = new MaptilerNavigationControl({ showZoom: false, showCompass: true });
-    map.addControl(compassControl, "top-right");
+    map.addControl(compassControl);
 
     map.on("load", () => {
       map.addSource("seamark", {
