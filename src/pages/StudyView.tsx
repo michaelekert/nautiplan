@@ -295,7 +295,7 @@ export default function StudyView() {
                         setTimerActive(true)
                         setResetTimer(true)
                       }}
-                      variant="outline"
+                      className="cursor-pointer"
                     >
                       {count} pytań
                     </Button>
@@ -359,30 +359,33 @@ export default function StudyView() {
         </h2>
         <Progress value={((currentQuestionIndex + 1) / questions.length) * 100} className="h-2 rounded-full" />
         <div className="text-xl font-bold">{currentQuestion.text}</div>
+          <div className="flex flex-col gap-2 mt-4 mb-10">
+            {currentQuestion.options.map((option) => {
+              let bgColor = "bg-gray-100 hover:bg-gray-200";
+              let textColor = "text-black";
 
-        <div className="flex flex-col gap-2 mt-4">
-          {currentQuestion.options.map((option) => {
-            let bgColor = "bg-gray-100"
-            if (selectedOptionId) {
-              if (option.id === selectedOptionId) {
-                bgColor = option.correct ? "bg-green-300" : "bg-red-300"
-              } else if (option.correct) {
-                bgColor = "bg-green-300"
+              if (selectedOptionId) {
+                if (option.id === selectedOptionId) {
+                  bgColor = option.correct ? "!bg-green-300" : "!bg-red-300";
+                } else if (option.correct) {
+                  bgColor = "!bg-green-300";
+                }
+                textColor = "text-black";
               }
-            }
 
-            return (
-              <Button
-                key={option.id}
-                variant="outline"
-                className={`${bgColor} text-black`}
-                onClick={() => handleOptionClick(option.id)}
-              >
-                {option.text}
-              </Button>
-            )
-          })}
-        </div>
+              return (
+                <Button
+                  key={option.id}
+                  variant="outline"
+                  className={`${bgColor} ${textColor} cursor-pointer`}
+                  onClick={() => handleOptionClick(option.id)}
+                >
+                  {option.text}
+                </Button>
+              );
+            })}
+          </div>
+
 
         {selectedOptionId && currentQuestionIndex + 1 === questions.length && (
           <Button className="mt-4" onClick={handleFinishTest}>
