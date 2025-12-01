@@ -63,6 +63,7 @@ export function PassagePlanMobileButtons({
 
       {!isWindPreviewMode && showRouteActions && (
         <div className="flex gap-2 items-center justify-center">
+          {iconButton(onCancelDrawing, Check, t("Exit"), "bg-red-600 hover:bg-red-700")}
           {iconButton(onAddPointAtCenter, PlusCircle, t("Add point"), "bg-blue-600 hover:bg-blue-700")}
           {iconButton(
             onFinishWithWaypoint || onFinishDrawing,
@@ -78,7 +79,6 @@ export function PassagePlanMobileButtons({
             "bg-orange-600 hover:bg-orange-700",
             isUndoDisabled
           )}
-          {iconButton(onCancelDrawing, Check, t("Exit"), "bg-red-600 hover:bg-red-700")}
         </div>
       )}
 
