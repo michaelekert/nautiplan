@@ -51,7 +51,7 @@ export function PassagePlanMobileDrawer({
   return (
     <Drawer>
       <DrawerTrigger
-        className="md:hidden fixed left-1/2 bottom-[150px] -translate-x-1/2 z-50"
+        className="md:hidden fixed left-1/2 bottom-[170px] -translate-x-1/2 z-50"
         asChild
       >
         <Button className="w-1/2">{t("Open planning panel")}</Button>

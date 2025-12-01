@@ -54,7 +54,7 @@ export function PassagePlanMobileButtons({
   const isUndoDisabled = tempRoutePointsCount <= 0;
 
   return (
-    <div className="md:hidden fixed left-1/2 bottom-[200px] -translate-x-1/2 z-50">
+    <div className="md:hidden fixed left-1/2 bottom-[210px] -translate-x-1/2 z-50">
       {isWindPreviewMode && (
         <Button onClick={onStartRouteDrawing} className="bg-slate-900 hover:bg-blue-700 px-2 py-2">
           {t("Draw route")}
