@@ -1,3 +1,5 @@
+import { useState } from "react";
+
 interface WindPreviewControlsProps {
   windData: { speed: number; dir: number } | null;
   previewTime: Date;
@@ -11,6 +13,17 @@ export function WindPreviewControls({
   timeRange,
   onTimeChange,
 }: WindPreviewControlsProps) {
+  const [unit, setUnit] = useState<"ms" | "kmh" | "kt" | "bft">("kmh");
+
+  const toggleUnit = () => {
+    setUnit((prev) => {
+      if (prev === "ms") return "kmh";
+      if (prev === "kmh") return "kt";
+      if (prev === "kt") return "bft";
+      return "ms";
+    });
+  };
+
   const formatDate = (date: Date) =>
     date.toLocaleString("pl-PL", {
       day: "2-digit",
@@ -26,8 +39,44 @@ export function WindPreviewControls({
     return directions[index];
   };
 
-  const speedKmh = windData ? (windData.speed * 3.6).toFixed(1) : "—";
-  const speedKnots = windData ? (windData.speed * 1.944).toFixed(1) : "—";
+  // Speed conversions — windData.speed is in m/s
+  const ms = windData ? windData.speed : null;
+  const speedMs = ms?.toFixed(1) ?? "—";
+  const speedKmh = ms ? (ms * 3.6).toFixed(1) : "—";
+  const speedKt = ms ? (ms * 1.944).toFixed(1) : "—";
+
+  // Beaufort scale
+  const msToBeaufort = (speed: number) => {
+    if (speed < 0.5) return 0;
+    if (speed < 1.6) return 1;
+    if (speed < 3.4) return 2;
+    if (speed < 5.5) return 3;
+    if (speed < 8) return 4;
+    if (speed < 10.8) return 5;
+    if (speed < 13.9) return 6;
+    if (speed < 17.2) return 7;
+    if (speed < 20.8) return 8;
+    if (speed < 24.5) return 9;
+    if (speed < 28.5) return 10;
+    if (speed < 32.7) return 11;
+    return 12;
+  };
+
+  const speedBft = ms !== null ? msToBeaufort(ms) : "—";
+
+  const getUnitValue = () => {
+    switch (unit) {
+      case "ms":
+        return `${speedMs} m/s`;
+      case "kmh":
+        return `${speedKmh} km/h`;
+      case "kt":
+        return `${speedKt} kt`;
+      case "bft":
+        return `${speedBft} Bft`;
+    }
+  };
+
   const direction = windData ? getCompassDirection(windData.dir) : "—";
 
   const progress =
@@ -37,9 +86,9 @@ export function WindPreviewControls({
 
   return (
     <>
-      <div className="absolute top-4 left-1/2 -translate-x-1/2 z-50 w-[90%] max-w-xs">
+      <div className="absolute top-2 left-1/2 -translate-x-1/2 z-50 w-[50%] max-w-xs">
         <div className="bg-slate-900/90 backdrop-blur-md rounded-xl p-4 shadow-lg border border-slate-700">
-          <div className="flex items-center gap-3 mb-3">
+          <div className="flex items-center gap-1 mb-1">
             <div
               className="w-10 h-10 flex items-center justify-center bg-white-500 rounded-full transition-transform duration-500"
               style={windData ? { transform: `rotate(${windData.dir}deg)` } : {}}
@@ -57,22 +106,26 @@ export function WindPreviewControls({
                 <polyline points="5 12 12 5 19 12" />
               </svg>
             </div>
+
             <div className="flex-1">
-              <div className="text-xs text-gray-400">Wind at cursor</div>
-              <div className="text-lg font-bold text-white">
-                {direction} {speedKmh} km/h
+              <div className="text-xs text-gray-400">Wind</div>
+
+              <div
+                className="text-base font-bold text-white cursor-pointer select-none transition-opacity duration-150 hover:opacity-80"
+                onClick={toggleUnit}
+              >
+                {direction} {getUnitValue()}
               </div>
-              <div className="text-xs text-gray-400">{speedKnots} kn</div>
             </div>
           </div>
 
-          <div className="text-xs text-gray-400 text-center pt-2 border-t border-slate-700">
+          <div className="text-xs text-gray-400 text-center pt-1 border-t border-slate-700">
             {formatDate(previewTime)}
           </div>
         </div>
       </div>
 
-      {/* Mobile */}
+      {/* Mobile slider */}
       <div className="md:hidden absolute bottom-[35px] left-1/2 -translate-x-1/2 z-50 w-[90%] max-w-md">
         <div className="bg-slate-900/80 backdrop-blur-md rounded-xl p-3 shadow-lg">
           <div className="flex items-center gap-2 mb-2">
@@ -100,7 +153,7 @@ export function WindPreviewControls({
         </div>
       </div>
 
-      {/* Desktop */}
+      {/* Desktop slider */}
       <div className="hidden md:block absolute bottom-6 left-1/2 -translate-x-1/2 z-50 w-1/2 min-w-[500px]">
         <div className="bg-slate-900/90 backdrop-blur-md rounded-xl p-4 shadow-lg">
           <div className="flex items-center gap-3 mb-2">

@@ -1,5 +1,5 @@
 import { useEffect, useRef } from "react";
-import { Map, MapStyle, config } from "@maptiler/sdk";
+import { Map, MapStyle, MaptilerNavigationControl, config } from "@maptiler/sdk";
 import { WindLayer } from "@maptiler/weather";
 
 config.apiKey = import.meta.env.VITE_MAPTILER_API_KEY;
@@ -22,6 +22,9 @@ export function useMapInstance() {
       geolocateControl: false,
     });
     mapRef.current = map;
+
+    const compassControl = new MaptilerNavigationControl({ showZoom: false, showCompass: true });
+    map.addControl(compassControl);
 
     map.on("load", () => {
       map.addSource("seamark", {

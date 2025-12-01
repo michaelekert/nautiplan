@@ -133,3 +133,16 @@
 .animate-fall {
   animation: fall 3s linear forwards;
 }
+
+.maplibregl-ctrl-top-right,
+.maptiler-ctrl-top-right {
+  top: 50% !important;
+  transform: translateY(-50%) !important;
+  margin-right: 10px;
+  transition: none !important;
+}
+
+.maplibregl-ctrl-top-right .maplibregl-ctrl-group,
+.maptiler-ctrl-top-right .maptiler-ctrl-group {
+  margin: 0 !important;
+}

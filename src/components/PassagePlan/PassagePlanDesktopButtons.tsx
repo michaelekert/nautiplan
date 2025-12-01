@@ -26,11 +26,7 @@ export function PassagePlanDesktopButtons({
   return (
     <div className="hidden md:flex flex-col items-center gap-3 absolute left-1/2 bottom-30 -translate-x-1/2 z-50">
       {isWindPreviewMode && (
-        <Button 
-          onClick={onStartRouteDrawing} 
-          className="bg-blue-600 hover:bg-blue-700 px-6 py-3 text-base font-semibold flex items-center gap-2"
-        >
-          <Route className="w-5 h-5" />
+        <Button onClick={onStartRouteDrawing} className="bg-slate-900 hover:bg-blue-700 px-2 py-2">
           {t("Draw route")}
         </Button>
       )}
