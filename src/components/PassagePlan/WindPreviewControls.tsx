@@ -86,7 +86,6 @@ export function WindPreviewControls({
 
   return (
     <>
-      {/* TOP FLOATING PANEL */}
       <div className="absolute top-2 left-1/2 -translate-x-1/2 z-50 w-[50%] max-w-xs">
         <div className="bg-slate-900/90 backdrop-blur-md rounded-xl p-4 shadow-lg border border-slate-700">
           <div className="flex items-center gap-1 mb-1">
@@ -111,7 +110,6 @@ export function WindPreviewControls({
             <div className="flex-1">
               <div className="text-xs text-gray-400">Wind</div>
 
-              {/* CLICK TO TOGGLE UNIT */}
               <div
                 className="text-base font-bold text-white cursor-pointer select-none transition-opacity duration-150 hover:opacity-80"
                 onClick={toggleUnit}

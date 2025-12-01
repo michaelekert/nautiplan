@@ -30,18 +30,15 @@ export function RouteInfoPanel({
   const [isExpanded, setIsExpanded] = useState(false);
   const [cursorPos, setCursorPos] = useState<[number, number] | null>(null);
 
-  // tryb wyświetlania dystansu: "total" | "last"
   const [distanceMode, setDistanceMode] = useState<"total" | "last">("total");
   const toggleDistanceMode = () =>
     setDistanceMode((prev) => (prev === "total" ? "last" : "total"));
 
-  // całkowita odległość segmentów
   const totalDistanceNm = useMemo(
     () => segments.reduce((sum, seg) => sum + seg.distanceNm, 0),
     [segments]
   );
 
-  // pobranie współrzędnych segmentu
   const getSegmentCoordinates = useCallback(
     (segmentId: string) => {
       const draw = drawRef.current;
@@ -54,7 +51,6 @@ export function RouteInfoPanel({
     [drawRef]
   );
 
-  // lista unikalnych punktów
   const points = useMemo(() => {
     const arr: { name: string; lat: number; lon: number }[] = [];
     segments.forEach((segment) => {
@@ -69,7 +65,6 @@ export function RouteInfoPanel({
     return [...unique.values()];
   }, [segments, getSegmentCoordinates]);
 
-  // odległość ostatniego segmentu / do kursora
   const lastSegmentDistanceNm = useMemo(() => {
     if (!isDrawingMode || !cursorPos) return 0;
 
@@ -122,7 +117,6 @@ export function RouteInfoPanel({
     return `${h}h ${m}m`;
   }, [timeToCursorHours]);
 
-  // dystans i opis do wyświetlenia
   const displayedDistanceNm =
     distanceMode === "total" ? totalDistanceWithCursor : lastSegmentDistanceNm;
 
@@ -131,7 +125,6 @@ export function RouteInfoPanel({
       ? "Total route length"
       : `from last stop, ETA ${timeToCursorFormatted}`;
 
-  // listener ruchu kursora
   useEffect(() => {
     const map = mapRef.current;
     if (!map) return;
@@ -156,7 +149,6 @@ export function RouteInfoPanel({
     };
   }, [mapRef, isDrawingMode]);
 
-  // reset kursora przy wyłączeniu rysowania
   useEffect(() => {
     if (!isDrawingMode) setCursorPos(null);
   }, [isDrawingMode]);
@@ -167,7 +159,6 @@ export function RouteInfoPanel({
     <div className="absolute top-0 right-0 md:top-4 md:left-1/2 md:-translate-x-1/2 z-40 w-[100%] md:w-2/3 max-w-md px-0 md:px-4">
       <div className="bg-slate-800/95 text-white md:rounded-lg border border-slate-700 shadow-xl overflow-hidden">
       <div className="w-full px-4 py-3 flex items-center justify-between">
-        {/* Lewa strona - dystans */}
         <div className="flex items-center gap-3">
           <Waypoints className="text-blue-400" size={30} />
           <div className="flex flex-col cursor-pointer" onClick={toggleDistanceMode}>
@@ -176,7 +167,6 @@ export function RouteInfoPanel({
           </div>
         </div>
 
-        {/* Prawa strona - przyciski */}
         {segments.length > 0 && (
           <div className="flex items-center gap-2">
             <Button
