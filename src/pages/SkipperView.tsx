@@ -306,19 +306,36 @@ function ChecklistSection() {
         const progress = getCategoryProgress(category)
         return (
           <Accordion type="single" collapsible className="w-full" key={category.name}>
-            <AccordionItem value={category.name} className="!border !border-solid rounded-lg overflow-hidden px-4">
-              <AccordionTrigger className="hover:no-underline">
-            <div className="flex flex-col w-full gap-2">
-              <div className="flex items-center gap-2">
-                <span className="md:text-xl text-base">{category.icon}</span>
-                <h2 className="md:text-xl font-bold text-base">{category.name}</h2>
-              </div>
+            <AccordionItem
+              value={category.name}
+              className={`!border !border-solid rounded-lg overflow-hidden px-4 transition-colors
+                ${progress.percentage === 100 ? "bg-green-50 !border-green-300" : "bg-white !border-gray-200"}
+              `}
+            >
+              <AccordionTrigger className="hover:no-underline w-full">
+                <div className="flex flex-col w-full gap-2 text-left">
+                  
+                  <div className="flex items-center justify-between w-full">
+                    <div className="flex items-center gap-2">
+                      <span className="md:text-xl text-sm">{category.icon}</span>
+                      <h2 className="md:text-xl font-bold text-sm">{category.name}</h2>
+                    </div>
 
-              <div className="w-full px-2">
-                <Progress value={progress.percentage} className="w-full h-2" />
-              </div>
-            </div>
-          </AccordionTrigger>
+                    {progress.percentage === 100 && (
+                      <span className="text-xs bg-green-600 text-white px-2 py-0.5 h-5 flex items-center rounded-full whitespace-nowrap">
+                        ✓ Ukończono
+                      </span>
+                    )}
+                  </div>
+
+                  <div className="w-full">
+                    <Progress
+                      value={progress.percentage}
+                      className="w-full h-2"
+                    />
+                  </div>
+                </div>
+              </AccordionTrigger>
 
               <AccordionContent className="pt-4 px-3">
                 <Accordion type="single" collapsible className="w-full space-y-2">
