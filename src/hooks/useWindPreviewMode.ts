@@ -19,11 +19,9 @@ export function useWindPreviewMode(
   const lastUpdateRef = useRef(0);
 
   const updateWindData = useCallback(async (force = false) => {
-    console.log("🔄 updateWindData wywołane", { force });
     
     const now = Date.now();
     if (!force && now - lastUpdateRef.current < 200) {
-      console.log("⏭️ Pominięto - za szybko od ostatniego update");
       return;
     }
     lastUpdateRef.current = now;
@@ -31,37 +29,25 @@ export function useWindPreviewMode(
     const map = mapRef.current;
     const windLayer = windLayerRef.current;
     
-    console.log("📊 Stan:", {
-      map: !!map,
-      windLayer: !!windLayer,
-      isWindPreviewMode,
-      isWindLayerReady
-    });
     
     if (!map || !windLayer || !isWindPreviewMode || !isWindLayerReady) {
-      console.log("❌ Brak wymaganych warunków");
       return;
     }
 
     const center = map.getCenter();
-    console.log("📍 Centrum mapy:", center.lng, center.lat);
     
     try {
       const timeSec = Math.floor(previewTime.getTime() / 1000);
-      console.log("⏰ Ustawiam czas animacji:", previewTime, "->", timeSec);
       windLayer.setAnimationTime(timeSec);
       
       await new Promise(resolve => setTimeout(resolve, 200));
-      console.log("🌬️ Pobieram dane wiatru...");
       let wind = await getWindAt(center.lng, center.lat);
       
       if (!wind) {
-        console.log("⚠️ Brak danych, próbuję ponownie...");
         await new Promise(resolve => setTimeout(resolve, 150));
         wind = await getWindAt(center.lng, center.lat);
       }
       
-      console.log("✅ Dane wiatru pobrane:", wind);
       setWindData(wind);
     } catch (e) {
       console.error("❌ Błąd przy pobieraniu danych wiatru:", e);
@@ -74,7 +60,6 @@ export function useWindPreviewMode(
 
     const startDate = windLayer.getAnimationStartDate();
     const endDate = windLayer.getAnimationEndDate();
-    console.log("📅 Zakres dat:", startDate, "->", endDate);
     
     if (startDate && endDate) {
       setTimeRange({ min: startDate, max: endDate });
@@ -82,12 +67,8 @@ export function useWindPreviewMode(
   }, [windLayerRef, isWindLayerReady]);
 
   useEffect(() => {
-    console.log("🎯 useEffect [isWindPreviewMode, isWindLayerReady]:", { isWindPreviewMode, isWindLayerReady });
-    
     if (isWindPreviewMode && isWindLayerReady) {
-      console.log("⏱️ Planuje updateWindData za 150ms");
       const timer = setTimeout(() => {
-        console.log("🚀 Wywołuję updateWindData");
         updateWindData();
       }, 150);
       return () => clearTimeout(timer);
@@ -99,7 +80,6 @@ export function useWindPreviewMode(
     if (!map || !isWindPreviewMode || !isWindLayerReady) return;
 
     const handleMove = () => {
-      console.log("🗺️ Mapa się poruszyła");
       if (updateTimerRef.current) clearTimeout(updateTimerRef.current);
       updateTimerRef.current = setTimeout(() => {
         updateWindData();
@@ -115,7 +95,6 @@ export function useWindPreviewMode(
 
   useEffect(() => {
     if (isWindPreviewMode && isWindLayerReady) {
-      console.log("⏰ Zmiana czasu - updateWindData z opóźnieniem");
       const timer = setTimeout(() => {
         updateWindData(true);
       }, 250);
@@ -124,13 +103,11 @@ export function useWindPreviewMode(
   }, [previewTime, isWindPreviewMode, isWindLayerReady, updateWindData]);
 
   const enableWindPreviewMode = useCallback(() => {
-    console.log("✨ Włączam Wind Preview Mode");
     setIsWindPreviewMode(true);
     setPreviewTime(new Date());
   }, []);
 
   const disableWindPreviewMode = useCallback(() => {
-    console.log("🚫 Wyłączam Wind Preview Mode");
     setIsWindPreviewMode(false);
     setWindData(null);
   }, []);
