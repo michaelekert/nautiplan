@@ -67,34 +67,20 @@ export function PassagePlanTimeline({
   useEffect(() => {
     const map = mapRef.current;
     if (!map) return;
+
     const id = "sim-position";
 
-    if (segments.length === 0) {
-      if (map.getLayer(id)) {
-        try {
-          map.removeLayer(id);
-        } catch (e) {
-          console.error("Error removing layer:", e);
-        }
-      }
-      if (map.getSource(id)) {
-        try {
-          map.removeSource(id);
-        } catch (e) {
-          console.error("Error removing source:", e);
-        }
-      }
+    if (segments.length === 0 || isWindPreviewMode) {
+      if (map.getLayer(id)) map.removeLayer(id);
+      if (map.getSource(id)) map.removeSource(id);
       setSimTime(null);
       setWindInfo(null);
       onWindInfoChange?.(null);
+      return;
     }
-  }, [segments, mapRef, onWindInfoChange]);
 
-  useEffect(() => {
-    const map = mapRef.current;
-    if (!map || !simTime || segments.length === 0) return;
+    if (!simTime) return;
 
-    const id = "sim-position";
     const pos = getPositionAtTime(simTime);
 
     if (!pos) {
@@ -136,7 +122,7 @@ export function PassagePlanTimeline({
       setWindInfo(info);
       onWindInfoChange?.(info);
     });
-  }, [simTime, segments, startDate, setTime, getWindAt, onWindInfoChange, mapRef, drawRef]);
+  }, [simTime, segments, startDate, setTime, getWindAt, onWindInfoChange, mapRef, drawRef, isWindPreviewMode]);
 
   useEffect(() => {
     if (!isPlaying || segments.length === 0 || totalTravelTime === 0) return;
