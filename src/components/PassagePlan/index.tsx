@@ -23,9 +23,9 @@ export default function PassagePlan() {
   );
   const [defaultSpeed, setDefaultSpeed] = useState<number>(5);
 
-  const { mapRef, windLayerRef, setTime, getWindAt } = useMapInstance();
+  const { mapRef, windLayerRef, setTime, getWindAt, isWindLayerReady } = useMapInstance();
   
-  const windPreview = useWindPreviewMode(mapRef, windLayerRef, getWindAt);
+  const windPreview = useWindPreviewMode(mapRef, windLayerRef, getWindAt, isWindLayerReady);
   const {
     isWindPreviewMode,
     windData,

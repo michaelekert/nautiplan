@@ -1,4 +1,4 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Map, MapStyle, MaptilerNavigationControl, config } from "@maptiler/sdk";
 import { WindLayer } from "@maptiler/weather";
 
@@ -8,6 +8,7 @@ export function useMapInstance() {
   const mapRef = useRef<Map | null>(null);
   const windLayerRef = useRef<any>(null);
   const readyRef = useRef(false);
+  const [isWindLayerReady, setIsWindLayerReady] = useState(false);
 
   useEffect(() => {
     if (mapRef.current) return;
@@ -47,13 +48,9 @@ export function useMapInstance() {
 
       windLayer.on("sourceReady", () => {
         readyRef.current = true;
-        console.log("✅ WindLayer source ready (dane pogodowe załadowane)");
+        setIsWindLayerReady(true);
         const now = new Date();
         windLayer.setAnimationTime(Math.floor(now.getTime() / 1000));
-      });
-
-      windLayer.on("animationTimeSet", () => {
-        console.log("⏱️ WindLayer animation time:", windLayer.getAnimationTimeDate());
       });
     });
   }, []);
@@ -84,5 +81,5 @@ export function useMapInstance() {
     }
   };
 
-  return { mapRef, windLayerRef, setTime, getWindAt };
+  return { mapRef, windLayerRef, setTime, getWindAt, isWindLayerReady };
 }

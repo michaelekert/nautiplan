@@ -4,12 +4,8 @@ import { Map } from "@maptiler/sdk";
 export function useWindPreviewMode(
   mapRef: React.RefObject<Map | null>,
   windLayerRef: React.RefObject<any>,
-  getWindAt: (
-    lon: number,
-    lat: number,
-    date: Date,
-    options?: { signal?: AbortSignal }
-  ) => Promise<{ speed: number; dir: number } | null>
+  getWindAt: (lon: number, lat: number) => Promise<{ speed: number; dir: number } | null>,
+  isWindLayerReady: boolean
 ) {
   const [isWindPreviewMode, setIsWindPreviewMode] = useState(true);
   const [previewTime, setPreviewTime] = useState<Date>(new Date());
@@ -20,33 +16,68 @@ export function useWindPreviewMode(
   });
 
   const updateTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const abortControllerRef = useRef<AbortController | null>(null);
   const lastUpdateRef = useRef(0);
 
-  const updateWindData = useCallback(async () => {
+  const updateWindData = useCallback(async (force = false) => {
+    
     const now = Date.now();
-    if (now - lastUpdateRef.current < 200) return;
+    if (!force && now - lastUpdateRef.current < 200) {
+      return;
+    }
     lastUpdateRef.current = now;
 
     const map = mapRef.current;
-    if (!map || !isWindPreviewMode) return;
-
-    if (abortControllerRef.current) abortControllerRef.current.abort();
-    const controller = new AbortController();
-    abortControllerRef.current = controller;
+    const windLayer = windLayerRef.current;
+    
+    
+    if (!map || !windLayer || !isWindPreviewMode || !isWindLayerReady) {
+      return;
+    }
 
     const center = map.getCenter();
+    
     try {
-      const wind = await getWindAt(center.lng, center.lat, previewTime, { signal: controller.signal });
+      const timeSec = Math.floor(previewTime.getTime() / 1000);
+      windLayer.setAnimationTime(timeSec);
+      
+      await new Promise(resolve => setTimeout(resolve, 200));
+      let wind = await getWindAt(center.lng, center.lat);
+      
+      if (!wind) {
+        await new Promise(resolve => setTimeout(resolve, 150));
+        wind = await getWindAt(center.lng, center.lat);
+      }
+      
       setWindData(wind);
     } catch (e) {
-      if ((e as any).name === "AbortError") return;
+      console.error("❌ Błąd przy pobieraniu danych wiatru:", e);
     }
-  }, [mapRef, isWindPreviewMode, previewTime, getWindAt]);
+  }, [mapRef, windLayerRef, isWindPreviewMode, isWindLayerReady, previewTime, getWindAt]);
+
+  useEffect(() => {
+    const windLayer = windLayerRef.current;
+    if (!windLayer || !isWindLayerReady) return;
+
+    const startDate = windLayer.getAnimationStartDate();
+    const endDate = windLayer.getAnimationEndDate();
+    
+    if (startDate && endDate) {
+      setTimeRange({ min: startDate, max: endDate });
+    }
+  }, [windLayerRef, isWindLayerReady]);
+
+  useEffect(() => {
+    if (isWindPreviewMode && isWindLayerReady) {
+      const timer = setTimeout(() => {
+        updateWindData();
+      }, 150);
+      return () => clearTimeout(timer);
+    }
+  }, [isWindPreviewMode, isWindLayerReady, updateWindData]);
 
   useEffect(() => {
     const map = mapRef.current;
-    if (!map || !isWindPreviewMode) return;
+    if (!map || !isWindPreviewMode || !isWindLayerReady) return;
 
     const handleMove = () => {
       if (updateTimerRef.current) clearTimeout(updateTimerRef.current);
@@ -60,31 +91,16 @@ export function useWindPreviewMode(
       map.off("move", handleMove);
       if (updateTimerRef.current) clearTimeout(updateTimerRef.current);
     };
-  }, [mapRef, isWindPreviewMode, updateWindData]);
+  }, [mapRef, isWindPreviewMode, isWindLayerReady, updateWindData]);
 
   useEffect(() => {
-    if (isWindPreviewMode) updateWindData();
-  }, [previewTime, updateWindData, isWindPreviewMode]);
-
-  useEffect(() => {
-    const windLayer = windLayerRef.current;
-    if (!windLayer || !isWindPreviewMode) return;
-    windLayer.setAnimationTime(Math.floor(previewTime.getTime() / 1000));
-  }, [windLayerRef, previewTime, isWindPreviewMode]);
-
-  useEffect(() => {
-    const windLayer = windLayerRef.current;
-    if (!windLayer) return;
-
-    const handleSourceReady = () => {
-      const startDate = windLayer.getAnimationStartDate();
-      const endDate = windLayer.getAnimationEndDate();
-      if (startDate && endDate) setTimeRange({ min: startDate, max: endDate });
-    };
-
-    windLayer.on("sourceReady", handleSourceReady);
-    return () => windLayer.off("sourceReady", handleSourceReady);
-  }, [windLayerRef]);
+    if (isWindPreviewMode && isWindLayerReady) {
+      const timer = setTimeout(() => {
+        updateWindData(true);
+      }, 250);
+      return () => clearTimeout(timer);
+    }
+  }, [previewTime, isWindPreviewMode, isWindLayerReady, updateWindData]);
 
   const enableWindPreviewMode = useCallback(() => {
     setIsWindPreviewMode(true);
