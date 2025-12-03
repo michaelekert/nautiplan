@@ -20,6 +20,7 @@ import {
 import { Checkbox } from "@/components/ui/checkbox"
 import { ClipboardList, BookOpen, AlertCircle, Lightbulb, FileText } from "lucide-react"
 import { Progress } from "@/components/ui/progress"
+import { BottomNavbar } from "@/components/BottomNavbar"
 
 type Section = "checklisty" | "przepisy" | "usterki" | "porady" | "dokumenty"
 
@@ -489,7 +490,7 @@ export default function SkipperView() {
     <SidebarProvider>
       <div className="flex min-h-screen w-full">
         <AppSidebar activeSection={activeSection} setActiveSection={setActiveSection} />
-        <main className="flex-1">
+        <main className="flex-1 pb-[10dvh] md:pb-16">
           <div className="sticky top-0 z-10 border-b bg-background p-4">
             <div className="flex items-center gap-4">
               <SidebarTrigger />
@@ -501,6 +502,9 @@ export default function SkipperView() {
 
           <div className="p-2">{renderContent()}</div>
         </main>
+        <div className="z-50">
+          <BottomNavbar />
+        </div>
       </div>
     </SidebarProvider>
   )
