@@ -30,9 +30,11 @@ export function RouteInfoPanel({
   const [isExpanded, setIsExpanded] = useState(false);
   const [cursorPos, setCursorPos] = useState<[number, number] | null>(null);
 
-  const [distanceMode, setDistanceMode] = useState<"total" | "last">("total");
+  const [distanceMode, setDistanceMode] = useState<"total" | "last" | "both">("total");
   const toggleDistanceMode = () =>
-    setDistanceMode((prev) => (prev === "total" ? "last" : "total"));
+    setDistanceMode((prev) => 
+      prev === "total" ? "last" : prev === "last" ? "both" : "total"
+    );
 
   const totalDistanceNm = useMemo(
     () => segments.reduce((sum, seg) => sum + seg.distanceNm, 0),
@@ -117,13 +119,27 @@ export function RouteInfoPanel({
     return `${h}h ${m}m`;
   }, [timeToCursorHours]);
 
-  const displayedDistanceNm =
-    distanceMode === "total" ? totalDistanceWithCursor : lastSegmentDistanceNm;
-
-  const distanceDescription =
-    distanceMode === "total"
-      ? "Total route length"
-      : `from last stop, ETA ${timeToCursorFormatted}`;
+  const displayInfo = useMemo(() => {
+    if (distanceMode === "total") {
+      return {
+        primary: `${totalDistanceWithCursor.toFixed(1)} NM`,
+        secondary: "Total route length",
+        isSplit: false
+      };
+    } else if (distanceMode === "last") {
+      return {
+        primary: `${lastSegmentDistanceNm.toFixed(1)} NM`,
+        secondary: `from last stop, ETA ${timeToCursorFormatted}`,
+        isSplit: false
+      };
+    } else {
+      return {
+        primary: `${totalDistanceWithCursor.toFixed(1)} / ${lastSegmentDistanceNm.toFixed(1)} NM`,
+        secondary: `from last stop, ETA ${timeToCursorFormatted}`,
+        isSplit: true
+      };
+    }
+  }, [distanceMode, totalDistanceWithCursor, lastSegmentDistanceNm, timeToCursorFormatted]);
 
   useEffect(() => {
     const map = mapRef.current;
@@ -162,8 +178,16 @@ export function RouteInfoPanel({
         <div className="flex items-center gap-3">
           <Waypoints className="text-blue-400" size={30} />
           <div className="flex flex-col cursor-pointer" onClick={toggleDistanceMode}>
-            <div className="font-semibold text-sm">{displayedDistanceNm.toFixed(1)} NM</div>
-            <div className="text-[9px] text-slate-400">{distanceDescription}</div>
+            {distanceMode === "both" ? (
+              <div className="flex items-baseline gap-2">
+                <div className="font-semibold text-sm">{totalDistanceWithCursor.toFixed(1)} NM</div>
+                <div className="text-slate-500 text-xs">•</div>
+                <div className="font-semibold text-sm text-blue-300">{lastSegmentDistanceNm.toFixed(1)} NM</div>
+              </div>
+            ) : (
+              <div className="font-semibold text-sm">{displayInfo.primary}</div>
+            )}
+            <div className="text-[9px] text-slate-400">{displayInfo.secondary}</div>
           </div>
         </div>
 
