@@ -5,11 +5,13 @@ import { useTranslation } from "react-i18next"
 interface PassagePlanControlsProps {
   startDate: string
   defaultSpeed: number
+  defaultStopHours: number
   segmentsCount: number
   showRouteActions: boolean
   isDrawingMode: boolean
   onStartDateChange: (value: string) => void
   onDefaultSpeedChange: (value: number) => void
+  onDefaultStopHoursChange: (value: number) => void
   onStartRouteDrawing: () => void
   onStartDrawing: () => void
   onFinishDrawing: () => void
@@ -21,8 +23,10 @@ interface PassagePlanControlsProps {
 export function PassagePlanControls({
   startDate,
   defaultSpeed,
+  defaultStopHours,
   onStartDateChange,
   onDefaultSpeedChange,
+  onDefaultStopHoursChange,
 }: PassagePlanControlsProps) {
   const { t } = useTranslation()
 
@@ -54,6 +58,24 @@ export function PassagePlanControls({
           onChange={(e) => {
             const val = e.target.value
             onDefaultSpeedChange(val === "" ? NaN : Number(val))
+          }}
+          className="rounded-lg border border-slate-600 bg-slate-900 text-white w-1/2"
+        />
+      </div>
+
+      <div className="flex flex-col">
+        <Label htmlFor="defaultStopHours" className="mb-1 font-medium text-slate-200">
+          ⏱️ {t("Default stop time (hours)")}
+        </Label>
+        <Input
+          id="defaultStopHours"
+          type="number"
+          min={0}
+          step={0.5}
+          value={defaultStopHours}
+          onChange={(e) => {
+            const val = e.target.value
+            onDefaultStopHoursChange(val === "" ? 0 : Number(val))
           }}
           className="rounded-lg border border-slate-600 bg-slate-900 text-white w-1/2"
         />

@@ -10,17 +10,23 @@ export function useSegments(
   mapRef: React.RefObject<Map | null>,
   drawRef: React.RefObject<MapboxDraw | null>,
   startDate: string,
-  defaultSpeed: number
+  defaultSpeed: number,
+  defaultStopHours: number
 ) {
   const [segments, setSegments] = useState<Segment[]>([]);
   const lastCoordRef = useRef<[number, number] | null>(null);
   const defaultSpeedRef = useRef<number>(defaultSpeed);
+  const defaultStopHoursRef = useRef<number>(defaultStopHours);
   const segmentsRef = useRef<Segment[]>([]);
   const unknownCounterRef = useRef(1);
 
   useEffect(() => {
     defaultSpeedRef.current = defaultSpeed;
   }, [defaultSpeed]);
+
+  useEffect(() => {
+    defaultStopHoursRef.current = defaultStopHours;
+  }, [defaultStopHours]);
 
   useEffect(() => {
     segmentsRef.current = segments;
@@ -159,7 +165,7 @@ export function useSegments(
       const distanceKm = turf.length(f, { units: "kilometers" });
       const distanceNm = distanceKm / 1.852;
       const speed = existingSegment?.speed ?? defaultSpeedRef.current;
-      const stopHours = existingSegment?.stopHours ?? 0;
+      const stopHours = existingSegment?.stopHours ?? defaultStopHoursRef.current;
       const timeHours = distanceNm / speed;
       const arrivalTime = new Date(currentTime);
       arrivalTime.setHours(currentTime.getHours() + timeHours);

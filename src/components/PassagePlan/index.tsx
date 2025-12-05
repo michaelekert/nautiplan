@@ -22,6 +22,7 @@ export default function PassagePlan() {
     new Date().toISOString().slice(0, 16)
   );
   const [defaultSpeed, setDefaultSpeed] = useState<number>(5);
+  const [defaultStopHours, setDefaultStopHours] = useState<number>(2);
 
   const { mapRef, windLayerRef, setTime, getWindAt, isWindLayerReady } = useMapInstance();
   
@@ -42,7 +43,7 @@ export default function PassagePlan() {
     updateSegments: async () => await updateSegmentsRef.current(),
   });
 
-  const segmentsHook = useSegments(mapRef, drawRef, startDate, defaultSpeed);
+  const segmentsHook = useSegments(mapRef, drawRef, startDate, defaultSpeed, defaultStopHours);
   const {
     segments,
     lastCoordRef,
@@ -91,6 +92,10 @@ export default function PassagePlan() {
         setStartDate(loadedRoute.startDate);
         setDefaultSpeed(loadedRoute.defaultSpeed);
       }
+      if (isDrawingMode) {
+        cancelDrawing();
+      }
+    enableWindPreviewMode();
     }
   };
 
@@ -218,11 +223,13 @@ export default function PassagePlan() {
             <PassagePlanControls
               startDate={startDate}
               defaultSpeed={defaultSpeed}
+              defaultStopHours={defaultStopHours}
               segmentsCount={segments.length}
               showRouteActions={showRouteActions}
               isDrawingMode={isDrawingMode}
               onStartDateChange={setStartDate}
               onDefaultSpeedChange={setDefaultSpeed}
+              onDefaultStopHoursChange={setDefaultStopHours}
               onStartRouteDrawing={handleStartRouteDrawing}
               onStartDrawing={handleStartDrawing}
               onFinishDrawing={handleFinishDrawing}
@@ -252,9 +259,11 @@ export default function PassagePlan() {
         <PassagePlanMobileDrawer
           startDate={startDate}
           defaultSpeed={defaultSpeed}
+          defaultStopHours={defaultStopHours}
           segments={segments}
           onStartDateChange={setStartDate}
           onDefaultSpeedChange={setDefaultSpeed}
+          onDefaultStopHoursChange={setDefaultStopHours}
           onSpeedChange={handleSpeedChange}
           onStopChange={handleStopChange}
           onNameChange={handleNameChange}

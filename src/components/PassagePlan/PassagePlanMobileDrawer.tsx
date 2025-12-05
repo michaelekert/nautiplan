@@ -16,9 +16,11 @@ import type { SavedRoute } from "../../hooks/useRouteSave"
 interface PassagePlanMobileDrawerProps {
   startDate: string
   defaultSpeed: number
+  defaultStopHours: number
   segments: Segment[]
   onStartDateChange: (value: string) => void
   onDefaultSpeedChange: (value: number) => void
+  onDefaultStopHoursChange: (value: number) => void
   onSpeedChange: (id: string, speed: number) => void
   onStopChange: (id: string, stop: number) => void
   onNameChange: (
@@ -35,9 +37,11 @@ interface PassagePlanMobileDrawerProps {
 export function PassagePlanMobileDrawer({
   startDate,
   defaultSpeed,
+  defaultStopHours,
   segments,
   onStartDateChange,
   onDefaultSpeedChange,
+  onDefaultStopHoursChange,
   onSpeedChange,
   onStopChange,
   onNameChange,
@@ -78,8 +82,8 @@ export function PassagePlanMobileDrawer({
             </div>
           )}
 
-          <div className="flex flex-row gap-2">
-            <div className="flex flex-col flex-[7]">
+          <div className="flex flex-col gap-4">
+            <div className="flex flex-col">
               <Label htmlFor="startDate" className="mb-2">
                 📅 {t("Departure date and time")}
               </Label>
@@ -92,43 +96,85 @@ export function PassagePlanMobileDrawer({
               />
             </div>
 
-            <div className="flex flex-col flex-[3] items-center">
-              <Label htmlFor="defaultSpeed" className="mb-2">
-                ⚓ {t("Default speed")}
-              </Label>
+            <div className="flex flex-row gap-2">
+              <div className="flex flex-col flex-1">
+                <Label htmlFor="defaultSpeed" className="mb-2">
+                  ⚓ {t("Default speed")}
+                </Label>
 
-              <div className="flex items-center gap-1">
-                <Button
-                  size="sm"
-                  onClick={() => onDefaultSpeedChange(Math.max(0, defaultSpeed - 1))}
-                >
-                  -
-                </Button>
+                <div className="flex items-center gap-1">
+                  <Button
+                    size="sm"
+                    onClick={() => onDefaultSpeedChange(Math.max(0, defaultSpeed - 1))}
+                  >
+                    -
+                  </Button>
 
-                <div className="relative w-16">
-                  <Input
-                    id="defaultSpeed"
-                    type="number"
-                    min={0}
-                    step={1}
-                    value={defaultSpeed}
-                    onChange={(e) => {
-                      const val = e.target.value
-                      onDefaultSpeedChange(val === "" ? NaN : Number(val))
-                    }}
-                    className="w-full h-10 pr-8 text-center rounded-lg border border-slate-600 bg-slate-900 text-white"
-                  />
-                  <span className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-300 text-sm pointer-events-none">
-                    KN
-                  </span>
+                  <div className="relative flex-1">
+                    <Input
+                      id="defaultSpeed"
+                      type="number"
+                      min={0}
+                      step={1}
+                      value={defaultSpeed}
+                      onChange={(e) => {
+                        const val = e.target.value
+                        onDefaultSpeedChange(val === "" ? NaN : Number(val))
+                      }}
+                      className="w-full h-10 pr-8 text-center rounded-lg border border-slate-600 bg-slate-900 text-white"
+                    />
+                    <span className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-300 text-sm pointer-events-none">
+                      KN
+                    </span>
+                  </div>
+
+                  <Button
+                    size="sm"
+                    onClick={() => onDefaultSpeedChange(defaultSpeed + 1)}
+                  >
+                    +
+                  </Button>
                 </div>
+              </div>
 
-                <Button
-                  size="sm"
-                  onClick={() => onDefaultSpeedChange(defaultSpeed + 1)}
-                >
-                  +
-                </Button>
+              <div className="flex flex-col flex-1">
+                <Label htmlFor="defaultStopHours" className="mb-2">
+                  ⏱️ {t("Default stop")}
+                </Label>
+
+                <div className="flex items-center gap-1">
+                  <Button
+                    size="sm"
+                    onClick={() => onDefaultStopHoursChange(Math.max(0, defaultStopHours - 1))}
+                  >
+                    -
+                  </Button>
+
+                  <div className="relative flex-1">
+                    <Input
+                      id="defaultStopHours"
+                      type="number"
+                      min={0}
+                      step={0.5}
+                      value={defaultStopHours}
+                      onChange={(e) => {
+                        const val = e.target.value
+                        onDefaultStopHoursChange(val === "" ? 0 : Number(val))
+                      }}
+                      className="w-full h-10 pr-8 text-center rounded-lg border border-slate-600 bg-slate-900 text-white"
+                    />
+                    <span className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-300 text-sm pointer-events-none">
+                      H
+                    </span>
+                  </div>
+
+                  <Button
+                    size="sm"
+                    onClick={() => onDefaultStopHoursChange(defaultStopHours + 1)}
+                  >
+                    +
+                  </Button>
+                </div>
               </div>
             </div>
           </div>

@@ -129,13 +129,13 @@ export function RouteInfoPanel({
     } else if (distanceMode === "last") {
       return {
         primary: `${lastSegmentDistanceNm.toFixed(1)} NM`,
-        secondary: `from last stop, ETA ${timeToCursorFormatted}`,
+        secondary: `from last stop, Time ${timeToCursorFormatted}`,
         isSplit: false
       };
     } else {
       return {
         primary: `${totalDistanceWithCursor.toFixed(1)} / ${lastSegmentDistanceNm.toFixed(1)} NM`,
-        secondary: `from last stop, ETA ${timeToCursorFormatted}`,
+        secondary: `from last stop, Time: ${timeToCursorFormatted}`,
         isSplit: true
       };
     }
