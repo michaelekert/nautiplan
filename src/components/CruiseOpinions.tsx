@@ -7,7 +7,8 @@ import { Input } from "@/components/ui/input";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Trash2, Plus, Edit2, X } from "lucide-react";
 import * as z from "zod";
-
+import { pdf } from '@react-pdf/renderer';
+import { CrewOpinionPdf } from '@/documentToGenerate/CrewOpinionPdf';
 
 const crewMemberSchema = z.object({
   firstName: z.string().min(2, "Imię musi mieć minimum 2 znaki"),
@@ -20,7 +21,7 @@ const crewMemberSchema = z.object({
 
 export type CrewMemberFormData = z.infer<typeof crewMemberSchema>;
 
-interface CrewMember extends CrewMemberFormData {
+export interface CrewMember extends CrewMemberFormData {
   id: string;
 }
 
@@ -43,6 +44,21 @@ const fieldPlaceholders: Record<keyof CrewMemberFormData, string> = {
   role: "Podaj funkcję",
 };
 
+const isCrewMemberComplete = (member: CrewMember): boolean => {
+  try {
+    crewMemberSchema.parse({
+      firstName: member.firstName,
+      lastName: member.lastName,
+      sailingDegree: member.sailingDegree,
+      phone: member.phone,
+      email: member.email,
+      role: member.role,
+    });
+    return true;
+  } catch {
+    return false;
+  }
+};
 
 export function CruiseOpinions() {
   const [members, setMembers] = useState<CrewMember[]>([]);
@@ -68,14 +84,14 @@ export function CruiseOpinions() {
 
   const handleSave = (id: string, data: CrewMemberFormData) => {
     setMembers((prev) =>
-      prev.map((m) => (m.id == id ? { ...m, ...data } : m))
+      prev.map((m) => (m.id === id ? { ...m, ...data } : m))
     );
     setEditingId(null);
   };
 
   const handleCancel = (id: string) => {
     const member = members.find((m) => m.id === id);
-    if (member && Object.values(member).every((v) => v == "" || v == member.id)) {
+    if (member && !isCrewMemberComplete(member)) {
       setMembers((prev) => prev.filter((m) => m.id !== id));
     }
     setEditingId(null);
@@ -84,6 +100,22 @@ export function CruiseOpinions() {
   const removeMember = (id: string) => {
     setMembers((prev) => prev.filter((m) => m.id !== id));
   };
+
+  const generatePdfs = async () => {
+    for (const member of members) {
+      const blob = await pdf(<CrewOpinionPdf member={member} />).toBlob();
+      const url = URL.createObjectURL(blob);
+
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `${member.firstName}_${member.lastName}_opinia_z_rejsu.pdf`;
+      a.click();
+
+      URL.revokeObjectURL(url);
+    }
+  };
+
+  const hasCompleteMembers = members.some(isCrewMemberComplete);
 
   return (
     <div className="space-y-6">
@@ -100,7 +132,7 @@ export function CruiseOpinions() {
 
       {members.map((member) => (
         <Card key={member.id}>
-          <CardContent>
+          <CardContent className="pt-6">
             {editingId === member.id ? (
               <MemberForm
                 member={member}
@@ -129,11 +161,12 @@ export function CruiseOpinions() {
           </CardContent>
         </Card>
       ))}
-        {members.length > 0 && (
-            <Button className="mb-4">
-                Wygeneruj opinie rejsu
-            </Button>
-        )}
+      
+      {hasCompleteMembers && (
+        <Button onClick={generatePdfs} className="mb-4">
+          Wygeneruj opinie rejsu
+        </Button>
+      )}
     </div>
   );
 }
