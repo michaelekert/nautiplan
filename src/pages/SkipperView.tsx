@@ -21,8 +21,10 @@ import { Checkbox } from "@/components/ui/checkbox"
 import { ClipboardList, BookOpen, AlertCircle, Lightbulb, FileText } from "lucide-react"
 import { Progress } from "@/components/ui/progress"
 import { BottomNavbar } from "@/components/BottomNavbar"
-
-type Section = "checklisty" | "przepisy" | "usterki" | "porady" | "dokumenty"
+import { NauticalDictionarySection } from "@/components/NauticalDictionarySection"
+import DocumentsSection  from "@/components/DocumentsSection"
+ 
+type Section = "checklisty" | "przepisy" | "słownik żeglarski" | "moje trasy" | "dokumenty"
 
 const flagImages = import.meta.glob('../assets/flags/*.png', { eager: true, as: 'url' })
 
@@ -632,8 +634,8 @@ function AppSidebar({
   const sections: { name: string; icon: typeof ClipboardList; key: Section }[] = [
     { name: "Checklisty", icon: ClipboardList, key: "checklisty" },
     { name: "Przepisy", icon: BookOpen, key: "przepisy" },
-    { name: "Usterki", icon: AlertCircle, key: "usterki" },
-    { name: "Porady", icon: Lightbulb, key: "porady" },
+    { name: "Słownik żeglarkski", icon: AlertCircle, key: "słownik żeglarski" },
+    { name: "Moje trasy", icon: Lightbulb, key: "moje trasy" },
     { name: "Dokumenty", icon: FileText, key: "dokumenty" },
   ]
 
@@ -679,12 +681,12 @@ export default function SkipperView() {
         return <ChecklistSection />
       case "przepisy":
         return <RegulationsSection />
-      case "usterki":
-        return <p>Sekcja usterek 🚧</p>
-      case "porady":
+      case "słownik żeglarski":
+        return <NauticalDictionarySection/>
+      case "moje trasy":
         return <p>Sekcja porad ⚓</p>
       case "dokumenty":
-        return <p>Sekcja dokumentów 📄</p>
+        return < DocumentsSection/>
       default:
         return null
     }
@@ -693,8 +695,8 @@ export default function SkipperView() {
   const sections: { name: string; key: Section }[] = [
     { name: "Checklisty", key: "checklisty" },
     { name: "Przepisy", key: "przepisy" },
-    { name: "Usterki", key: "usterki" },
-    { name: "Porady", key: "porady" },
+    { name: "Słownik żeglarski", key: "słownik żeglarski" },
+    { name: "Moje trasy", key: "moje trasy" },
     { name: "Dokumenty", key: "dokumenty" },
   ]
 
