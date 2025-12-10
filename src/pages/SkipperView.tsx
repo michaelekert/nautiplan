@@ -26,7 +26,12 @@ import DocumentsSection  from "@/components/DocumentsSection"
  
 type Section = "checklisty" | "przepisy" | "słownik żeglarski" | "moje trasy" | "dokumenty"
 
-const flagImages = import.meta.glob('../assets/flags/*.png', { eager: true, as: 'url' })
+const flagImages = import.meta.glob<string>('../assets/flags/*.png', { 
+  eager: true, 
+  query: '?url',
+  import: 'default'
+});
+
 
 interface ChecklistItem {
   text: string

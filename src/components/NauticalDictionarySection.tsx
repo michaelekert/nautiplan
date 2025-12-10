@@ -70,7 +70,7 @@ export const NauticalDictionarySection = () => {
         <div className="px-6 pt-12 pb-6">
           <button 
             onClick={() => setView("home")}
-            className="text-blue-500 text-lg mb-2"
+            className="text-lg mb-2"
           >
            Wstecz
           </button>
