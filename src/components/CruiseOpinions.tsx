@@ -11,12 +11,12 @@ import { pdf } from '@react-pdf/renderer';
 import { CrewOpinionPdf } from '@/documentToGenerate/CrewOpinionPdf';
 
 const crewMemberSchema = z.object({
-  firstName: z.string(),
-  lastName: z.string(),
-  sailingDegree: z.string(),
-  phone: z.e164("Nieprawidłowy numer telefonu"),
-  email: z.email("Nieprawidłowy adres email"),
-  role: z.string(),
+  firstName: z.string().optional(),
+  lastName: z.string().optional(),
+  sailingDegree: z.string().optional(),
+  phone: z.e164("Nieprawidłowy numer telefonu").optional(),
+  email: z.email("Nieprawidłowy adres email").optional(),
+  role: z.string().optional(),
 });
 
 
@@ -160,12 +160,12 @@ export function CruiseOpinions() {
   const addMember = () => {
     const newMember: CrewMember = {
       id: Math.random().toString(36).substring(2, 9),
-      firstName: "",
-      lastName: "",
-      sailingDegree: "",
-      phone: "",
-      email: "",
-      role: "",
+      firstName: undefined,
+      lastName: undefined,
+      sailingDegree: undefined,
+      phone: undefined,
+      email: undefined,
+      role: undefined,
     };
     setMembers((prev) => [...prev, newMember]);
     setEditingCrewId(newMember.id);
