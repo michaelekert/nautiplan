@@ -683,7 +683,7 @@ function CruiseForm({
           control={form.control}
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Port startu</FormLabel>
+              <FormLabel>Port zaokrętowania</FormLabel>
               <FormControl>
                 <Input {...field} placeholder="np. Gdynia" />
               </FormControl>
@@ -694,7 +694,7 @@ function CruiseForm({
           name="startPortTidal"
           control={form.control}
           render={({ field }) => (
-            <FormItem className="flex items-center gap-2 space-y-0 pt-8">
+            <FormItem className="flex items-center gap-2 space-y-0 pb-4">
               <FormControl>
                 <input
                   type="checkbox"
@@ -703,7 +703,7 @@ function CruiseForm({
                   className="w-4 h-4"
                 />
               </FormControl>
-              <FormLabel className="!mt-0">Port startu pływowy</FormLabel>
+              <FormLabel className="!mt-0">Port pływowy</FormLabel>
             </FormItem>
           )}
         />
@@ -712,7 +712,7 @@ function CruiseForm({
           control={form.control}
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Port końca</FormLabel>
+              <FormLabel>Port wyokrętowania</FormLabel>
               <FormControl>
                 <Input {...field} placeholder="np. Hel" />
               </FormControl>
@@ -723,7 +723,7 @@ function CruiseForm({
           name="endPortTidal"
           control={form.control}
           render={({ field }) => (
-            <FormItem className="flex items-center gap-2 space-y-0 pt-8">
+            <FormItem className="flex items-center gap-2 space-y-0 pb-4">
               <FormControl>
                 <input
                   type="checkbox"
@@ -732,7 +732,7 @@ function CruiseForm({
                   className="w-4 h-4"
                 />
               </FormControl>
-              <FormLabel className="!mt-0">Port końca pływowy</FormLabel>
+              <FormLabel className="!mt-0">Port pływowy</FormLabel>
             </FormItem>
           )}
         />
