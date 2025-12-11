@@ -298,20 +298,29 @@ export function CruiseOpinions() {
     setCaptain(null);
   };
 
-  const generatePdfs = async () => {
+const generatePdfs = async () => {
   for (const member of members) {
     const blob = await pdf(
       <CrewOpinionPdf member={member} captain={captain} yacht={yacht} cruise={cruise} />
     ).toBlob();
 
-    const url = URL.createObjectURL(blob);
+    const fileName = `${member.firstName}_${member.lastName}_opinia_z_rejsu.pdf`;
+    const file = new File([blob], fileName, { type: 'application/pdf' });
 
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `${member.firstName}_${member.lastName}_opinia_z_rejsu.pdf`;
-    a.click();
-
-    URL.revokeObjectURL(url);
+    if (navigator.share && navigator.canShare?.({ files: [file] })) {
+      await navigator.share({
+        files: [file],
+        title: 'Opinia z rejsu',
+        text: `Opinia dla ${member.firstName} ${member.lastName}`
+      });
+    } else {
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = fileName;
+      a.click();
+      URL.revokeObjectURL(url);
+    }
   }
 };
 
