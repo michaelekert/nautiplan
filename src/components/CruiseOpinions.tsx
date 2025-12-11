@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import { Trash2, Plus, Edit2, X, Check } from "lucide-react";
+import { Trash2, Plus, Edit2, X, Check, Share } from "lucide-react";
 import * as z from "zod";
 import { pdf } from '@react-pdf/renderer';
 import { CrewOpinionPdf } from '@/documentToGenerate/CrewOpinionPdf';
@@ -129,19 +129,14 @@ const captainFieldPlaceholders: Record<keyof CaptainFormData, string> = {
 };
 
 const isCrewMemberComplete = (member: CrewMember): boolean => {
-  try {
-    crewMemberSchema.parse({
-      firstName: member.firstName,
-      lastName: member.lastName,
-      sailingDegree: member.sailingDegree,
-      phone: member.phone,
-      email: member.email,
-      role: member.role,
-    });
-    return true;
-  } catch {
-    return false;
-  }
+  return !!(
+    member.firstName?.trim() ||
+    member.lastName?.trim() ||
+    member.sailingDegree?.trim() ||
+    member.phone?.trim() ||
+    member.email?.trim() ||
+    member.role?.trim()
+  );
 };
 
 export function CruiseOpinions() {
@@ -298,6 +293,31 @@ export function CruiseOpinions() {
     setCaptain(null);
   };
 
+
+  const shareFile = async (blob: Blob, fileName: string, title: string, text: string) => {
+    const file = new File([blob], fileName, { type: 'application/pdf' });
+
+    if (navigator.share && navigator.canShare?.({ files: [file] })) {
+      try {
+        await navigator.share({
+          files: [file],
+          title,
+          text,
+        });
+      } catch (err) {
+        console.error(err);
+      }
+    } else {
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = fileName;
+      a.click();
+      URL.revokeObjectURL(url);
+    }
+  };
+
+
   const generatePdfs = async () => {
   for (const member of members) {
     const blob = await pdf(
@@ -316,16 +336,21 @@ export function CruiseOpinions() {
 };
 
 const generateEmptyPdf = async () => {
+  const blob = await pdf(<CrewOpinionPdf />).toBlob();
+  await shareFile(blob, 'Opinia_z_rejsu.pdf', 'Opinia z rejsu', 'Czysty formularz do wypełnienia');
+};
+
+
+const generateSinglePdf = async (member: CrewMember) => {
   const blob = await pdf(
-    <CrewOpinionPdf />
+    <CrewOpinionPdf member={member} captain={captain} yacht={yacht} cruise={cruise} />
   ).toBlob();
 
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = `Opinia_z_rejsu.pdf`;
-  a.click();
-  URL.revokeObjectURL(url);
+  const firstName = member.firstName || "BrakImienia";
+  const lastName = member.lastName || "BrakNazwiska";
+  const fileName = `${firstName}_${lastName}_opinia_z_rejsu.pdf`;
+
+  await shareFile(blob, fileName, 'Opinia z rejsu', `Opinia dla ${firstName} ${lastName}`);
 };
 
 
@@ -487,6 +512,9 @@ const generateEmptyPdf = async () => {
                     <div className="flex gap-2">
                       <Button variant="outline" size="sm" onClick={() => editMember(member.id)}>
                         <Edit2 className="w-4 h-4" />
+                      </Button>
+                      <Button className="md:hidden" variant="secondary" size="sm" onClick={() => generateSinglePdf(member)}>
+                        <Share className="w-4 h-4 mr-1" />
                       </Button>
                       <Button variant="destructive" size="sm" onClick={() => removeMember(member.id)}>
                         <Trash2 className="w-4 h-4" />
