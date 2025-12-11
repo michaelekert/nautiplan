@@ -350,7 +350,10 @@ const generateSinglePdf = async (member: CrewMember) => {
   const lastName = member.lastName || "BrakNazwiska";
   const fileName = `${firstName}_${lastName}_opinia_z_rejsu.pdf`;
 
-  await shareFile(blob, fileName, 'Opinia z rejsu', `Opinia dla ${firstName} ${lastName}`);
+  
+  const shareTitle = `${firstName} ${lastName} – Opinia z rejsu`;
+
+  await shareFile(blob, fileName, shareTitle, `Opinia dla ${firstName} ${lastName}`);
 };
 
 
