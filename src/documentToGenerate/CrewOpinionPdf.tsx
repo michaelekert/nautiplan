@@ -1,5 +1,5 @@
 import { Document, Page, Text, View, Font, Image } from "@react-pdf/renderer";
-import type { CrewMember } from "@/components/CruiseOpinions";
+import type { CrewMember, Captain, Yacht, Cruise } from "@/components/CruiseOpinions";
 import Logo from '@/assets/Logo.jpeg?url'; 
 import { pdfStyles as styles } from "./pdfStyles";
 
@@ -24,7 +24,21 @@ function CheckRow({ options }: { options: string[] }) {
   );
 }
 
-export function CrewOpinionPdf({member}: {member: CrewMember}) {
+export function CrewOpinionPdf({
+  member,
+  captain,
+  yacht,
+  cruise
+}: {
+  member?: CrewMember;
+  captain?: Captain | null;
+  yacht?: Yacht | null;
+  cruise?: Cruise | null;
+}) {
+
+  const yesNo = (v?: boolean) => (v == true ? "TAK" : v == false ? "NIE" : "TAK / NIE");
+
+
   return (
     <Document>
       <Page size="A4" style={styles.page}>
@@ -37,17 +51,17 @@ export function CrewOpinionPdf({member}: {member: CrewMember}) {
         <View style={styles.box}>
           <View style={styles.row}>
             <Text style={styles.label}>Imię i nazwisko:</Text>
-            <Text style={styles.value}>{member.firstName} {member.lastName}</Text>
+            <Text style={styles.value}>{member?.firstName} {member?.lastName}</Text>
             <Text style={[styles.label, { marginLeft: 10 }]}>stop. żegl. /mot. i nr pat.:</Text>
-            <Text style={styles.value}>{member.sailingDegree}</Text>
+            <Text style={styles.value}>{member?.sailingDegree}</Text>
           </View>
           <View style={styles.row}>
             <Text style={styles.label}>Tel.:</Text>
-            <Text style={styles.value}>{member.phone}</Text>
+            <Text style={styles.value}>{member?.phone}</Text>
             <Text style={styles.label}>Adres e-mail:</Text>
-            <Text style={styles.value}>{member.email}</Text>
+            <Text style={styles.value}>{member?.email}</Text>
             <Text style={styles.label}>Funkcja:</Text>
-            <Text style={styles.value}>{member.role}</Text>
+            <Text style={styles.value}>{member?.role}</Text>
           </View>
         </View>
         
@@ -55,17 +69,17 @@ export function CrewOpinionPdf({member}: {member: CrewMember}) {
         <View style={styles.box}>
           <View style={styles.row}>
             <Text style={styles.label}>Nr rej.:</Text>
-            <View style={styles.value}></View>
+            <Text style={styles.value}>{yacht?.registrationNumber}</Text>
             <Text style={styles.label}>nazwa jachtu:</Text>
-            <View style={styles.value}></View>
+            <Text style={styles.value}>{yacht?.name}</Text>
             <Text style={styles.label}>Lc=[m]:</Text>
-            <View style={{ borderBottom: "1 solid #888", width: 30, paddingBottom: 1 }}></View>
+            <Text style={{ borderBottom: "1 solid #888", width: 30, paddingBottom: 1 }}>{yacht?.lengthOverall}</Text>
           </View>
           <View style={styles.row}>
             <Text style={styles.label}>Port macierzysty:</Text>
-            <View style={styles.value}></View>
+            <Text style={styles.value}>{yacht?.homePort}</Text>
             <Text style={styles.label}>moc silnika [kW]:</Text>
-            <View style={{ borderBottom: "1 solid #888", width: 45, paddingBottom: 1 }}></View>
+            <Text style={{ borderBottom: "1 solid #888", width: 45, paddingBottom: 1 }}>{yacht?.enginePower}</Text>
           </View>
         </View>
         
@@ -77,29 +91,29 @@ export function CrewOpinionPdf({member}: {member: CrewMember}) {
           </View>
           <View style={styles.row}>
             <Text style={styles.label}>Port zaokrętowania:</Text>
-            <View style={styles.value}></View>
+            <Text style={styles.value}>{cruise?.startPort}</Text>
             <Text style={styles.label}>Data:</Text>
-            <View style={{ borderBottom: "1 solid #888", width: 38, paddingBottom: 1 }}></View>
+            <Text style={{ borderBottom: "1 solid #888", width: 45, paddingBottom: 1 }}>{cruise?.startDate}</Text>
             <Text style={styles.label}>Pływowy:</Text>
-            <Text style={styles.value}>TAK / NIE</Text>
+            <Text style={styles.value}>{yesNo(cruise?.startPortTidal)}</Text>
           </View>
           <View style={styles.row}>
             <Text style={styles.label}>Port wyokrętowania:</Text>
-            <View style={styles.value}></View>
+            <Text style={styles.value}>{cruise?.endPort}</Text>
             <Text style={styles.label}>Data:</Text>
-            <View style={{ borderBottom: "1 solid #888", width: 38, paddingBottom: 1 }}></View>
+            <Text style={{ borderBottom: "1 solid #888", width: 38, paddingBottom: 1 }}>{cruise?.endDate}</Text>
             <Text style={styles.label}>Pływowy:</Text>
-            <Text style={styles.value}>TAK / NIE</Text>
+            <Text style={styles.value}>{yesNo(cruise?.endPortTidal)}</Text>
           </View>
           <View style={styles.row}>
             <Text style={styles.label}>Odwiedzone porty:</Text>
-            <View style={[styles.value, { minHeight: 11, paddingBottom: 1 }]}></View>
+            <Text style={[styles.value, { minHeight: 11, paddingBottom: 1 }]}>{cruise?.visitedPorts}</Text>
           </View>
           <View style={styles.row}>
             <Text style={{ fontWeight: "bold" }}>W tym liczba portów pływowych:</Text>
-            <View style={{ borderBottom: "1 solid #888", width: 50, paddingBottom: 1, marginLeft: 3, marginRight: 15 }}></View>
+            <Text style={{ borderBottom: "1 solid #888", width: 50, paddingBottom: 1, marginLeft: 3, marginRight: 15 }}>{cruise?.tidalPortsCount}</Text>
             <Text style={styles.label}>Liczba dni rejsu:</Text>
-            <View style={{ borderBottom: "1 solid #888", width: 50, paddingBottom: 1, marginLeft: 3 }}></View>
+            <Text style={{ borderBottom: "1 solid #888", width: 50, paddingBottom: 1, marginLeft: 3 }}>{cruise?.cruiseDays}</Text>
           </View>
         </View>
         
@@ -132,21 +146,27 @@ export function CrewOpinionPdf({member}: {member: CrewMember}) {
           </View>
           <View style={styles.tableDataRow}>
             <View style={styles.tableDataCell}>
-              <Text></Text>
+              <Text>{cruise?.totalHours}</Text>
             </View>
+
             <View style={styles.tableDataCell}>
-              <Text></Text>
+              <Text>{cruise?.sailingHours}</Text>
             </View>
+
             <View style={[styles.tableDataCell, {flex: 0.55}]}>
-              <Text></Text>
+              <Text>{cruise?.engineHours}</Text>
             </View>
+
             <View style={styles.tableDataCell}>
-              <Text></Text>
+              <Text>{cruise?.tidalWatersHours}</Text>
             </View>
+
             <View style={[styles.tableDataCell, {flex:1.1}]}>
-              <Text></Text>
+              <Text>{cruise?.inPortHours}</Text>
             </View>
+
             <View style={styles.tableDataCellLast}>
+              <Text>{cruise?.nauticalMiles}</Text>
             </View>
           </View>
         </View>
@@ -171,15 +191,15 @@ export function CrewOpinionPdf({member}: {member: CrewMember}) {
         <View style={styles.box}>
           <View style={styles.row}>
             <Text style={styles.label}>Imię i nazwisko:</Text>
-            <View style={styles.value}></View>
+            <Text style={styles.value}>{captain?.firstName} {captain?.lastName}</Text>
             <Text style={styles.label}>stop. żegl. / mot. i nr pat.:</Text>
-            <View style={styles.value}></View>
+            <Text style={styles.value}>{captain?.sailingDegree}</Text>
           </View>
           <View style={styles.row}>
             <Text style={styles.label}>tel.:</Text>
-            <View style={styles.value}></View>
+            <Text style={styles.value}>{captain?.phone}</Text>
             <Text style={styles.label}>adres e-mail:</Text>
-            <View style={styles.value}></View>
+            <Text style={styles.value}>{captain?.email}</Text>
           </View>
         </View>
         
