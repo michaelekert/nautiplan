@@ -356,8 +356,52 @@ const generateSinglePdf = async (member: CrewMember) => {
   await shareFile(blob, fileName, shareTitle, `Opinia dla ${firstName} ${lastName}`);
 };
 
+const generatePartialPdf = async () => {
+  const blob = await pdf(
+    <CrewOpinionPdf captain={captain} yacht={yacht} cruise={cruise} />
+  ).toBlob();
 
-  const hasCompleteMembers = members.some(isCrewMemberComplete);
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = 'Opinia_z_rejsu.pdf';
+  a.click();
+  URL.revokeObjectURL(url);
+};
+
+
+  const hasCompleteMembers = members.some(isCrewMemberComplete); 
+  const isCrewCompletelyEmpty = members.length === 0 || members.every(m => !isCrewMemberComplete(m));
+
+  const hasAnyData = () => {
+    const hasYachtData = yacht && (
+      yacht.name?.trim() ||
+      yacht.registrationNumber?.trim() ||
+      yacht.lengthOverall?.trim() ||
+      yacht.homePort?.trim() ||
+      yacht.enginePower?.trim()
+    );
+
+    const hasCruiseData = cruise && (
+      cruise.startDate?.trim() ||
+      cruise.endDate?.trim() ||
+      cruise.startPort?.trim() ||
+      cruise.endPort?.trim() ||
+      cruise.visitedPorts?.trim() ||
+      cruise.cruiseDays?.trim() ||
+      cruise.nauticalMiles?.trim()
+    );
+
+    const hasCaptainData = captain && (
+      captain.firstName?.trim() ||
+      captain.lastName?.trim() ||
+      captain.sailingDegree?.trim() ||
+      captain.phone?.trim() ||
+      captain.email?.trim()
+    );
+
+    return hasYachtData || hasCruiseData || hasCaptainData || members.length > 0;
+  };
 
   return (
     <div className="max-w-6xl mx-auto p-6 space-y-6">
@@ -533,11 +577,18 @@ const generateSinglePdf = async (member: CrewMember) => {
 
       {hasCompleteMembers && (
         <Button onClick={generatePdfs} size="lg" className="w-full">
-          Wygeneruj opinie rejsu
+          Wygeneruj opinie dla członków załogi
         </Button>
       )}
-      <Button onClick={generateEmptyPdf} size="lg" className="w-full">
-          Wygeneruj opinie rejsu (bez danych)
+
+      {isCrewCompletelyEmpty && hasAnyData() && (
+        <Button onClick={generatePartialPdf} size="lg" variant="secondary" className="w-full">
+          Wygeneruj opinię o rejsie z częściowymi danymi
+        </Button>
+      )}
+
+      <Button onClick={generateEmptyPdf} size="lg" variant="outline" className="w-full">
+        Wygeneruj pusty formularz
       </Button>
     </div>
   );
