@@ -4,9 +4,11 @@ import { Button } from '@/components/ui/button';
 import { 
   FileText, 
   ArrowLeft,
+  Anchor,
 } from 'lucide-react';
 
 import { CruiseOpinions } from "@/components/CruiseOpinions";
+import { WatchSystem } from "@/components/WatchSystem";
 
 export default function DocumentsSection() {
   const [selectedCard, setSelectedCard] = useState<string | null>(null);
@@ -19,13 +21,21 @@ export default function DocumentsSection() {
       icon: FileText,
       color: 'text-blue-600'
     },
+    {
+      id: 'watch-system',
+      title: 'System wacht',
+      description: 'Planowanie grafiku wacht na rejs',
+      icon: Anchor,
+      color: 'text-emerald-600'
+    },
   ];
 
   const renderSection = () => {
     switch (selectedCard) {
       case 'cruise-opinions':
         return <CruiseOpinions />;
-
+      case 'watch-system':
+        return <WatchSystem />;
       default:
         return null;
     }
