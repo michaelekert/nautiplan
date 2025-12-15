@@ -4,6 +4,14 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
 import { Calendar, Clock, Users, ChefHat, Anchor, Download, PenLine } from 'lucide-react';
 import { PDFDownloadLink } from '@react-pdf/renderer';
 import { WatchSchedulePDF } from '@/documentToGenerate/WatchSchedulePDF';
@@ -353,19 +361,19 @@ export function WatchSystem() {
       {schedule && (
         <Card className="border-2 border-slate-200 bg-gradient-to-br from-slate-50 to-white">
           <CardHeader className="border-b border-slate-100">
-            <div className="flex items-center justify-between flex-wrap gap-4">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
               <div className="flex items-center gap-3">
-                <div className="p-3 rounded-xl bg-gradient-to-br from-emerald-500 to-emerald-600 shadow-lg shadow-emerald-200">
-                  <Calendar className="w-6 h-6 text-white" />
+                <div className="p-2 sm:p-3 rounded-xl bg-gradient-to-br from-emerald-500 to-emerald-600 shadow-lg shadow-emerald-200">
+                  <Calendar className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
                 </div>
                 <div>
-                  <CardTitle className="text-xl font-bold text-slate-800">Grafik wacht</CardTitle>
+                  <CardTitle className="text-lg sm:text-xl font-bold text-slate-800">Grafik wacht</CardTitle>
                   <CardDescription className="text-slate-500">
                     {schedule.days.length} dni rejsu
                   </CardDescription>
                 </div>
               </div>
-              <div className="flex gap-2 flex-wrap">
+              <div className="flex flex-col sm:flex-row gap-2">
                 <PDFDownloadLink
                   document={
                     <WatchSchedulePDF
@@ -421,7 +429,8 @@ export function WatchSystem() {
               </div>
             </div>
           </CardHeader>
-          <CardContent className="pt-6">
+
+          <CardContent className="p-4 sm:p-6 overflow-x-auto">
             {hasAnyMembers && (
               <div className="mb-4 p-3 rounded-lg bg-slate-50 border border-slate-200">
                 <div className="flex flex-wrap gap-3">
@@ -440,60 +449,46 @@ export function WatchSystem() {
                 </div>
               </div>
             )}
-            <div className="overflow-x-auto">
-              <table className="w-full border-collapse">
-                <thead>
-                  <tr>
-                    <th className="border border-slate-300 bg-slate-100 px-3 py-2 text-left text-sm font-semibold text-slate-600">
-                      Godziny
-                    </th>
+
+            <div className="overflow-x-auto w-70">
+              <Table className="min-w-[600px]">
+                <TableHeader>
+                  <TableRow>
+                    <TableHead className="w-[100px]">Godziny</TableHead>
                     {schedule.days.map((day, idx) => (
-                      <th key={idx} className="border border-slate-300 bg-blue-600 px-3 py-2 text-center text-sm font-semibold text-white min-w-[80px]">
-                        <div className="capitalize">{day.date}</div>
-                      </th>
+                      <TableHead key={idx} className="text-center whitespace-nowrap">
+                        {day.date}
+                      </TableHead>
                     ))}
-                  </tr>
-                </thead>
-                <tbody>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
                   {schedule.timeSlots.map((time, timeIdx) => (
-                    <tr key={timeIdx}>
-                      <td className="border border-slate-300 bg-slate-50 px-3 py-2 text-sm font-mono text-slate-600">
-                        {time}
-                      </td>
+                    <TableRow key={timeIdx}>
+                      <TableCell className="font-medium">{time}</TableCell>
                       {schedule.days.map((day, dayIdx) => (
-                        <td 
-                          key={dayIdx} 
-                          className={`border border-slate-300 px-3 py-2 text-center ${watchBgColors[day.watches[timeIdx]]}`}
-                        >
+                        <TableCell key={dayIdx} className="text-center">
                           <span className={`inline-flex px-2 py-1 rounded text-sm font-bold ${watchColors[day.watches[timeIdx]]}`}>
                             {toRoman(day.watches[timeIdx] + 1)}
                           </span>
-                        </td>
+                        </TableCell>
                       ))}
-                    </tr>
+                    </TableRow>
                   ))}
                   {hasGalleyWatch && (
-                    <tr>
-                      <td className="border border-slate-300 bg-orange-100 px-3 py-2 text-sm font-semibold text-orange-800">
-                        <div className="flex items-center gap-2">
-                          <ChefHat className="w-4 h-4" />
-                          Kambuz
-                        </div>
-                      </td>
+                    <TableRow>
+                      <TableCell className="font-medium">Kambuz</TableCell>
                       {schedule.days.map((day, dayIdx) => (
-                        <td 
-                          key={dayIdx} 
-                          className={`border border-slate-300 px-3 py-2 text-center ${watchBgColors[day.galleyIndex]}`}
-                        >
+                        <TableCell key={dayIdx} className="text-center">
                           <span className={`inline-flex px-2 py-1 rounded text-sm font-bold ${watchColors[day.galleyIndex]}`}>
                             {toRoman(day.galleyIndex + 1)}
                           </span>
-                        </td>
+                        </TableCell>
                       ))}
-                    </tr>
+                    </TableRow>
                   )}
-                </tbody>
-              </table>
+                </TableBody>
+              </Table>
             </div>
           </CardContent>
         </Card>
