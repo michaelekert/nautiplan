@@ -144,13 +144,6 @@ export function WatchSystem() {
     'bg-violet-100 text-violet-800 border-violet-300',
   ];
 
-  const watchBgColors = [
-    'bg-sky-50',
-    'bg-amber-50',
-    'bg-emerald-50',
-    'bg-violet-50',
-  ];
-
   const hasAnyMembers = watchMembers.some(w => w.members.some(m => m.trim()));
 
   return (
@@ -373,7 +366,7 @@ export function WatchSystem() {
                   </CardDescription>
                 </div>
               </div>
-              <div className="flex flex-col sm:flex-row gap-2">
+              <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
                 <PDFDownloadLink
                   document={
                     <WatchSchedulePDF
@@ -393,7 +386,7 @@ export function WatchSystem() {
                     <Button
                       variant="outline"
                       disabled={loading}
-                      className="border-slate-200 hover:bg-slate-50"
+                      className="border-slate-200 hover:bg-slate-50 w-full sm:w-auto"
                     >
                       <Download className="w-4 h-4 mr-2" />
                       {loading ? 'Generowanie...' : 'Pobierz PDF'}
@@ -419,7 +412,7 @@ export function WatchSystem() {
                     <Button
                       variant="outline"
                       disabled={loading}
-                      className="border-orange-200 hover:bg-orange-50 text-orange-700"
+                      className="border-orange-200 hover:bg-orange-50 text-orange-700 w-full sm:w-auto"
                     >
                       <PenLine className="w-4 h-4 mr-2" />
                       {loading ? 'Generowanie...' : 'PDF do wypełnienia'}
@@ -429,8 +422,7 @@ export function WatchSystem() {
               </div>
             </div>
           </CardHeader>
-
-          <CardContent className="p-4 sm:p-6 overflow-x-auto">
+          <CardContent className="p-4 sm:p-6">
             {hasAnyMembers && (
               <div className="mb-4 p-3 rounded-lg bg-slate-50 border border-slate-200">
                 <div className="flex flex-wrap gap-3">
@@ -449,9 +441,8 @@ export function WatchSystem() {
                 </div>
               </div>
             )}
-
-            <div className="overflow-x-auto w-70">
-              <Table className="min-w-[600px]">
+            <div className="w-full max-w-[calc(100vw-3rem)] sm:max-w-full">
+              <Table>
                 <TableHeader>
                   <TableRow>
                     <TableHead className="w-[100px]">Godziny</TableHead>
