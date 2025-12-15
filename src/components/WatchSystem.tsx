@@ -13,10 +13,16 @@ interface WatchMember {
   members: string[];
 }
 
-interface WatchScheduleEntry {
-  time: string;
-  watchIndex: number;
-  galleyIndex?: number;
+interface DaySchedule {
+  date: string;
+  shortDate: string;
+  watches: number[];
+  galleyIndex: number;
+}
+
+interface ScheduleData {
+  timeSlots: string[];
+  days: DaySchedule[];
 }
 
 export function WatchSystem() {
@@ -31,7 +37,12 @@ export function WatchSystem() {
   ]);
   const [hasGalleyWatch, setHasGalleyWatch] = useState<boolean>(false);
   const [galleyHasNavWatch, setGalleyHasNavWatch] = useState<boolean>(false);
-  const [schedule, setSchedule] = useState<{ date: string; entries: WatchScheduleEntry[] }[] | null>(null);
+  const [schedule, setSchedule] = useState<ScheduleData | null>(null);
+
+  const toRoman = (num: number): string => {
+    const romanNumerals = ['I', 'II', 'III', 'IV'];
+    return romanNumerals[num - 1] || num.toString();
+  };
 
   const handleWatchCountChange = (count: 3 | 4) => {
     setWatchCount(count);
@@ -65,52 +76,57 @@ export function WatchSystem() {
 
   const generateSchedule = () => {
     if (!startDate || !endDate) return;
+    
     const start = new Date(startDate);
     const end = new Date(endDate);
-    const scheduleData: { date: string; entries: WatchScheduleEntry[] }[] = [];
+    const watchesPerDay = 24 / watchDuration;
+    
+    const timeSlots: string[] = [];
+    for (let slot = 0; slot < watchesPerDay; slot++) {
+      const startHour = slot * watchDuration;
+      const endHour = ((slot + 1) * watchDuration) % 24;
+      timeSlots.push(`${startHour.toString().padStart(2, '0')}00-${endHour.toString().padStart(2, '0')}00`);
+    }
+
+    const days: DaySchedule[] = [];
     let currentWatchIndex = 0;
     let galleyWatchIndex = 0;
-    const watchesPerDay = 24 / watchDuration;
 
     for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
-      const dayEntries: WatchScheduleEntry[] = [];
       const dateStr = d.toLocaleDateString('pl-PL', { 
-        weekday: 'long', 
+        weekday: 'short', 
         day: 'numeric', 
-        month: 'long' 
+        month: 'short' 
+      });
+      const shortDate = d.toLocaleDateString('pl-PL', { 
+        day: 'numeric', 
+        month: 'numeric' 
       });
 
+      const watches: number[] = [];
+      
       for (let slot = 0; slot < watchesPerDay; slot++) {
-        const startHour = slot * watchDuration;
-        const endHour = ((slot + 1) * watchDuration) % 24;
-        const timeStr = `${startHour.toString().padStart(2, '0')}:00 - ${endHour.toString().padStart(2, '0')}:00`;
         let navWatchIdx = currentWatchIndex % watchCount;
 
         if (hasGalleyWatch && !galleyHasNavWatch && navWatchIdx === (galleyWatchIndex % watchCount)) {
           navWatchIdx = (navWatchIdx + 1) % watchCount;
         }
 
-        const entry: WatchScheduleEntry = {
-          time: timeStr,
-          watchIndex: navWatchIdx,
-        };
-
-        if (hasGalleyWatch) {
-          entry.galleyIndex = galleyWatchIndex % watchCount;
-        }
-
-        dayEntries.push(entry);
+        watches.push(navWatchIdx);
         currentWatchIndex = (currentWatchIndex + 1) % watchCount;
       }
 
-      galleyWatchIndex = (galleyWatchIndex + 1) % watchCount;
-      scheduleData.push({
+      days.push({
         date: dateStr,
-        entries: dayEntries
+        shortDate,
+        watches,
+        galleyIndex: galleyWatchIndex % watchCount,
       });
+
+      galleyWatchIndex = (galleyWatchIndex + 1) % watchCount;
     }
 
-    setSchedule(scheduleData);
+    setSchedule({ timeSlots, days });
   };
 
   const watchColors = [
@@ -119,6 +135,15 @@ export function WatchSystem() {
     'bg-emerald-100 text-emerald-800 border-emerald-300',
     'bg-violet-100 text-violet-800 border-violet-300',
   ];
+
+  const watchBgColors = [
+    'bg-sky-50',
+    'bg-amber-50',
+    'bg-emerald-50',
+    'bg-violet-50',
+  ];
+
+  const hasAnyMembers = watchMembers.some(w => w.members.some(m => m.trim()));
 
   return (
     <div className="space-y-6">
@@ -231,7 +256,7 @@ export function WatchSystem() {
                   <Card key={watchIdx} className={`border-2 ${watchColors[watchIdx]}`}>
                     <CardHeader className="pb-2">
                       <CardTitle className="text-base font-semibold">
-                        Wachta {watch.watchNumber}
+                        {toRoman(watch.watchNumber)}
                       </CardTitle>
                     </CardHeader>
                     <CardContent className="space-y-2">
@@ -336,7 +361,7 @@ export function WatchSystem() {
                 <div>
                   <CardTitle className="text-xl font-bold text-slate-800">Grafik wacht</CardTitle>
                   <CardDescription className="text-slate-500">
-                    {schedule.length} dni rejsu
+                    {schedule.days.length} dni rejsu
                   </CardDescription>
                 </div>
               </div>
@@ -397,82 +422,78 @@ export function WatchSystem() {
             </div>
           </CardHeader>
           <CardContent className="pt-6">
-            <div className="mb-6 p-4 rounded-lg bg-slate-50 border border-slate-200">
-              <h4 className="text-sm font-semibold text-slate-600 mb-3">Skład wacht:</h4>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                {watchMembers.map((watch, idx) => (
-                  <div key={idx} className="flex items-center gap-3">
-                    <span className={`px-3 py-1.5 rounded-full text-sm font-bold border ${watchColors[idx]}`}>
-                      Wachta {watch.watchNumber}
-                    </span>
-                    <span className="text-sm text-slate-600">
-                      {watch.members.filter(m => m.trim()).join(', ') || '(brak przypisanych)'}
-                    </span>
-                  </div>
-                ))}
-              </div>
-            </div>
-            <div className="overflow-x-auto">
-              {schedule.map((day, dayIdx) => (
-                <div key={dayIdx} className="mb-6">
-                  <h3 className="text-lg font-bold text-slate-700 mb-3 capitalize flex items-center gap-2">
-                    <span className="w-2 h-2 rounded-full bg-blue-500"></span>
-                    {day.date}
-                  </h3>
-                  <div className="overflow-hidden rounded-lg border border-slate-200">
-                    <table className="w-full">
-                      <thead>
-                        <tr className="bg-slate-100">
-                          <th className="px-4 py-3 text-left text-sm font-semibold text-slate-600 border-b border-slate-200">
-                            <div className="flex items-center gap-2">
-                              <Clock className="w-4 h-4" />
-                              Godziny
-                            </div>
-                          </th>
-                          <th className="px-4 py-3 text-left text-sm font-semibold text-slate-600 border-b border-slate-200">
-                            <div className="flex items-center gap-2">
-                              <Anchor className="w-4 h-4" />
-                              Wachta nawigacyjna
-                            </div>
-                          </th>
-                          {hasGalleyWatch && (
-                            <th className="px-4 py-3 text-left text-sm font-semibold text-slate-600 border-b border-slate-200">
-                              <div className="flex items-center gap-2">
-                                <ChefHat className="w-4 h-4" />
-                                Kambuz
-                              </div>
-                            </th>
-                          )}
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {day.entries.map((entry, entryIdx) => (
-                          <tr 
-                            key={entryIdx} 
-                            className={`${entryIdx % 2 === 0 ? 'bg-white' : 'bg-slate-50'} hover:bg-slate-100 transition-colors`}
-                          >
-                            <td className="px-4 py-3 text-sm font-mono text-slate-600 border-b border-slate-100">
-                              {entry.time}
-                            </td>
-                            <td className="px-4 py-3 border-b border-slate-100">
-                              <span className={`inline-flex px-3 py-1.5 rounded-full text-sm font-medium border ${watchColors[entry.watchIndex]}`}>
-                                Wachta {entry.watchIndex + 1}
-                              </span>
-                            </td>
-                            {hasGalleyWatch && entry.galleyIndex !== undefined && (
-                              <td className="px-4 py-3 border-b border-slate-100">
-                                <span className={`inline-flex px-3 py-1.5 rounded-full text-sm font-medium border ${watchColors[entry.galleyIndex]}`}>
-                                  Wachta {entry.galleyIndex + 1}
-                                </span>
-                              </td>
-                            )}
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
+            {hasAnyMembers && (
+              <div className="mb-4 p-3 rounded-lg bg-slate-50 border border-slate-200">
+                <div className="flex flex-wrap gap-3">
+                  {watchMembers.map((watch, idx) => {
+                    const members = watch.members.filter(m => m.trim()).join(', ');
+                    if (!members) return null;
+                    return (
+                      <div key={idx} className="flex items-center gap-2">
+                        <span className={`px-2 py-1 rounded-full text-xs font-bold border ${watchColors[idx]}`}>
+                          {toRoman(watch.watchNumber)}
+                        </span>
+                        <span className="text-xs text-slate-600">{members}</span>
+                      </div>
+                    );
+                  })}
                 </div>
-              ))}
+              </div>
+            )}
+            <div className="overflow-x-auto">
+              <table className="w-full border-collapse">
+                <thead>
+                  <tr>
+                    <th className="border border-slate-300 bg-slate-100 px-3 py-2 text-left text-sm font-semibold text-slate-600">
+                      Godziny
+                    </th>
+                    {schedule.days.map((day, idx) => (
+                      <th key={idx} className="border border-slate-300 bg-blue-600 px-3 py-2 text-center text-sm font-semibold text-white min-w-[80px]">
+                        <div className="capitalize">{day.date}</div>
+                      </th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {schedule.timeSlots.map((time, timeIdx) => (
+                    <tr key={timeIdx}>
+                      <td className="border border-slate-300 bg-slate-50 px-3 py-2 text-sm font-mono text-slate-600">
+                        {time}
+                      </td>
+                      {schedule.days.map((day, dayIdx) => (
+                        <td 
+                          key={dayIdx} 
+                          className={`border border-slate-300 px-3 py-2 text-center ${watchBgColors[day.watches[timeIdx]]}`}
+                        >
+                          <span className={`inline-flex px-2 py-1 rounded text-sm font-bold ${watchColors[day.watches[timeIdx]]}`}>
+                            {toRoman(day.watches[timeIdx] + 1)}
+                          </span>
+                        </td>
+                      ))}
+                    </tr>
+                  ))}
+                  {hasGalleyWatch && (
+                    <tr>
+                      <td className="border border-slate-300 bg-orange-100 px-3 py-2 text-sm font-semibold text-orange-800">
+                        <div className="flex items-center gap-2">
+                          <ChefHat className="w-4 h-4" />
+                          Kambuz
+                        </div>
+                      </td>
+                      {schedule.days.map((day, dayIdx) => (
+                        <td 
+                          key={dayIdx} 
+                          className={`border border-slate-300 px-3 py-2 text-center ${watchBgColors[day.galleyIndex]}`}
+                        >
+                          <span className={`inline-flex px-2 py-1 rounded text-sm font-bold ${watchColors[day.galleyIndex]}`}>
+                            {toRoman(day.galleyIndex + 1)}
+                          </span>
+                        </td>
+                      ))}
+                    </tr>
+                  )}
+                </tbody>
+              </table>
             </div>
           </CardContent>
         </Card>
