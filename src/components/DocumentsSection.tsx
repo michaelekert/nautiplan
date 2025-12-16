@@ -7,12 +7,14 @@ import {
   Anchor,
   Ship,
   ClipboardList,
+  OctagonAlert,
 } from 'lucide-react';
 
 import { CruiseOpinions } from "@/components/CruiseOpinions";
 import { WatchSystem } from "@/components/WatchSystem";
 import { YachtDocuments } from "@/components/YachtDocuments";
 import { CruiseCard } from "@/components/CruiseCard";
+import { CollisionStatement } from '@/components/CollisionStatement';
 
 export default function DocumentsSection() {
   const [selectedCard, setSelectedCard] = useState<string | null>(null);
@@ -46,6 +48,13 @@ export default function DocumentsSection() {
       icon: Ship,
       color: 'text-violet-600'
     },
+    {
+      id: 'collision-statement',
+      title: 'Oświadczenie o kolizji',
+      description: 'Dokument do wydrukowania w przypdaku kolizji z innym jachtem',
+      icon: OctagonAlert,
+      color: 'text-red-600'
+    },
   ];
 
   const renderSection = () => {
@@ -58,6 +67,8 @@ export default function DocumentsSection() {
         return <WatchSystem />;
       case 'yacht-documents':
         return <YachtDocuments />;
+      case 'collision-statement':
+        return <CollisionStatement />;
       default:
         return null;
     }
