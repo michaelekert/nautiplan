@@ -21,7 +21,7 @@ export default function DocumentsSection() {
     {
       id: 'cruise-card',
       title: 'Karta Rejsu',
-      description: 'Oficjalny formularz PZŻ do dokumentowania rejsu',
+      description: 'Oficjalny formularz do dokumentowania rejsu',
       icon: ClipboardList,
       color: 'text-orange-600'
     },

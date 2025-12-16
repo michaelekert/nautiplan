@@ -5,8 +5,10 @@ import {
   View,
   StyleSheet,
   Font,
+  Image
 } from '@react-pdf/renderer';
-
+import Logo from '@/assets/Logo.jpeg?url';
+ 
 Font.register({
   family: "Roboto",
   fonts: [
@@ -60,32 +62,30 @@ export interface CruiseCardData {
   ownerComments: string;
 }
 
-
 const styles = StyleSheet.create({
   page: {
-    padding: 30,
+    padding: 25,
+    paddingBottom: 20,
     fontFamily: 'Roboto',
-    fontSize: 9,
+    fontSize: 8,
   },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 15,
+    marginBottom: 12,
     borderBottomWidth: 1,
     borderBottomColor: '#000',
     paddingBottom: 10,
   },
   logoPlaceholder: {
-    width: 50,
-    height: 50,
+    width: 45,
+    height: 45,
     marginRight: 15,
-    borderWidth: 1,
-    borderColor: '#003366',
     justifyContent: 'center',
     alignItems: 'center',
   },
   logoText: {
-    fontSize: 8,
+    fontSize: 7,
     color: '#003366',
     textAlign: 'center',
     fontWeight: 'bold',
@@ -95,24 +95,24 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   headerTitle: {
-    fontSize: 11,
+    fontSize: 10,
     letterSpacing: 3,
     color: '#003366',
     fontWeight: 'bold',
   },
   mainTitle: {
-    fontSize: 16,
+    fontSize: 14,
     fontWeight: 'bold',
-    marginTop: 5,
+    marginTop: 4,
     letterSpacing: 2,
   },
   sectionTitle: {
-    fontSize: 10,
+    fontSize: 9,
     fontWeight: 'bold',
-    marginTop: 12,
-    marginBottom: 6,
+    marginTop: 10,
+    marginBottom: 5,
     backgroundColor: '#f0f0f0',
-    padding: 4,
+    padding: 3,
   },
   row: {
     flexDirection: 'row',
@@ -121,19 +121,17 @@ const styles = StyleSheet.create({
   label: {
     fontSize: 8,
     color: '#333',
-    minWidth: 100,
   },
   inputLine: {
     flex: 1,
     borderBottomWidth: 1,
     borderBottomColor: '#999',
     borderBottomStyle: 'dotted',
-    marginLeft: 5,
+    marginLeft: 4,
     minHeight: 14,
-    paddingBottom: 2,
   },
   inputValue: {
-    fontSize: 9,
+    fontSize: 8,
   },
   halfRow: {
     flex: 1,
@@ -156,13 +154,13 @@ const styles = StyleSheet.create({
     padding: 4,
     borderRightWidth: 1,
     borderRightColor: '#000',
-    minHeight: 20,
+    minHeight: 22,
     justifyContent: 'center',
   },
   cruiseInfoCellLast: {
     flex: 1,
     padding: 4,
-    minHeight: 20,
+    minHeight: 22,
     justifyContent: 'center',
   },
   cruiseInfoLabel: {
@@ -170,7 +168,7 @@ const styles = StyleSheet.create({
     color: '#666',
   },
   cruiseInfoValue: {
-    fontSize: 9,
+    fontSize: 8,
     marginTop: 2,
   },
   hoursTableHeader: {
@@ -187,7 +185,7 @@ const styles = StyleSheet.create({
   },
   hoursCell: {
     flex: 1,
-    padding: 4,
+    padding: 3,
     borderRightWidth: 1,
     borderRightColor: '#000',
     textAlign: 'center',
@@ -196,7 +194,7 @@ const styles = StyleSheet.create({
   },
   hoursCellLast: {
     flex: 1,
-    padding: 4,
+    padding: 3,
     textAlign: 'center',
     justifyContent: 'center',
     alignItems: 'center',
@@ -207,8 +205,8 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   hoursCellValue: {
-    fontSize: 9,
-    minHeight: 16,
+    fontSize: 8,
+    minHeight: 14,
   },
   crewTableHeader: {
     flexDirection: 'row',
@@ -221,7 +219,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#000',
     borderTopWidth: 0,
-    minHeight: 18,
+    minHeight: 16,
   },
   crewCell: {
     padding: 3,
@@ -242,22 +240,21 @@ const styles = StyleSheet.create({
     marginTop: 10,
   },
   commentsTitle: {
-    fontSize: 9,
+    fontSize: 8,
     fontWeight: 'bold',
-    marginBottom: 4,
+    marginBottom: 3,
   },
   commentsLine: {
     borderBottomWidth: 1,
     borderBottomColor: '#999',
     borderBottomStyle: 'dotted',
-    minHeight: 16,
+    minHeight: 14,
     marginBottom: 2,
-    paddingTop: 2,
   },
   signatureRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginTop: 8,
+    marginTop: 6,
   },
   signatureBlock: {
     width: '45%',
@@ -267,8 +264,8 @@ const styles = StyleSheet.create({
     borderTopWidth: 1,
     borderTopColor: '#000',
     width: '100%',
-    marginTop: 20,
-    paddingTop: 4,
+    marginTop: 18,
+    paddingTop: 3,
   },
   signatureLabel: {
     fontSize: 7,
@@ -278,14 +275,13 @@ const styles = StyleSheet.create({
   footnote: {
     fontSize: 7,
     color: '#666',
-    marginTop: 15,
-
+    marginTop: 10,
   },
   visitedPortsBox: {
     borderWidth: 1,
     borderColor: '#000',
     borderTopWidth: 0,
-    minHeight: 50,
+    minHeight: 45,
     padding: 4,
   },
   twoColumnRow: {
@@ -306,7 +302,47 @@ const styles = StyleSheet.create({
   },
 });
 
-export const CruiseCardPDF = ({ data }: { data: CruiseCardData }) => {
+
+export const getEmptyFormData = (): CruiseCardData => ({
+  captain: {
+    name: '',
+    certificate: '',
+    phone: '',
+    email: '',
+  },
+  yacht: {
+    regNo: '',
+    name: '',
+    length: '',
+    homePort: '',
+    enginePower: '',
+  },
+  cruise: {
+    logBookNo: '',
+    embarkationPort: '',
+    embarkationDate: '',
+    embarkationTidal: '',
+    disembarkationPort: '',
+    disembarkationDate: '',
+    disembarkationTidal: '',
+    visitedPorts: '',
+    tidalPortsCount: '',
+    cruiseDays: '',
+  },
+  hours: {
+    totalUnderway: '',
+    underSails: '',
+    usingEngine: '',
+    tidalWaters: '',
+    inHarbours: '',
+    tripNM: '',
+  },
+  crew: [],
+  captainComments: '',
+  ownerComments: '',
+});
+
+export function CruiseCardPDF({ data }: { data: CruiseCardData }) {
   const crewRows: CrewMember[] = [];
   for (let i = 0; i < 8; i++) {
     crewRows.push(data.crew[i] || { name: '', certificate: '', rank: '' });
@@ -316,6 +352,9 @@ export const CruiseCardPDF = ({ data }: { data: CruiseCardData }) => {
     <Document>
       <Page size="A4" style={styles.page}>
         <View style={styles.header}>
+          <View style={styles.logoPlaceholder}>
+            <Image src={Logo} style={{ width: 50, height: 50 }} />
+          </View>
           <View style={styles.headerTextContainer}>
             <Text style={styles.mainTitle}>KARTA REJSU</Text>
           </View>
@@ -329,7 +368,7 @@ export const CruiseCardPDF = ({ data }: { data: CruiseCardData }) => {
               <Text style={styles.inputValue}>{data.captain.name}</Text>
             </View>
           </View>
-          <View style={[styles.halfRow, { marginLeft: 10 }]}>
+          <View style={[styles.halfRow, { marginLeft: 8 }]}>
             <Text style={styles.label}>stop. żegl./mot. i nr pat.:</Text>
             <View style={styles.inputLine}>
               <Text style={styles.inputValue}>{data.captain.certificate}</Text>
@@ -343,7 +382,7 @@ export const CruiseCardPDF = ({ data }: { data: CruiseCardData }) => {
               <Text style={styles.inputValue}>{data.captain.phone}</Text>
             </View>
           </View>
-          <View style={[styles.halfRow, { marginLeft: 10 }]}>
+          <View style={[styles.halfRow, { marginLeft: 8 }]}>
             <Text style={styles.label}>adres e-mail:</Text>
             <View style={styles.inputLine}>
               <Text style={styles.inputValue}>{data.captain.email}</Text>
@@ -359,13 +398,13 @@ export const CruiseCardPDF = ({ data }: { data: CruiseCardData }) => {
               <Text style={styles.inputValue}>{data.yacht.regNo}</Text>
             </View>
           </View>
-          <View style={[styles.halfRow, { flex: 0.5, marginLeft: 10 }]}>
+          <View style={[styles.halfRow, { flex: 0.5, marginLeft: 8 }]}>
             <Text style={styles.label}>nazwa jachtu:</Text>
             <View style={styles.inputLine}>
               <Text style={styles.inputValue}>{data.yacht.name}</Text>
             </View>
           </View>
-          <View style={[styles.halfRow, { flex: 0.2, marginLeft: 10 }]}>
+          <View style={[styles.halfRow, { flex: 0.2, marginLeft: 8 }]}>
             <Text style={styles.label}>Lc=</Text>
             <View style={styles.inputLine}>
               <Text style={styles.inputValue}>{data.yacht.length}</Text>
@@ -380,7 +419,7 @@ export const CruiseCardPDF = ({ data }: { data: CruiseCardData }) => {
               <Text style={styles.inputValue}>{data.yacht.homePort}</Text>
             </View>
           </View>
-          <View style={[styles.halfRow, { flex: 0.4, marginLeft: 10 }]}>
+          <View style={[styles.halfRow, { flex: 0.4, marginLeft: 8 }]}>
             <Text style={styles.label}>moc silnika:</Text>
             <View style={styles.inputLine}>
               <Text style={styles.inputValue}>{data.yacht.enginePower}</Text>
@@ -442,58 +481,60 @@ export const CruiseCardPDF = ({ data }: { data: CruiseCardData }) => {
           </View>
         </View>
 
-        <View style={{ marginTop: 10 }}>
-          <View style={styles.hoursTableHeader}>
-            <View style={[styles.hoursCell, { flex: 2 }]}>
-              <Text style={styles.hoursCellHeader}>GODZINY ŻEGLUGI</Text>
+        <View style={{ marginTop: 8, borderWidth: 1, borderColor: '#000' }}>
+          <View style={{ flexDirection: 'row' }}>
+            <View style={{ width: '80%', borderRightWidth: 1, borderRightColor: '#000' }}>
+              <View style={{ flexDirection: 'row', backgroundColor: '#e8e8e8', borderBottomWidth: 1, borderBottomColor: '#000' }}>
+                <View style={{ width: '37.5%', padding: 3, borderRightWidth: 1, borderRightColor: '#000', alignItems: 'center' }}>
+                  <Text style={styles.hoursCellHeader}>GODZINY ŻEGLUGI</Text>
+                </View>
+                <View style={{ width: '62.5%', padding: 3, alignItems: 'center' }}>
+                  <Text style={styles.hoursCellHeader}>GODZINY POSTOJU</Text>
+                </View>
+              </View>
+              <View style={{ flexDirection: 'row' }}>
+                <View style={{ width: '12.5%', padding: 3, borderRightWidth: 1, borderRightColor: '#000', alignItems: 'center', justifyContent: 'center' }}>
+                  <Text style={styles.hoursCellHeader}>razem</Text>
+                  <Text style={{ fontSize: 6 }}>(pod żaglami i na silniku)</Text>
+                </View>
+                <View style={{ width: '12.5%', padding: 3, borderRightWidth: 1, borderRightColor: '#000', alignItems: 'center', justifyContent: 'center' }}>
+                  <Text style={styles.hoursCellHeader}>pod żaglami</Text>
+                </View>
+                <View style={{ width: '12.5%', padding: 3, borderRightWidth: 1, borderRightColor: '#000', alignItems: 'center', justifyContent: 'center' }}>
+                  <Text style={styles.hoursCellHeader}>na silniku</Text>
+                </View>
+                <View style={{ width: '31.25%', padding: 3, borderRightWidth: 1, borderRightColor: '#000', alignItems: 'center', justifyContent: 'center' }}>
+                  <Text style={styles.hoursCellHeader}>po wodach</Text>
+                  <Text style={styles.hoursCellHeader}>pływowych</Text>
+                </View>
+                <View style={{ width: '31.25%', padding: 3, alignItems: 'center', justifyContent: 'center' }}>
+                  <Text style={styles.hoursCellHeader}>w portach i na kotwicy</Text>
+                </View>
+              </View>
             </View>
-            <View style={[styles.hoursCell, { flex: 2 }]}>
-              <Text style={styles.hoursCellHeader}>GODZINY POSTOJU</Text>
-            </View>
-            <View style={styles.hoursCellLast}>
+            <View style={{ width: '20%', backgroundColor: '#e8e8e8', padding: 3, alignItems: 'center', justifyContent: 'center' }}>
               <Text style={styles.hoursCellHeader}>PRZEBYTO</Text>
               <Text style={styles.hoursCellHeader}>MIL</Text>
               <Text style={styles.hoursCellHeader}>MORSKICH</Text>
             </View>
           </View>
-          <View style={styles.hoursTableRow}>
-            <View style={styles.hoursCell}>
-              <Text style={styles.hoursCellHeader}>razem</Text>
-              <Text style={{ fontSize: 6 }}>(pod żaglami i na silniku)</Text>
-            </View>
-            <View style={styles.hoursCell}>
-              <Text style={styles.hoursCellHeader}>pod żaglami</Text>
-            </View>
-            <View style={styles.hoursCell}>
-              <Text style={styles.hoursCellHeader}>na silniku</Text>
-            </View>
-            <View style={styles.hoursCell}>
-              <Text style={styles.hoursCellHeader}>po wodach pływowych</Text>
-            </View>
-            <View style={styles.hoursCell}>
-              <Text style={styles.hoursCellHeader}>w portach i na kotwicy</Text>
-            </View>
-            <View style={styles.hoursCellLast}>
-              <Text style={styles.hoursCellHeader}></Text>
-            </View>
-          </View>
-          <View style={styles.hoursTableRow}>
-            <View style={styles.hoursCell}>
+          <View style={{ flexDirection: 'row', borderTopWidth: 1, borderTopColor: '#000' }}>
+            <View style={{ width: '10%', padding: 4, borderRightWidth: 1, borderRightColor: '#000', alignItems: 'center', minHeight: 18 }}>
               <Text style={styles.hoursCellValue}>{data.hours.totalUnderway}</Text>
             </View>
-            <View style={styles.hoursCell}>
+            <View style={{ width: '10%', padding: 4, borderRightWidth: 1, borderRightColor: '#000', alignItems: 'center', minHeight: 18 }}>
               <Text style={styles.hoursCellValue}>{data.hours.underSails}</Text>
             </View>
-            <View style={styles.hoursCell}>
+            <View style={{ width: '10%', padding: 4, borderRightWidth: 1, borderRightColor: '#000', alignItems: 'center', minHeight: 18 }}>
               <Text style={styles.hoursCellValue}>{data.hours.usingEngine}</Text>
             </View>
-            <View style={styles.hoursCell}>
+            <View style={{ width: '25%', padding: 4, borderRightWidth: 1, borderRightColor: '#000', alignItems: 'center', minHeight: 18 }}>
               <Text style={styles.hoursCellValue}>{data.hours.tidalWaters}</Text>
             </View>
-            <View style={styles.hoursCell}>
+            <View style={{ width: '25%', padding: 4, borderRightWidth: 1, borderRightColor: '#000', alignItems: 'center', minHeight: 18 }}>
               <Text style={styles.hoursCellValue}>{data.hours.inHarbours}</Text>
             </View>
-            <View style={styles.hoursCellLast}>
+            <View style={{ width: '20%', padding: 4, alignItems: 'center', minHeight: 18 }}>
               <Text style={styles.hoursCellValue}>{data.hours.tripNM}</Text>
             </View>
           </View>
@@ -501,7 +542,7 @@ export const CruiseCardPDF = ({ data }: { data: CruiseCardData }) => {
 
         <Text style={styles.sectionTitle}>INFORMACJE O ZAŁODZE</Text>
         <View style={styles.crewTableHeader}>
-          <View style={[styles.crewCell, { width: 25 }]}>
+          <View style={[styles.crewCell, { width: 20 }]}>
             <Text style={styles.crewCellHeader}>Lp.</Text>
           </View>
           <View style={[styles.crewCell, { flex: 2 }]}>
@@ -513,7 +554,7 @@ export const CruiseCardPDF = ({ data }: { data: CruiseCardData }) => {
           <View style={[styles.crewCell, { flex: 1 }]}>
             <Text style={styles.crewCellHeader}>funkcja na jachcie</Text>
           </View>
-          <View style={[styles.crewCell, { width: 25 }]}>
+          <View style={[styles.crewCell, { width: 20 }]}>
             <Text style={styles.crewCellHeader}>Lp.</Text>
           </View>
           <View style={[styles.crewCell, { flex: 2 }]}>
@@ -528,29 +569,29 @@ export const CruiseCardPDF = ({ data }: { data: CruiseCardData }) => {
         </View>
         {[0, 1, 2, 3].map((rowIndex) => (
           <View key={rowIndex} style={styles.crewTableRow}>
-            <View style={[styles.crewCell, { width: 25 }]}>
-              <Text style={{ fontSize: 8, textAlign: 'center' }}>{rowIndex * 2 + 1}</Text>
+            <View style={[styles.crewCell, { width: 20 }]}>
+              <Text style={{ fontSize: 7, textAlign: 'center' }}>{rowIndex * 2 + 1}</Text>
             </View>
             <View style={[styles.crewCell, { flex: 2 }]}>
-              <Text style={{ fontSize: 8 }}>{crewRows[rowIndex * 2]?.name || ''}</Text>
+              <Text style={{ fontSize: 7 }}>{crewRows[rowIndex * 2]?.name || ''}</Text>
             </View>
             <View style={[styles.crewCell, { flex: 1 }]}>
-              <Text style={{ fontSize: 8 }}>{crewRows[rowIndex * 2]?.certificate || ''}</Text>
+              <Text style={{ fontSize: 7 }}>{crewRows[rowIndex * 2]?.certificate || ''}</Text>
             </View>
             <View style={[styles.crewCell, { flex: 1 }]}>
-              <Text style={{ fontSize: 8 }}>{crewRows[rowIndex * 2]?.rank || ''}</Text>
+              <Text style={{ fontSize: 7 }}>{crewRows[rowIndex * 2]?.rank || ''}</Text>
             </View>
-            <View style={[styles.crewCell, { width: 25 }]}>
-              <Text style={{ fontSize: 8, textAlign: 'center' }}>{rowIndex * 2 + 2}</Text>
+            <View style={[styles.crewCell, { width: 20 }]}>
+              <Text style={{ fontSize: 7, textAlign: 'center' }}>{rowIndex * 2 + 2}</Text>
             </View>
             <View style={[styles.crewCell, { flex: 2 }]}>
-              <Text style={{ fontSize: 8 }}>{crewRows[rowIndex * 2 + 1]?.name || ''}</Text>
+              <Text style={{ fontSize: 7 }}>{crewRows[rowIndex * 2 + 1]?.name || ''}</Text>
             </View>
             <View style={[styles.crewCell, { flex: 1 }]}>
-              <Text style={{ fontSize: 8 }}>{crewRows[rowIndex * 2 + 1]?.certificate || ''}</Text>
+              <Text style={{ fontSize: 7 }}>{crewRows[rowIndex * 2 + 1]?.certificate || ''}</Text>
             </View>
             <View style={[styles.crewCellLast, { flex: 1 }]}>
-              <Text style={{ fontSize: 8 }}>{crewRows[rowIndex * 2 + 1]?.rank || ''}</Text>
+              <Text style={{ fontSize: 7 }}>{crewRows[rowIndex * 2 + 1]?.rank || ''}</Text>
             </View>
           </View>
         ))}
@@ -558,9 +599,8 @@ export const CruiseCardPDF = ({ data }: { data: CruiseCardData }) => {
         <View style={styles.commentsSection}>
           <Text style={styles.commentsTitle}>UWAGI KAPITANA</Text>
           <View style={styles.commentsLine}>
-            <Text style={{ fontSize: 8 }}>{data.captainComments}</Text>
+            <Text style={{ fontSize: 7 }}>{data.captainComments}</Text>
           </View>
-          <View style={styles.commentsLine}></View>
           <View style={styles.commentsLine}></View>
           <View style={styles.signatureRow}>
             <View style={styles.signatureBlock}>
@@ -579,9 +619,8 @@ export const CruiseCardPDF = ({ data }: { data: CruiseCardData }) => {
         <View style={styles.commentsSection}>
           <Text style={styles.commentsTitle}>UWAGI ARMATORA/WŁAŚCICIELA JACHTU</Text>
           <View style={styles.commentsLine}>
-            <Text style={{ fontSize: 8 }}>{data.ownerComments}</Text>
+            <Text style={{ fontSize: 7 }}>{data.ownerComments}</Text>
           </View>
-          <View style={styles.commentsLine}></View>
           <View style={styles.commentsLine}></View>
           <View style={styles.signatureRow}>
             <View style={styles.signatureBlock}>
@@ -601,43 +640,4 @@ export const CruiseCardPDF = ({ data }: { data: CruiseCardData }) => {
       </Page>
     </Document>
   );
-};
-
-export const getEmptyFormData = (): CruiseCardData => ({
-  captain: {
-    name: '',
-    certificate: '',
-    phone: '',
-    email: '',
-  },
-  yacht: {
-    regNo: '',
-    name: '',
-    length: '',
-    homePort: '',
-    enginePower: '',
-  },
-  cruise: {
-    logBookNo: '',
-    embarkationPort: '',
-    embarkationDate: '',
-    embarkationTidal: '',
-    disembarkationPort: '',
-    disembarkationDate: '',
-    disembarkationTidal: '',
-    visitedPorts: '',
-    tidalPortsCount: '',
-    cruiseDays: '',
-  },
-  hours: {
-    totalUnderway: '',
-    underSails: '',
-    usingEngine: '',
-    tidalWaters: '',
-    inHarbours: '',
-    tripNM: '',
-  },
-  crew: [],
-  captainComments: '',
-  ownerComments: '',
-});
+}
