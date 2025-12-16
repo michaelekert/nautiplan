@@ -5,15 +5,26 @@ import {
   FileText, 
   ArrowLeft,
   Anchor,
+  Ship,
+  ClipboardList,
 } from 'lucide-react';
 
 import { CruiseOpinions } from "@/components/CruiseOpinions";
 import { WatchSystem } from "@/components/WatchSystem";
+import { YachtDocuments } from "@/components/YachtDocuments";
+import { CruiseCard } from "@/components/CruiseCard";
 
 export default function DocumentsSection() {
   const [selectedCard, setSelectedCard] = useState<string | null>(null);
 
   const documents = [
+    {
+      id: 'cruise-card',
+      title: 'Karta Rejsu',
+      description: 'Oficjalny formularz do dokumentowania rejsu',
+      icon: ClipboardList,
+      color: 'text-orange-600'
+    },
     {
       id: 'cruise-opinions',
       title: 'Opinie z rejsu',
@@ -28,14 +39,25 @@ export default function DocumentsSection() {
       icon: Anchor,
       color: 'text-emerald-600'
     },
+    {
+      id: 'yacht-documents',
+      title: 'Dokumenty jachtu',
+      description: 'Licencje i certyfikaty z przypomnieniami',
+      icon: Ship,
+      color: 'text-violet-600'
+    },
   ];
 
   const renderSection = () => {
     switch (selectedCard) {
+      case 'cruise-card':
+        return <CruiseCard />;
       case 'cruise-opinions':
         return <CruiseOpinions />;
       case 'watch-system':
         return <WatchSystem />;
+      case 'yacht-documents':
+        return <YachtDocuments />;
       default:
         return null;
     }
