@@ -10,7 +10,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Form, FormControl, FormField, FormItem, FormLabel } from '@/components/ui/form';
 import { Download, FileText, Plus, Trash2, Loader2 } from 'lucide-react';
-import { CruiseCardPDF } from '@/documentToGenerate/CruiseCardPDF';
+import { CruiseCardPDF } from './PDFTemplate/CruiseCardPDF';
 
 const crewMemberSchema = z.object({
   name: z.string(),

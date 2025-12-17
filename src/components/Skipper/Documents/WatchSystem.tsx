@@ -14,7 +14,7 @@ import {
 } from '@/components/ui/table';
 import { Calendar, Clock, Users, ChefHat, Anchor, Download, PenLine } from 'lucide-react';
 import { PDFDownloadLink } from '@react-pdf/renderer';
-import { WatchSchedulePDF } from '@/documentToGenerate/WatchSchedulePDF';
+import { WatchSchedulePDF } from './PDFTemplate/WatchSchedulePDF';
 
 interface WatchMember {
   watchNumber: number;
