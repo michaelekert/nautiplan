@@ -1,5 +1,5 @@
 import { useState } from "react"
-import { ChevronRight, Cloud, Waves, Wind } from "lucide-react"
+import { ChevronRight } from "lucide-react"
 import { SignalsView } from "./NauticalDictionary/SignalsView"
 import { BeaufortView } from "./NauticalDictionary/BeaufortView"
 import { DouglasView } from "./NauticalDictionary/DouglasView"
@@ -42,7 +42,6 @@ export function NauticalDictionarySection() {
             className="w-full px-4 py-3 flex items-center justify-between active:bg-gray-100 transition-colors cursor-pointer"
           >
             <div className="flex items-center gap-3">
-              <Wind className="w-5 h-5 text-blue-500" />
               <span className="text-base text-black">Skala Beauforta</span>
             </div>
             <ChevronRight className="w-5 h-5 text-gray-400" />
@@ -55,7 +54,6 @@ export function NauticalDictionarySection() {
             className="w-full px-4 py-3 flex items-center justify-between active:bg-gray-100 transition-colors cursor-pointer"
           >
             <div className="flex items-center gap-3">
-              <Waves className="w-5 h-5 text-blue-500" />
               <span className="text-base text-black">Skala morska Douglasa</span>
             </div>
             <ChevronRight className="w-5 h-5 text-gray-400" />
@@ -68,7 +66,6 @@ export function NauticalDictionarySection() {
             className="w-full px-4 py-3 flex items-center justify-between active:bg-gray-100 transition-colors cursor-pointer"
           >
             <div className="flex items-center gap-3">
-              <Cloud className="w-5 h-5 text-gray-500" />
               <span className="text-base text-black">Chmury</span>
             </div>
             <ChevronRight className="w-5 h-5 text-gray-400" />
