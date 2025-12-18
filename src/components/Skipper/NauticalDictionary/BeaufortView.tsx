@@ -1,6 +1,6 @@
 import { useState } from "react"
-import { beaufortScale } from "@/data/meteorology"
-import type { SpeedUnit, HeightUnit } from "@/types/meteorology"
+import { beaufortScale } from "@/data/Skipper/meteorology"
+import type { SpeedUnit, HeightUnit } from "@/types/Skipper/meteorology"
 
 interface BeaufortViewProps {
   onBack: () => void

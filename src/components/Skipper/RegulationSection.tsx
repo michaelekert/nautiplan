@@ -4,7 +4,7 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion"
-import { initialSignals } from "@/data/signals"
+import { initialSignals } from "@/data/Skipper/signals"
 
 export function RegulationsSection() {
   return (

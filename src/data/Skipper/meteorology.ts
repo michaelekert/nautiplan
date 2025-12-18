@@ -1,4 +1,4 @@
-import type { BeaufortScale, DouglasScale, CloudType, WeatherFront } from "@/types/meteorology"
+import type { BeaufortScale, DouglasScale, CloudType, WeatherFront } from "@/types/Skipper/meteorology"
 
 export const beaufortScale: BeaufortScale[] = [
   { force: 0, description: "Calm", windKt: "<1", windMph: 1, windKmh: 1, wavesM: 0, wavesFt: 0 },

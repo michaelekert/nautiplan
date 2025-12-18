@@ -6,7 +6,7 @@ import { RegulationsSection } from "@/components/Skipper/RegulationSection"
 import { NauticalDictionarySection } from "@/components/Skipper/NauticalDictionarySection"
 import DocumentsSection from "@/components/Skipper/DocumentsSection"
 import { BottomNavbar } from "@/components/BottomNavbar"
-import type { Section } from "@/types/skipper"
+import type { Section } from "@/types/Skipper/skipper"
 
 const sections: { name: string; key: Section }[] = [
   { name: "Checklisty", key: "checklisty" },

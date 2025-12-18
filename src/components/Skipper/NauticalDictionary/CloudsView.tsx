@@ -1,5 +1,5 @@
 import { Cloud } from "lucide-react"
-import { cloudTypes } from "@/data/meteorology"
+import { cloudTypes } from "@/data/Skipper/meteorology"
 
 interface CloudsViewProps {
   onBack: () => void

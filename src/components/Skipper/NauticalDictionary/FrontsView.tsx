@@ -1,4 +1,4 @@
-import { weatherFronts } from "@/data/meteorology"
+import { weatherFronts } from "@/data/Skipper/meteorology"
 
 interface FrontsViewProps {
   onBack: () => void

@@ -7,8 +7,8 @@ import {
 } from "@/components/ui/accordion"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Progress } from "@/components/ui/progress"
-import { initialCategories } from "@/data/checklists"
-import type { Checklist, ChecklistCategory } from "@/types/skipper"
+import { initialCategories } from "@/data/Skipper/checklists"
+import type { Checklist, ChecklistCategory } from "@/types/Skipper/skipper"
 
 export function ChecklistSection() {
   const [categories, setCategories] = useState<ChecklistCategory[]>(initialCategories)
