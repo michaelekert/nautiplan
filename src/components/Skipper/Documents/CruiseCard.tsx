@@ -498,15 +498,6 @@ export function CruiseCard() {
     }
   };
 
-  const resetAll = () => {
-    setCaptain(null);
-    setYacht(null);
-    setCruise(null);
-    setHours(null);
-    setCrew([]);
-    setComments(null);
-  };
-
   const hasData = hasAnyData(captain, yacht, cruise, hours, crew, comments);
 
   return (
@@ -762,12 +753,6 @@ export function CruiseCard() {
           )}
           {isGeneratingEmpty ? 'Generowanie...' : 'Pobierz pusty formularz'}
         </Button>
-
-        {hasData && (
-          <Button onClick={resetAll} variant="ghost" className="w-full">
-            Wyczyść wszystkie dane
-          </Button>
-        )}
       </div>
     </div>
   );
