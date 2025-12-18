@@ -34,7 +34,7 @@ export default function StudyView() {
     if (!isLastQuestion) {
       setTimeout(() => {
         setCurrentQuestionIndex((prev) => prev + 1)
-      }, 3000)
+      }, 1000)
     }
   }
 

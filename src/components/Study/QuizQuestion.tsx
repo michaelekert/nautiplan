@@ -1,4 +1,4 @@
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Progress } from "@/components/ui/progress"
 import { ArrowLeft } from "lucide-react"
@@ -39,6 +39,7 @@ export function QuizQuestion({
 }: QuizQuestionProps) {
   const [selectedOptionId, setSelectedOptionId] = useState<string | null>(null)
   const [showConfirm, setShowConfirm] = useState(false)
+  const [feedback, setFeedback] = useState<{ isCorrect: boolean; correctAnswer?: string } | null>(null)
 
   const handleOptionClick = (optionId: string) => {
     if (selectedOptionId) return
@@ -46,15 +47,20 @@ export function QuizQuestion({
     
     const option = question.options.find((o) => o.id === optionId)
     const isCorrect = option?.correct ?? false
+    const correctOption = question.options.find((o) => o.correct)
+    
+    setFeedback({
+      isCorrect,
+      correctAnswer: !isCorrect ? correctOption?.text : undefined
+    })
     
     onAnswer(optionId, isCorrect)
-
-    if (!isLastQuestion) {
-      setTimeout(() => {
-        setSelectedOptionId(null)
-      }, 3000)
-    }
   }
+
+  useEffect(() => {
+    setSelectedOptionId(null)
+    setFeedback(null)
+  }, [question.id])
 
   return (
     <div className="flex flex-col items-center justify-center min-h-screen p-4">
@@ -91,7 +97,7 @@ export function QuizQuestion({
         />
         <div className="text-xl font-bold">{question.text}</div>
         
-        <div className="flex flex-col gap-2 mt-4 mb-10">
+        <div className="flex flex-col gap-2 mt-4 mb-4">
           {question.options.map((option) => {
             let bgColor = "bg-gray-100 hover:bg-gray-200"
             let textColor = "text-black"
@@ -116,6 +122,21 @@ export function QuizQuestion({
               </Button>
             )
           })}
+        </div>
+
+        <div className="h-20 mb-6">
+          {feedback && (
+            <div className={`p-4 rounded-lg ${feedback.isCorrect ? "bg-green-100 text-green-800" : "bg-red-100 text-red-800"}`}>
+              {feedback.isCorrect ? (
+                <p className="font-semibold">✓ Dobrze!</p>
+              ) : (
+                <div>
+                  <p className="font-semibold">✗ Źle!</p>
+                  <p className="mt-1">Poprawna odpowiedź: {feedback.correctAnswer}</p>
+                </div>
+              )}
+            </div>
+          )}
         </div>
 
         {selectedOptionId && isLastQuestion && (
