@@ -31,16 +31,15 @@ export default function StudyView() {
     }
 
     const isLastQuestion = currentQuestionIndex + 1 === questions.length
-    if (!isLastQuestion) {
-      setTimeout(() => {
+    
+    setTimeout(() => {
+      if (isLastQuestion) {
+        setFinished(true)
+        setTimerActive(false)
+      } else {
         setCurrentQuestionIndex((prev) => prev + 1)
-      }, 1000)
-    }
-  }
-
-  const handleFinish = () => {
-    setFinished(true)
-    setTimerActive(false)
+      }
+    }, 1000)
   }
 
   const handleRestart = () => {
@@ -84,9 +83,7 @@ export default function StudyView() {
         totalQuestions={questions.length}
         time={time}
         onAnswer={handleAnswer}
-        onFinish={handleFinish}
         onExit={handleRestart}
-        isLastQuestion={currentQuestionIndex + 1 === questions.length}
       />
       <BottomNavbar />
     </>

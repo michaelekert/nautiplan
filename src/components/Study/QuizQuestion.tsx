@@ -22,9 +22,7 @@ interface QuizQuestionProps {
   totalQuestions: number
   time: number
   onAnswer: (optionId: string, isCorrect: boolean) => void
-  onFinish: () => void
   onExit: () => void
-  isLastQuestion: boolean
 }
 
 export function QuizQuestion({
@@ -33,9 +31,7 @@ export function QuizQuestion({
   totalQuestions,
   time,
   onAnswer,
-  onFinish,
   onExit,
-  isLastQuestion,
 }: QuizQuestionProps) {
   const [selectedOptionId, setSelectedOptionId] = useState<string | null>(null)
   const [showConfirm, setShowConfirm] = useState(false)
@@ -63,9 +59,9 @@ export function QuizQuestion({
   }, [question.id])
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen p-4">
-      <div className="w-full max-w-2xl text-center space-y-6">
-        <div className="flex justify-between items-center w-full">
+    <div className="min-h-screen p-4 pt-8 md:pt-60">
+      <div className="w-full max-w-2xl mx-auto text-center">
+        <div className="flex justify-between items-center w-full mb-6">
           <AlertDialog open={showConfirm} onOpenChange={setShowConfirm}>
             <AlertDialogTrigger asChild>
               <Button variant="ghost" className="flex items-center gap-2">
@@ -88,16 +84,19 @@ export function QuizQuestion({
           <span className="text-lg font-mono">{formatTime(time)}</span>
         </div>
 
-        <h2 className="text-2xl font-semibold">
+        <h2 className="text-2xl font-semibold mb-4">
           Pytanie {currentIndex + 1} z {totalQuestions}
         </h2>
         <Progress 
           value={((currentIndex + 1) / totalQuestions) * 100} 
-          className="h-2 rounded-full" 
+          className="h-2 rounded-full mb-6" 
         />
-        <div className="text-xl font-bold">{question.text}</div>
+
+        <div className="min-h-[80px] flex items-center justify-center mb-6">
+          <p className="text-xl font-bold">{question.text}</p>
+        </div>
         
-        <div className="flex flex-col gap-2 mt-4 mb-4">
+        <div className="flex flex-col gap-2 mb-4">
           {question.options.map((option) => {
             let bgColor = "bg-gray-100 hover:bg-gray-200"
             let textColor = "text-black"
@@ -115,7 +114,7 @@ export function QuizQuestion({
               <Button
                 key={option.id}
                 variant="outline"
-                className={`${bgColor} ${textColor} cursor-pointer`}
+                className={`${bgColor} ${textColor} cursor-pointer min-h-[44px] h-auto whitespace-normal`}
                 onClick={() => handleOptionClick(option.id)}
               >
                 {option.text}
@@ -124,26 +123,20 @@ export function QuizQuestion({
           })}
         </div>
 
-        <div className="h-20 mb-6">
+        <div className="h-24 flex flex-col items-center justify-start">
           {feedback && (
-            <div className={`p-4 rounded-lg ${feedback.isCorrect ? "bg-green-100 text-green-800" : "bg-red-100 text-red-800"}`}>
+            <div className={`w-full p-4 rounded-lg ${feedback.isCorrect ? "bg-green-100 text-green-800" : "bg-red-100 text-red-800"}`}>
               {feedback.isCorrect ? (
                 <p className="font-semibold">✓ Dobrze!</p>
               ) : (
                 <div>
                   <p className="font-semibold">✗ Źle!</p>
-                  <p className="mt-1">Poprawna odpowiedź: {feedback.correctAnswer}</p>
+                  <p className="mt-1 text-sm">Poprawna odpowiedź: {feedback.correctAnswer}</p>
                 </div>
               )}
             </div>
           )}
         </div>
-
-        {selectedOptionId && isLastQuestion && (
-          <Button className="mt-4" onClick={onFinish}>
-            Zakończ test
-          </Button>
-        )}
       </div>
     </div>
   )
