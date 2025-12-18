@@ -4,6 +4,8 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Trash2, Plus, Edit2, X, Check, Share } from "lucide-react";
 import * as z from "zod";
@@ -409,6 +411,59 @@ const generatePartialPdf = async () => {
 
       <Card>
         <CardHeader>
+          <CardTitle>Informacje o uczestniku rejsu</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <Button onClick={addMember}>
+            <Plus className="w-4 h-4 mr-2" />
+            Dodaj członka załogi
+          </Button>
+
+          {members.length === 0 && (
+            <p className="text-muted-foreground">
+              Brak członków załogi — dodaj pierwszego.
+            </p>
+          )}
+
+          {members.map((member) => (
+            <Card key={member.id} className="bg-muted/30">
+              <CardContent className="pt-6">
+                {editingCrewId === member.id ? (
+                  <CrewMemberForm
+                    member={member}
+                    onSave={(data) => handleSaveMember(member.id, data)}
+                    onCancel={() => handleCancelMember(member.id)}
+                  />
+                ) : (
+                  <div className="flex justify-between items-center">
+                    <div>
+                      <p>
+                        <strong>{member.firstName} {member.lastName}</strong>
+                      </p>
+                      <p>{member.role} – {member.sailingDegree}</p>
+                      <p>{member.phone} | {member.email}</p>
+                    </div>
+                    <div className="flex gap-2">
+                      <Button variant="outline" size="sm" onClick={() => editMember(member.id)}>
+                        <Edit2 className="w-4 h-4" />
+                      </Button>
+                      <Button className="md:hidden" variant="secondary" size="sm" onClick={() => generateSinglePdf(member)}>
+                        <Share className="w-4 h-4 mr-1" />
+                      </Button>
+                      <Button variant="destructive" size="sm" onClick={() => removeMember(member.id)}>
+                        <Trash2 className="w-4 h-4" />
+                      </Button>
+                    </div>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          ))}
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
           <CardTitle>Informacje o Jachcie</CardTitle>
         </CardHeader>
         <CardContent>
@@ -467,9 +522,11 @@ const generatePartialPdf = async () => {
                 {cruise.startDate && cruise.endDate && (
                   <p><strong>{cruise.startDate} - {cruise.endDate}</strong></p>
                 )}
-                {cruise.startPort && <p>Start: {cruise.startPort} {cruise.startPortTidal && "(pływowy)"}</p>}
-                {cruise.endPort && <p>Koniec: {cruise.endPort} {cruise.endPortTidal && "(pływowy)"}</p>}
+                {cruise.startPort && <p>Zaokrętowanie: {cruise.startPort} {cruise.startPortTidal && "(pływowy)"}</p>}
+                {cruise.endPort && <p>Wyokrętowanie: {cruise.endPort} {cruise.endPortTidal && "(pływowy)"}</p>}
+                {cruise.visitedPorts && <p>Odwiedzone porty: {cruise.visitedPorts}</p>}
                 {cruise.cruiseDays && <p>Dni rejsu: {cruise.cruiseDays}</p>}
+                {cruise.totalHours && <p>Razem godzin: {cruise.totalHours}</p>}
                 {cruise.nauticalMiles && <p>Mile morskie: {cruise.nauticalMiles}</p>}
               </div>
               <div className="flex gap-2">
@@ -519,59 +576,6 @@ const generatePartialPdf = async () => {
               </div>
             </div>
           )}
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardHeader>
-          <CardTitle>Informacje o uczestniku rejsu</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <Button onClick={addMember}>
-            <Plus className="w-4 h-4 mr-2" />
-            Dodaj członka załogi
-          </Button>
-
-          {members.length === 0 && (
-            <p className="text-muted-foreground">
-              Brak członków załogi — dodaj pierwszego.
-            </p>
-          )}
-
-          {members.map((member) => (
-            <Card key={member.id} className="bg-muted/30">
-              <CardContent className="pt-6">
-                {editingCrewId === member.id ? (
-                  <CrewMemberForm
-                    member={member}
-                    onSave={(data) => handleSaveMember(member.id, data)}
-                    onCancel={() => handleCancelMember(member.id)}
-                  />
-                ) : (
-                  <div className="flex justify-between items-center">
-                    <div>
-                      <p>
-                        <strong>{member.firstName} {member.lastName}</strong>
-                      </p>
-                      <p>{member.role} – {member.sailingDegree}</p>
-                      <p>{member.phone} | {member.email}</p>
-                    </div>
-                    <div className="flex gap-2">
-                      <Button variant="outline" size="sm" onClick={() => editMember(member.id)}>
-                        <Edit2 className="w-4 h-4" />
-                      </Button>
-                      <Button className="md:hidden" variant="secondary" size="sm" onClick={() => generateSinglePdf(member)}>
-                        <Share className="w-4 h-4 mr-1" />
-                      </Button>
-                      <Button variant="destructive" size="sm" onClick={() => removeMember(member.id)}>
-                        <Trash2 className="w-4 h-4" />
-                      </Button>
-                    </div>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          ))}
         </CardContent>
       </Card>
 
@@ -732,200 +736,208 @@ function CruiseForm({
 
   return (
     <Form {...form}>
-      <form
-        className="grid grid-cols-1 md:grid-cols-2 gap-4"
-        onSubmit={(e) => e.preventDefault()}
-      >
-        <FormField
-          name="startDate"
-          control={form.control}
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Data startu</FormLabel>
-              <FormControl>
-                <Input {...field} type="date" />
-              </FormControl>
-            </FormItem>
-          )}
-        />
-        <FormField
-          name="endDate"
-          control={form.control}
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Data końca</FormLabel>
-              <FormControl>
-                <Input {...field} type="date" />
-              </FormControl>
-            </FormItem>
-          )}
-        />
-        <FormField
-          name="startPort"
-          control={form.control}
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Port zaokrętowania</FormLabel>
-              <FormControl>
-                <Input {...field} placeholder="np. Gdynia" />
-              </FormControl>
-            </FormItem>
-          )}
-        />
-        <FormField
-          name="startPortTidal"
-          control={form.control}
-          render={({ field }) => (
-            <FormItem className="flex items-center gap-2 space-y-0 pb-4">
-              <FormControl>
-                <input
-                  type="checkbox"
-                  checked={field.value || false}
-                  onChange={field.onChange}
-                  className="w-4 h-4"
-                />
-              </FormControl>
-              <FormLabel className="!mt-0">Port pływowy</FormLabel>
-            </FormItem>
-          )}
-        />
-        <FormField
-          name="endPort"
-          control={form.control}
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Port wyokrętowania</FormLabel>
-              <FormControl>
-                <Input {...field} placeholder="np. Hel" />
-              </FormControl>
-            </FormItem>
-          )}
-        />
-        <FormField
-          name="endPortTidal"
-          control={form.control}
-          render={({ field }) => (
-            <FormItem className="flex items-center gap-2 space-y-0 pb-4">
-              <FormControl>
-                <input
-                  type="checkbox"
-                  checked={field.value || false}
-                  onChange={field.onChange}
-                  className="w-4 h-4"
-                />
-              </FormControl>
-              <FormLabel className="!mt-0">Port pływowy</FormLabel>
-            </FormItem>
-          )}
-        />
-        <FormField
-          name="visitedPorts"
-          control={form.control}
-          render={({ field }) => (
-            <FormItem className="md:col-span-2">
-              <FormLabel>Odwiedzone porty</FormLabel>
-              <FormControl>
-                <Input {...field} placeholder="np. Gdynia, Hel, Władysławowo" />
-              </FormControl>
-            </FormItem>
-          )}
-        />
-        <FormField
-          name="tidalPortsCount"
-          control={form.control}
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Liczba portów pływowych</FormLabel>
-              <FormControl>
-                <Input {...field} type="number" placeholder="0" />
-              </FormControl>
-            </FormItem>
-          )}
-        />
-        <FormField
-          name="cruiseDays"
-          control={form.control}
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Liczba dni rejsu</FormLabel>
-              <FormControl>
-                <Input {...field} type="number" placeholder="0" />
-              </FormControl>
-            </FormItem>
-          )}
-        />
-        <FormField
-          name="totalHours"
-          control={form.control}
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Razem godzin (pod żaglami + silnik)</FormLabel>
-              <FormControl>
-                <Input {...field} placeholder="0" />
-              </FormControl>
-            </FormItem>
-          )}
-        />
-        <FormField
-          name="sailingHours"
-          control={form.control}
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Pod żaglami (godz.)</FormLabel>
-              <FormControl>
-                <Input {...field} placeholder="0" />
-              </FormControl>
-            </FormItem>
-          )}
-        />
-        <FormField
-          name="engineHours"
-          control={form.control}
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Na silniku (godz.)</FormLabel>
-              <FormControl>
-                <Input {...field} placeholder="0" />
-              </FormControl>
-            </FormItem>
-          )}
-        />
-        <FormField
-          name="tidalWatersHours"
-          control={form.control}
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Po wodach pływowych (godz.)</FormLabel>
-              <FormControl>
-                <Input {...field} placeholder="0" />
-              </FormControl>
-            </FormItem>
-          )}
-        />
-        <FormField
-          name="inPortHours"
-          control={form.control}
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>W portach (godz.)</FormLabel>
-              <FormControl>
-                <Input {...field} placeholder="0" />
-              </FormControl>
-            </FormItem>
-          )}
-        />
-        <FormField
-          name="anchoredHours"
-          control={form.control}
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Na kotwicy (godz.)</FormLabel>
-              <FormControl>
-                <Input {...field} placeholder="0" />
-              </FormControl>
-            </FormItem>
-          )}
-        />
+      <form className="space-y-4" onSubmit={(e) => e.preventDefault()}>
+        <div className="rounded-lg border p-4 space-y-4">
+          <h4 className="font-medium text-sm text-muted-foreground">Zaokrętowanie</h4>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
+            <FormField
+              name="startPort"
+              control={form.control}
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Port zaokrętowania</FormLabel>
+                  <FormControl>
+                    <Input {...field} placeholder="np. Gdynia" />
+                  </FormControl>
+                </FormItem>
+              )}
+            />
+            <FormField
+              name="startDate"
+              control={form.control}
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Data</FormLabel>
+                  <FormControl>
+                    <Input {...field} type="date" />
+                  </FormControl>
+                </FormItem>
+              )}
+            />
+            <FormField
+              name="startPortTidal"
+              control={form.control}
+              render={({ field }) => (
+                <FormItem className="flex flex-row items-center space-x-3 space-y-0 h-10">
+                  <FormControl>
+                    <Checkbox checked={field.value || false} onCheckedChange={field.onChange} />
+                  </FormControl>
+                  <FormLabel className="font-normal">Port pływowy</FormLabel>
+                </FormItem>
+              )}
+            />
+          </div>
+        </div>
+
+        <div className="rounded-lg border p-4 space-y-4">
+          <h4 className="font-medium text-sm text-muted-foreground">Wyokrętowanie</h4>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
+            <FormField
+              name="endPort"
+              control={form.control}
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Port wyokrętowania</FormLabel>
+                  <FormControl>
+                    <Input {...field} placeholder="np. Jarosławiec" />
+                  </FormControl>
+                </FormItem>
+              )}
+            />
+            <FormField
+              name="endDate"
+              control={form.control}
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Data</FormLabel>
+                  <FormControl>
+                    <Input {...field} type="date" />
+                  </FormControl>
+                </FormItem>
+              )}
+            />
+            <FormField
+              name="endPortTidal"
+              control={form.control}
+              render={({ field }) => (
+                <FormItem className="flex flex-row items-center space-x-3 space-y-0 h-10">
+                  <FormControl>
+                    <Checkbox checked={field.value || false} onCheckedChange={field.onChange} />
+                  </FormControl>
+                  <FormLabel className="font-normal">Port pływowy</FormLabel>
+                </FormItem>
+              )}
+            />
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <FormField
+            name="visitedPorts"
+            control={form.control}
+            render={({ field }) => (
+              <FormItem className="md:col-span-2">
+                <FormLabel>Odwiedzone porty</FormLabel>
+                <FormControl>
+                  <Textarea {...field} placeholder="np. Hel, Władysławowo" rows={2} />
+                </FormControl>
+              </FormItem>
+            )}
+          />
+          <FormField
+            name="tidalPortsCount"
+            control={form.control}
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Liczba portów pływowych</FormLabel>
+                <FormControl>
+                  <Input {...field} placeholder="0" />
+                </FormControl>
+              </FormItem>
+            )}
+          />
+          <FormField
+            name="cruiseDays"
+            control={form.control}
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Liczba dni rejsu</FormLabel>
+                <FormControl>
+                  <Input {...field} placeholder="np. 14" />
+                </FormControl>
+              </FormItem>
+            )}
+          />
+        </div>
+
+        <div className="rounded-lg border p-4 space-y-4">
+          <h4 className="font-medium text-sm text-muted-foreground">Godziny żeglugi i postoju</h4>
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+            <FormField
+              name="totalHours"
+              control={form.control}
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Razem (pod żaglami + silnik)</FormLabel>
+                  <FormControl>
+                    <Input {...field} placeholder="0" />
+                  </FormControl>
+                </FormItem>
+              )}
+            />
+            <FormField
+              name="sailingHours"
+              control={form.control}
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Pod żaglami (godz.)</FormLabel>
+                  <FormControl>
+                    <Input {...field} placeholder="0" />
+                  </FormControl>
+                </FormItem>
+              )}
+            />
+            <FormField
+              name="engineHours"
+              control={form.control}
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Na silniku (godz.)</FormLabel>
+                  <FormControl>
+                    <Input {...field} placeholder="0" />
+                  </FormControl>
+                </FormItem>
+              )}
+            />
+            <FormField
+              name="tidalWatersHours"
+              control={form.control}
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Po wodach pływowych (godz.)</FormLabel>
+                  <FormControl>
+                    <Input {...field} placeholder="0" />
+                  </FormControl>
+                </FormItem>
+              )}
+            />
+            <FormField
+              name="inPortHours"
+              control={form.control}
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>W portach (godz.)</FormLabel>
+                  <FormControl>
+                    <Input {...field} placeholder="0" />
+                  </FormControl>
+                </FormItem>
+              )}
+            />
+            <FormField
+              name="anchoredHours"
+              control={form.control}
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Na kotwicy (godz.)</FormLabel>
+                  <FormControl>
+                    <Input {...field} placeholder="0" />
+                  </FormControl>
+                </FormItem>
+              )}
+            />
+          </div>
+        </div>
+
         <FormField
           name="nauticalMiles"
           control={form.control}

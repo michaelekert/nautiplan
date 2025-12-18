@@ -943,7 +943,7 @@ function CruiseInfoForm({
                 <FormItem>
                   <FormLabel>Port</FormLabel>
                   <FormControl>
-                    <Input {...field} placeholder="np. Sopot" />
+                    <Input {...field} placeholder="np. Jarosławiec" />
                   </FormControl>
                 </FormItem>
               )}
@@ -983,7 +983,7 @@ function CruiseInfoForm({
               <FormItem className="md:col-span-2">
                 <FormLabel>Odwiedzone porty</FormLabel>
                 <FormControl>
-                  <Textarea {...field} placeholder="np. Hel, Jastarnia, Puck, Władysławowo" rows={2} />
+                  <Textarea {...field} placeholder="np. Hel, Władysławowo" rows={2} />
                 </FormControl>
               </FormItem>
             )}
