@@ -1,5 +1,5 @@
 import { Document, Page, Text, View, Font, Image } from "@react-pdf/renderer";
-import type { CrewMember, Captain, Yacht, Cruise } from "@/components/CruiseOpinions";
+import type { CrewMember, Captain, Yacht, Cruise } from "@/components/Skipper/Documents/CruiseOpinions";
 import Logo from '@/assets/Logo.jpeg?url'; 
 import { pdfStyles as styles } from "./pdfStyles";
 

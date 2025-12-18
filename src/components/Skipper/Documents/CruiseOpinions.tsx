@@ -8,7 +8,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { Trash2, Plus, Edit2, X, Check, Share } from "lucide-react";
 import * as z from "zod";
 import { pdf } from '@react-pdf/renderer';
-import { CrewOpinionPdf } from '@/documentToGenerate/CrewOpinionPdf';
+import { CrewOpinionPdf } from './PDFTemplate/CrewOpinionPdf';
 
 const crewMemberSchema = z.object({
   firstName: z.string().optional(),

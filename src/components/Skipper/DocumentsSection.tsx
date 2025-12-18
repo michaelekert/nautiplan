@@ -9,10 +9,10 @@ import {
   ClipboardList,
 } from 'lucide-react';
 
-import { CruiseOpinions } from "@/components/CruiseOpinions";
-import { WatchSystem } from "@/components/WatchSystem";
-import { YachtDocuments } from "@/components/YachtDocuments";
-import { CruiseCard } from "@/components/CruiseCard";
+import { CruiseOpinions } from "@/components/Skipper/Documents/CruiseOpinions";
+import { WatchSystem } from "@/components/Skipper/Documents/WatchSystem";
+import { YachtDocuments } from "@/components/Skipper/Documents/YachtDocuments";
+import { CruiseCard } from "@/components/Skipper/Documents/CruiseCard";
 
 export default function DocumentsSection() {
   const [selectedCard, setSelectedCard] = useState<string | null>(null);
