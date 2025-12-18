@@ -409,13 +409,13 @@ const generatePartialPdf = async () => {
 
       <Card>
         <CardHeader>
-          <CardTitle>Jacht</CardTitle>
+          <CardTitle>Informacje o Jachcie</CardTitle>
         </CardHeader>
         <CardContent>
           {!yacht ? (
             <Button onClick={addYacht}>
               <Plus className="w-4 h-4 mr-2" />
-              Dodaj jacht
+              Dodaj informacje o jachcie
             </Button>
           ) : editingYacht ? (
             <YachtForm
@@ -487,13 +487,13 @@ const generatePartialPdf = async () => {
 
       <Card>
         <CardHeader>
-          <CardTitle>Kapitan</CardTitle>
+          <CardTitle>Informacje o Kapitanie</CardTitle>
         </CardHeader>
         <CardContent>
           {!captain ? (
             <Button onClick={addCaptain}>
               <Plus className="w-4 h-4 mr-2" />
-              Dodaj kapitana
+              Dodaj informacje o kapitanie
             </Button>
           ) : editingCaptain ? (
             <CaptainForm
@@ -524,7 +524,7 @@ const generatePartialPdf = async () => {
 
       <Card>
         <CardHeader>
-          <CardTitle>Członkowie załogi</CardTitle>
+          <CardTitle>Informacje o uczestniku rejsu</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
           <Button onClick={addMember}>
