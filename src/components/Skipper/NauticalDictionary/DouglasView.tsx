@@ -1,6 +1,6 @@
 import { useState } from "react"
-import { douglasScale } from "@/data/meteorology"
-import type { HeightUnit } from "@/types/meteorology"
+import { douglasScale } from "@/data/Skipper/meteorology"
+import type { HeightUnit } from "@/types/Skipper/meteorology"
 
 interface DouglasViewProps {
   onBack: () => void

@@ -9,7 +9,7 @@ import {
   SidebarHeader,
 } from "@/components/ui/sidebar"
 import { ClipboardList, BookOpen, AlertCircle, Lightbulb, FileText } from "lucide-react"
-import type { Section } from "@/types/skipper"
+import type { Section } from "@/types/Skipper/skipper"
 
 interface AppSidebarProps {
   activeSection: Section

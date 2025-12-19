@@ -1,4 +1,4 @@
-import type { SignalList } from "@/types/skipper"
+import type { SignalList } from "@/types/Skipper/skipper"
 
 export const flagImages = import.meta.glob<string>('../assets/flags/*.png', { 
   eager: true, 

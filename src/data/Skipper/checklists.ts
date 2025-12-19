@@ -1,4 +1,4 @@
-import type { ChecklistCategory } from "@/types/skipper"
+import type { ChecklistCategory } from "@/types/Skipper/skipper"
 
 export const initialCategories: ChecklistCategory[] = [
   {
