@@ -33,6 +33,136 @@ interface ScheduleData {
   days: DaySchedule[];
 }
 
+interface ScheduleConfig {
+  watchCount: 3 | 4;
+  watchDuration: 3 | 4;
+  hasGalleyWatch: boolean;
+  galleyHasNavWatch: boolean;
+}
+
+function generateTimeSlots(config: ScheduleConfig): string[] {
+  const { watchCount, watchDuration, hasGalleyWatch, galleyHasNavWatch } = config;
+  const hasJump = hasGalleyWatch && !galleyHasNavWatch && watchCount === 4 && watchDuration === 4;
+  
+  if (hasJump) {
+    return ['0000-0400', '0400-0800', '0800-1200', '1200-1400', '1400-1600', '1600-2000', '2000-2400'];
+  }
+  
+  const slotsPerDay = 24 / watchDuration;
+  return Array.from({ length: slotsPerDay }, (_, i) => {
+    const startHour = i * watchDuration;
+    const endHour = ((i + 1) * watchDuration) % 24;
+    return `${startHour.toString().padStart(2, '0')}00-${endHour.toString().padStart(2, '0')}00`;
+  });
+}
+
+function generateDayWatches(dayIndex: number, config: ScheduleConfig): { watches: number[]; galleyIndex: number } {
+  const { watchCount, watchDuration, hasGalleyWatch, galleyHasNavWatch } = config;
+  const slotsPerDay = 24 / watchDuration;
+  
+  if (!hasGalleyWatch) {
+    const dailyOffset = slotsPerDay % watchCount;
+    const startWatch = (dailyOffset * dayIndex) % watchCount;
+    const watches = Array.from({ length: slotsPerDay }, (_, i) => (startWatch + i) % watchCount);
+    return { watches, galleyIndex: 0 };
+  }
+  
+  const watchCycleDay = dayIndex % watchCount;
+  const galleyCycleDay = dayIndex % (watchCount - 1);
+  
+  if (watchCount === 3 && watchDuration === 3 && galleyHasNavWatch) {
+    const startWatches = [0, 2, 1];
+    const galleyRotation = [2, 1, 0];
+    const startWatch = startWatches[watchCycleDay];
+    const galleyIndex = galleyRotation[watchCycleDay];
+    const watches = Array.from({ length: 8 }, (_, i) => (startWatch + i) % 3);
+    return { watches, galleyIndex };
+  }
+  
+  if (watchCount === 3 && !galleyHasNavWatch) {
+    const galleyIndex = (2 - watchCycleDay + 3) % 3;
+    const navWatches = [0, 1, 2].filter(w => w !== galleyIndex);
+    const watches = Array.from({ length: slotsPerDay }, (_, i) => navWatches[i % 2]);
+    return { watches, galleyIndex };
+  }
+  
+  const galleyIndex = galleyCycleDay + 1;
+  
+  if (watchDuration === 3) {
+    const startWatch = watchCycleDay;
+    const watches: number[] = [];
+    
+    for (let i = 0; i < 5; i++) {
+      watches.push((startWatch + i) % watchCount);
+    }
+    
+    const skippedWatch = (watches[4] + 1) % watchCount;
+    let nextWatch = skippedWatch;
+    
+    for (let i = 5; i < 8; i++) {
+      if (nextWatch === skippedWatch) nextWatch = (nextWatch + 1) % watchCount;
+      watches.push(nextWatch);
+      nextWatch = (nextWatch + 1) % watchCount;
+    }
+    
+    return { watches, galleyIndex };
+  }
+  
+  if (watchDuration === 4) {
+    if (galleyHasNavWatch) {
+      const startWatch = watchCycleDay;
+      const watches: number[] = [];
+      
+      for (let i = 0; i < 3; i++) {
+        watches.push((startWatch + i) % watchCount);
+      }
+      
+      const skippedWatch = (watches[2] + 1) % watchCount;
+      let nextWatch = skippedWatch;
+      
+      for (let i = 3; i < 6; i++) {
+        if (nextWatch === skippedWatch) nextWatch = (nextWatch + 1) % watchCount;
+        watches.push(nextWatch);
+        nextWatch = (nextWatch + 1) % watchCount;
+      }
+      
+      return { watches, galleyIndex };
+    }
+    
+    const galleyRotation = [3, 0, 1, 2];
+    const galleyIdx = galleyRotation[watchCycleDay];
+    const navWatches = [0, 1, 2, 3].filter(w => w !== galleyIdx);
+    
+    let startNavIdx = navWatches.indexOf(watchCycleDay);
+    if (startNavIdx === -1) startNavIdx = 0;
+    
+    const watches = Array.from({ length: 7 }, (_, i) => navWatches[(startNavIdx + i) % 3]);
+    return { watches, galleyIndex: galleyIdx };
+  }
+  
+  return { watches: Array(slotsPerDay).fill(0), galleyIndex: 0 };
+}
+
+function generateFullSchedule(startDate: Date, endDate: Date, config: ScheduleConfig): ScheduleData {
+  const timeSlots = generateTimeSlots(config);
+  const days: DaySchedule[] = [];
+  
+  let dayIndex = 0;
+  const currentDate = new Date(startDate);
+  
+  while (currentDate <= endDate) {
+    const dateStr = currentDate.toLocaleDateString('pl-PL', { weekday: 'short', day: 'numeric', month: 'short' });
+    const shortDate = currentDate.toLocaleDateString('pl-PL', { day: 'numeric', month: 'numeric' });
+    const { watches, galleyIndex } = generateDayWatches(dayIndex, config);
+    
+    days.push({ date: dateStr, shortDate, watches, galleyIndex });
+    dayIndex++;
+    currentDate.setDate(currentDate.getDate() + 1);
+  }
+  
+  return { timeSlots, days };
+}
+
 export function WatchSystem() {
   const [startDate, setStartDate] = useState<string>('');
   const [endDate, setEndDate] = useState<string>('');
@@ -44,22 +174,18 @@ export function WatchSystem() {
     { watchNumber: 3, members: [''] },
   ]);
   const [hasGalleyWatch, setHasGalleyWatch] = useState<boolean>(false);
-  const [galleyHasNavWatch, setGalleyHasNavWatch] = useState<boolean>(false);
+  const [galleyHasNavWatch, setGalleyHasNavWatch] = useState<boolean>(true);
   const [schedule, setSchedule] = useState<ScheduleData | null>(null);
 
-  const toRoman = (num: number): string => {
-    const romanNumerals = ['I', 'II', 'III', 'IV'];
-    return romanNumerals[num - 1] || num.toString();
-  };
+  const toRoman = (num: number): string => ['I', 'II', 'III', 'IV'][num - 1] || num.toString();
 
   const handleWatchCountChange = (count: 3 | 4) => {
     setWatchCount(count);
-    const newMembers: WatchMember[] = [];
-    for (let i = 1; i <= count; i++) {
-      const existing = watchMembers.find(w => w.watchNumber === i);
-      newMembers.push(existing || { watchNumber: i, members: [''] });
-    }
-    setWatchMembers(newMembers);
+    setWatchMembers(
+      Array.from({ length: count }, (_, i) => 
+        watchMembers.find(w => w.watchNumber === i + 1) || { watchNumber: i + 1, members: [''] }
+      )
+    );
   };
 
   const addMemberToWatch = (watchIndex: number) => {
@@ -69,8 +195,8 @@ export function WatchSystem() {
   };
 
   const removeMemberFromWatch = (watchIndex: number, memberIndex: number) => {
-    const newMembers = [...watchMembers];
-    if (newMembers[watchIndex].members.length > 1) {
+    if (watchMembers[watchIndex].members.length > 1) {
+      const newMembers = [...watchMembers];
       newMembers[watchIndex].members.splice(memberIndex, 1);
       setWatchMembers(newMembers);
     }
@@ -82,59 +208,18 @@ export function WatchSystem() {
     setWatchMembers(newMembers);
   };
 
-  const generateSchedule = () => {
+  const handleGenerateSchedule = () => {
     if (!startDate || !endDate) return;
     
     const start = new Date(startDate);
     const end = new Date(endDate);
-    const watchesPerDay = 24 / watchDuration;
     
-    const timeSlots: string[] = [];
-    for (let slot = 0; slot < watchesPerDay; slot++) {
-      const startHour = slot * watchDuration;
-      const endHour = ((slot + 1) * watchDuration) % 24;
-      timeSlots.push(`${startHour.toString().padStart(2, '0')}00-${endHour.toString().padStart(2, '0')}00`);
+    if (start > end) {
+      alert('Data rozpoczęcia musi być przed datą zakończenia');
+      return;
     }
-
-    const days: DaySchedule[] = [];
-    let currentWatchIndex = 0;
-    let galleyWatchIndex = 0;
-
-    for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
-      const dateStr = d.toLocaleDateString('pl-PL', { 
-        weekday: 'short', 
-        day: 'numeric', 
-        month: 'short' 
-      });
-      const shortDate = d.toLocaleDateString('pl-PL', { 
-        day: 'numeric', 
-        month: 'numeric' 
-      });
-
-      const watches: number[] = [];
-      
-      for (let slot = 0; slot < watchesPerDay; slot++) {
-        let navWatchIdx = currentWatchIndex % watchCount;
-
-        if (hasGalleyWatch && !galleyHasNavWatch && navWatchIdx === (galleyWatchIndex % watchCount)) {
-          navWatchIdx = (navWatchIdx + 1) % watchCount;
-        }
-
-        watches.push(navWatchIdx);
-        currentWatchIndex = (currentWatchIndex + 1) % watchCount;
-      }
-
-      days.push({
-        date: dateStr,
-        shortDate,
-        watches,
-        galleyIndex: galleyWatchIndex % watchCount,
-      });
-
-      galleyWatchIndex = (galleyWatchIndex + 1) % watchCount;
-    }
-
-    setSchedule({ timeSlots, days });
+    
+    setSchedule(generateFullSchedule(start, end, { watchCount, watchDuration, hasGalleyWatch, galleyHasNavWatch }));
   };
 
   const watchColors = [
@@ -156,9 +241,7 @@ export function WatchSystem() {
             </div>
             <div>
               <CardTitle className="text-2xl font-bold text-slate-800">System Wacht</CardTitle>
-              <CardDescription className="text-slate-500">
-                Zaplanuj grafik wacht na rejs
-              </CardDescription>
+              <CardDescription className="text-slate-500">Zaplanuj grafik wacht na rejs</CardDescription>
             </div>
           </div>
         </CardHeader>
@@ -256,9 +339,7 @@ export function WatchSystem() {
                 {watchMembers.map((watch, watchIdx) => (
                   <Card key={watchIdx} className={`border-2 ${watchColors[watchIdx]}`}>
                     <CardHeader className="pb-2">
-                      <CardTitle className="text-base font-semibold">
-                        {toRoman(watch.watchNumber)}
-                      </CardTitle>
+                      <CardTitle className="text-base font-semibold">{toRoman(watch.watchNumber)}</CardTitle>
                     </CardHeader>
                     <CardContent className="space-y-2">
                       {watch.members.map((member, memberIdx) => (
@@ -303,19 +384,13 @@ export function WatchSystem() {
               <div className="flex items-center gap-4 ml-10">
                 <div className="flex items-center gap-3 p-4 rounded-lg bg-orange-50 border border-orange-200">
                   <ChefHat className="w-5 h-5 text-orange-600" />
-                  <Label htmlFor="galley" className="text-slate-700 font-medium">
-                    Dodaj wachtę kambuzową
-                  </Label>
-                  <Switch
-                    id="galley"
-                    checked={hasGalleyWatch}
-                    onCheckedChange={setHasGalleyWatch}
-                  />
+                  <Label htmlFor="galley" className="text-slate-700 font-medium">Dodaj wachtę kambuzową</Label>
+                  <Switch id="galley" checked={hasGalleyWatch} onCheckedChange={setHasGalleyWatch} />
                 </div>
               </div>
             </div>
 
-            {hasGalleyWatch && watchCount === 4 && (
+            {hasGalleyWatch && (
               <div className="pt-4 border-t border-slate-100">
                 <div className="flex items-center gap-2 mb-4">
                   <div className="w-8 h-8 rounded-full bg-blue-500 text-white flex items-center justify-center text-sm font-bold">6</div>
@@ -324,14 +399,8 @@ export function WatchSystem() {
                 <div className="flex items-center gap-4 ml-10">
                   <div className="flex items-center gap-3 p-4 rounded-lg bg-violet-50 border border-violet-200">
                     <Anchor className="w-5 h-5 text-violet-600" />
-                    <Label htmlFor="galleyNav" className="text-slate-700 font-medium">
-                      Kambuz pełni też wachty nawigacyjne
-                    </Label>
-                    <Switch
-                      id="galleyNav"
-                      checked={galleyHasNavWatch}
-                      onCheckedChange={setGalleyHasNavWatch}
-                    />
+                    <Label htmlFor="galleyNav" className="text-slate-700 font-medium">Kambuz pełni też wachty nawigacyjne</Label>
+                    <Switch id="galleyNav" checked={galleyHasNavWatch} onCheckedChange={setGalleyHasNavWatch} />
                   </div>
                 </div>
               </div>
@@ -339,7 +408,7 @@ export function WatchSystem() {
 
             <div className="pt-6 border-t border-slate-100">
               <Button
-                onClick={generateSchedule}
+                onClick={handleGenerateSchedule}
                 disabled={!startDate || !endDate}
                 className="w-full md:w-auto bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white shadow-lg shadow-blue-200 py-6 px-8 text-lg"
               >
@@ -383,11 +452,7 @@ export function WatchSystem() {
                   fileName="grafik_wacht.pdf"
                 >
                   {({ loading }) => (
-                    <Button
-                      variant="outline"
-                      disabled={loading}
-                      className="border-slate-200 hover:bg-slate-50 w-full sm:w-auto"
-                    >
+                    <Button variant="outline" disabled={loading} className="border-slate-200 hover:bg-slate-50 w-full sm:w-auto">
                       <Download className="w-4 h-4 mr-2" />
                       {loading ? 'Generowanie...' : 'Pobierz PDF'}
                     </Button>
@@ -409,11 +474,7 @@ export function WatchSystem() {
                   fileName="grafik_wacht_do_wypelnienia.pdf"
                 >
                   {({ loading }) => (
-                    <Button
-                      variant="outline"
-                      disabled={loading}
-                      className="border-orange-200 hover:bg-orange-50 text-orange-700 w-full sm:w-auto"
-                    >
+                    <Button variant="outline" disabled={loading} className="border-orange-200 hover:bg-orange-50 text-orange-700 w-full sm:w-auto">
                       <PenLine className="w-4 h-4 mr-2" />
                       {loading ? 'Generowanie...' : 'PDF do wypełnienia'}
                     </Button>
@@ -441,22 +502,20 @@ export function WatchSystem() {
                 </div>
               </div>
             )}
-            <div className="w-full max-w-[calc(100vw-3rem)] sm:max-w-full">
+            <div className="w-full overflow-x-auto">
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead className="w-[100px]">Godziny</TableHead>
+                    <TableHead className="w-[100px] sticky left-0 z-10">Godziny</TableHead>
                     {schedule.days.map((day, idx) => (
-                      <TableHead key={idx} className="text-center whitespace-nowrap">
-                        {day.date}
-                      </TableHead>
+                      <TableHead key={idx} className="text-center whitespace-nowrap min-w-[80px]">{day.date}</TableHead>
                     ))}
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {schedule.timeSlots.map((time, timeIdx) => (
                     <TableRow key={timeIdx}>
-                      <TableCell className="font-medium">{time}</TableCell>
+                      <TableCell className="font-medium sticky left-0 z-10">{time}</TableCell>
                       {schedule.days.map((day, dayIdx) => (
                         <TableCell key={dayIdx} className="text-center">
                           <span className={`inline-flex px-2 py-1 rounded text-sm font-bold ${watchColors[day.watches[timeIdx]]}`}>
@@ -467,8 +526,13 @@ export function WatchSystem() {
                     </TableRow>
                   ))}
                   {hasGalleyWatch && (
-                    <TableRow>
-                      <TableCell className="font-medium">Kambuz</TableCell>
+                    <TableRow className="bg-orange-50/50">
+                      <TableCell className="font-medium sticky left-0 bg-orange-50 z-10">
+                        <span className="flex items-center gap-1">
+                          <ChefHat className="w-4 h-4 text-orange-600" />
+                          Kambuz
+                        </span>
+                      </TableCell>
                       {schedule.days.map((day, dayIdx) => (
                         <TableCell key={dayIdx} className="text-center">
                           <span className={`inline-flex px-2 py-1 rounded text-sm font-bold ${watchColors[day.galleyIndex]}`}>
