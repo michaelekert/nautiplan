@@ -502,11 +502,11 @@ export function WatchSystem() {
                 </div>
               </div>
             )}
-            <div className="w-full overflow-x-auto">
+            <div className="w-full max-w-[calc(100vw-3rem)] sm:max-w-full">
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead className="w-[100px] sticky left-0 z-10">Godziny</TableHead>
+                    <TableHead className="w-[100px] sticky left-0 bg-white z-10">Godziny</TableHead>
                     {schedule.days.map((day, idx) => (
                       <TableHead key={idx} className="text-center whitespace-nowrap min-w-[80px]">{day.date}</TableHead>
                     ))}
@@ -515,7 +515,7 @@ export function WatchSystem() {
                 <TableBody>
                   {schedule.timeSlots.map((time, timeIdx) => (
                     <TableRow key={timeIdx}>
-                      <TableCell className="font-medium sticky left-0 z-10">{time}</TableCell>
+                      <TableCell className="font-medium sticky left-0 bg-white z-10">{time}</TableCell>
                       {schedule.days.map((day, dayIdx) => (
                         <TableCell key={dayIdx} className="text-center">
                           <span className={`inline-flex px-2 py-1 rounded text-sm font-bold ${watchColors[day.watches[timeIdx]]}`}>
